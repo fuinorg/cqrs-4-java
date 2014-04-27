@@ -17,21 +17,35 @@
  */
 package org.fuin.cqrs4j;
 
+import java.io.Serializable;
+
+import org.joda.time.DateTime;
+
 /**
- * Type of the result.
+ * Basic information shared by all commands.
  */
-public enum CmdResultType {
+public abstract class AbstractCommand implements Serializable {
 
-    /** Command was successfully executed. */
-    OK,
+    private static final long serialVersionUID = 1000L;
 
-    /** A warning was raised. */
-    WARNING,
+    private DateTime created;
+    
+    /**
+     * Protected default constructor for de-serialization.
+     */
+    protected AbstractCommand() {
+	super();
+	this.created = new DateTime();
+    }
 
-    /** A system error was raised. */
-    SYSTEM_ERROR,
+    /**
+     * Returns the timestamp when the command was created.
+     * 
+     * @return Date/Time the object was created.
+     */
+    public final DateTime getCreated() {
+        return created;
+    }
 
-    /** An application error was raised. */
-    APPLICATION_ERROR
-
+    
 }

@@ -23,6 +23,7 @@ import static org.fuin.units4j.Units4JUtils.marshal;
 import static org.fuin.units4j.Units4JUtils.serialize;
 import static org.fuin.units4j.Units4JUtils.unmarshal;
 
+import org.joda.time.DateTime;
 import org.junit.Test;
 
 
@@ -60,7 +61,7 @@ public final class CmdResultTest {
 	}
 
 	private CmdResult createTestee() {
-		return new CmdResult(CmdResultType.OK, 0, "Yes!");
+		return new CmdResult(CmdResultType.OK, 0, "Yes!", new DateTime());
 	}
 
 }
