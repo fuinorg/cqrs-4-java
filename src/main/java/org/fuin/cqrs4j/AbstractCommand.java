@@ -19,6 +19,9 @@ package org.fuin.cqrs4j;
 
 import java.io.Serializable;
 
+import javax.validation.constraints.NotNull;
+import javax.xml.bind.annotation.XmlAttribute;
+
 import org.joda.time.DateTime;
 
 /**
@@ -26,26 +29,27 @@ import org.joda.time.DateTime;
  */
 public abstract class AbstractCommand implements Serializable {
 
-    private static final long serialVersionUID = 1000L;
+	private static final long serialVersionUID = 1000L;
 
-    private DateTime created;
-    
-    /**
-     * Protected default constructor for de-serialization.
-     */
-    protected AbstractCommand() {
-	super();
-	this.created = new DateTime();
-    }
+	@NotNull
+	@XmlAttribute(name = "created")
+	private DateTime created;
 
-    /**
-     * Returns the timestamp when the command was created.
-     * 
-     * @return Date/Time the object was created.
-     */
-    public final DateTime getCreated() {
-        return created;
-    }
+	/**
+	 * Protected default constructor for de-serialization.
+	 */
+	protected AbstractCommand() {
+		super();
+		this.created = new DateTime();
+	}
 
-    
+	/**
+	 * Returns the timestamp when the command was created.
+	 * 
+	 * @return Date/Time the object was created.
+	 */
+	public final DateTime getCreated() {
+		return created;
+	}
+
 }
