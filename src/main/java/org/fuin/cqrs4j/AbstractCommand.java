@@ -29,27 +29,27 @@ import org.joda.time.DateTime;
  */
 public abstract class AbstractCommand implements Serializable {
 
-	private static final long serialVersionUID = 1000L;
+    private static final long serialVersionUID = 1000L;
 
-	@NotNull
-	@XmlAttribute(name = "created")
-	private DateTime created;
+    @NotNull
+    @XmlAttribute(name = "created")
+    private DateTime created;
 
-	/**
-	 * Protected default constructor for de-serialization.
-	 */
-	protected AbstractCommand() {
-		super();
-		this.created = new DateTime();
-	}
+    /**
+     * Protected default constructor for de-serialization.
+     */
+    protected AbstractCommand() {
+	super();
+	this.created = new DateTime();
+    }
 
-	/**
-	 * Returns the timestamp when the command was created.
-	 * 
-	 * @return Date/Time the object was created.
-	 */
-	public final DateTime getCreated() {
-		return created;
-	}
+    /**
+     * Returns the timestamp when the command was created.
+     * 
+     * @return Date/Time the object was created.
+     */
+    public final DateTime getCreated() {
+	return created;
+    }
 
 }

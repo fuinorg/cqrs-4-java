@@ -29,17 +29,17 @@ import org.junit.Test;
  */
 public class GeneralTest {
 
-	/**
-	 * Verifies the test coverage of the project.
-	 */
-	@Test
-	public final void testEveryClassHasATest() {
-		assertEveryClassHasATest(new File("src/main/java"), new ClassFilter() {
-			@Override
-			public boolean isIncludeClass(final Class<?> clasz) {
-				return !clasz.getName().endsWith("Exception");
-			}
-		});
-	}
+    /**
+     * Verifies the test coverage of the project.
+     */
+    @Test
+    public final void testEveryClassHasATest() {
+	assertEveryClassHasATest(new File("src/main/java"), new ClassFilter() {
+	    @Override
+	    public boolean isIncludeClass(final Class<?> clasz) {
+		return !clasz.getName().endsWith("Exception");
+	    }
+	});
+    }
 
 }
