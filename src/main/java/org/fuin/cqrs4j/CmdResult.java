@@ -42,7 +42,7 @@ public final class CmdResult implements Serializable {
 
     @NotNull
     @XmlAttribute(name = "code")
-    private Integer code;
+    private Long code;
 
     @NotNull
     @XmlAttribute(name = "message")
@@ -68,7 +68,7 @@ public final class CmdResult implements Serializable {
     }
 
     /**
-     * Constructor with all data.
+     * Constructor with all mandatory data.
      * 
      * @param type
      *            Type.
@@ -80,13 +80,13 @@ public final class CmdResult implements Serializable {
      *            Date/Time the command was created.
      */
     public CmdResult(@NotNull final CmdResultType type,
-	    @NotNull final Integer code, @NotNull final String message,
+	    @NotNull final Long code, @NotNull final String message,
 	    @NotNull final DateTime cmdCreated) {
 	this(type, code, message, cmdCreated, null);
     }
 
     /**
-     * Constructor with all data.
+     * Constructor with additional data.
      * 
      * @param type
      *            Type.
@@ -100,7 +100,7 @@ public final class CmdResult implements Serializable {
      *            Additional data or NULL.
      */
     public CmdResult(@NotNull final CmdResultType type,
-	    @NotNull final Integer code, @NotNull final String message,
+	    @NotNull final Long code, @NotNull final String message,
 	    @NotNull final DateTime cmdCreated, final Object data) {
 	super();
 	Contract.requireArgNotNull("type", type);
@@ -116,6 +116,30 @@ public final class CmdResult implements Serializable {
     }
 
     /**
+     * Constructor with exception.
+     * 
+     * @param type
+     *            Type.
+     * @param code
+     *            Code.
+     * @param exception
+     *            The message for the result is equal to the exception message
+     *            or the simple name of the exception class if the exception
+     *            message is <code>null</code>.
+     * @param cmdCreated
+     *            Date/Time the command was created.
+     */
+    // CHECKSTYLE:OFF:AvoidInlineConditionals
+    public CmdResult(@NotNull final CmdResultType type,
+	    @NotNull final Long code, @NotNull final Exception exception,
+	    @NotNull final DateTime cmdCreated) {
+	this(type, code, exception.getMessage() == null ? exception.getClass()
+		.getSimpleName() : exception.getMessage(), cmdCreated, null);
+    }
+
+    // CHECKSTYLE:ON
+
+    /**
      * Returns the result type.
      * 
      * @return Type.
@@ -129,7 +153,7 @@ public final class CmdResult implements Serializable {
      * 
      * @return Code.
      */
-    public final Integer getCode() {
+    public final Long getCode() {
 	return code;
     }
 

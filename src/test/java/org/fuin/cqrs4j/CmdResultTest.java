@@ -59,7 +59,7 @@ public final class CmdResultTest {
     }
 
     private CmdResult createTestee() {
-	return new CmdResult(CmdResultType.OK, 0, "Yes!", new DateTime());
+	return new CmdResult(CmdResultType.OK, 0L, "Yes!", new DateTime());
     }
 
 }
