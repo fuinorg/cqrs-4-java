@@ -32,34 +32,34 @@ public final class CmdResultTest {
     @Test
     public final void testSerializeDeserialize() {
 
-	// PREPARE
-	final CmdResult original = createTestee();
+        // PREPARE
+        final CmdResult original = createTestee();
 
-	// TEST
-	final CmdResult copy = deserialize(serialize(original));
+        // TEST
+        final CmdResult copy = deserialize(serialize(original));
 
-	// VERIFY
-	assertThat(original).isEqualTo(copy);
+        // VERIFY
+        assertThat(original).isEqualTo(copy);
 
     }
 
     @Test
     public final void testMarshalUnmarshal() {
 
-	// PREPARE
-	final CmdResult original = createTestee();
+        // PREPARE
+        final CmdResult original = createTestee();
 
-	// TEST
-	final String xml = marshal(original, CmdResult.class);
-	final CmdResult copy = unmarshal(xml, CmdResult.class);
+        // TEST
+        final String xml = marshal(original, CmdResult.class);
+        final CmdResult copy = unmarshal(xml, CmdResult.class);
 
-	// VERIFY
-	assertThat(original).isEqualTo(copy);
+        // VERIFY
+        assertThat(original).isEqualTo(copy);
 
     }
 
     private CmdResult createTestee() {
-	return new CmdResult(CmdResultType.OK, 0L, "Yes!", new DateTime());
+        return new CmdResult(CmdResultType.OK, 0L, "Yes!", new DateTime());
     }
 
 }

@@ -34,12 +34,12 @@ public class GeneralTest {
      */
     @Test
     public final void testEveryClassHasATest() {
-	assertEveryClassHasATest(new File("src/main/java"), new ClassFilter() {
-	    @Override
-	    public boolean isIncludeClass(final Class<?> clasz) {
-		return !clasz.getName().endsWith("Exception");
-	    }
-	});
+        assertEveryClassHasATest(new File("src/main/java"), new ClassFilter() {
+            @Override
+            public boolean isIncludeClass(final Class<?> clasz) {
+                return !clasz.getName().endsWith("Exception");
+            }
+        });
     }
 
 }

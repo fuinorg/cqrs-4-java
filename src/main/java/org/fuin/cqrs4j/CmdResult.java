@@ -64,7 +64,7 @@ public final class CmdResult implements Serializable {
      * Protected default constructor for de-serialization.
      */
     protected CmdResult() {
-	super();
+        super();
     }
 
     /**
@@ -80,9 +80,9 @@ public final class CmdResult implements Serializable {
      *            Date/Time the command was created.
      */
     public CmdResult(@NotNull final CmdResultType type,
-	    @NotNull final Long code, @NotNull final String message,
-	    @NotNull final DateTime cmdCreated) {
-	this(type, code, message, cmdCreated, null);
+            @NotNull final Long code, @NotNull final String message,
+            @NotNull final DateTime cmdCreated) {
+        this(type, code, message, cmdCreated, null);
     }
 
     /**
@@ -100,19 +100,19 @@ public final class CmdResult implements Serializable {
      *            Additional data or NULL.
      */
     public CmdResult(@NotNull final CmdResultType type,
-	    @NotNull final Long code, @NotNull final String message,
-	    @NotNull final DateTime cmdCreated, final Object data) {
-	super();
-	Contract.requireArgNotNull("type", type);
-	Contract.requireArgNotNull("code", code);
-	Contract.requireArgNotNull("message", message);
-	Contract.requireArgNotNull("cmdCreated", cmdCreated);
-	this.type = type;
-	this.code = code;
-	this.message = message;
-	this.cmdCreated = cmdCreated;
-	this.resultCreated = new DateTime();
-	this.data = data;
+            @NotNull final Long code, @NotNull final String message,
+            @NotNull final DateTime cmdCreated, final Object data) {
+        super();
+        Contract.requireArgNotNull("type", type);
+        Contract.requireArgNotNull("code", code);
+        Contract.requireArgNotNull("message", message);
+        Contract.requireArgNotNull("cmdCreated", cmdCreated);
+        this.type = type;
+        this.code = code;
+        this.message = message;
+        this.cmdCreated = cmdCreated;
+        this.resultCreated = new DateTime();
+        this.data = data;
     }
 
     /**
@@ -131,10 +131,10 @@ public final class CmdResult implements Serializable {
      */
     // CHECKSTYLE:OFF:AvoidInlineConditionals
     public CmdResult(@NotNull final CmdResultType type,
-	    @NotNull final Long code, @NotNull final Exception exception,
-	    @NotNull final DateTime cmdCreated) {
-	this(type, code, exception.getMessage() == null ? exception.getClass()
-		.getSimpleName() : exception.getMessage(), cmdCreated, null);
+            @NotNull final Long code, @NotNull final Exception exception,
+            @NotNull final DateTime cmdCreated) {
+        this(type, code, exception.getMessage() == null ? exception.getClass()
+                .getSimpleName() : exception.getMessage(), cmdCreated, null);
     }
 
     // CHECKSTYLE:ON
@@ -145,7 +145,7 @@ public final class CmdResult implements Serializable {
      * @return Type.
      */
     public final CmdResultType getType() {
-	return type;
+        return type;
     }
 
     /**
@@ -154,7 +154,7 @@ public final class CmdResult implements Serializable {
      * @return Code.
      */
     public final Long getCode() {
-	return code;
+        return code;
     }
 
     /**
@@ -163,7 +163,7 @@ public final class CmdResult implements Serializable {
      * @return Message.
      */
     public final String getMessage() {
-	return message;
+        return message;
     }
 
     /**
@@ -172,7 +172,7 @@ public final class CmdResult implements Serializable {
      * @return Timestamp.
      */
     public final DateTime getCmdCreated() {
-	return cmdCreated;
+        return cmdCreated;
     }
 
     /**
@@ -181,59 +181,59 @@ public final class CmdResult implements Serializable {
      * @return Result of the executing the command.
      */
     public final Object getData() {
-	return data;
+        return data;
     }
 
     // CHECKSTYLE:OFF Generated code
     @Override
     public final int hashCode() {
-	final int prime = 31;
-	int result = 1;
-	result = prime * result + ((type == null) ? 0 : type.hashCode());
-	result = prime * result + ((code == null) ? 0 : code.hashCode());
-	result = prime * result
-		+ ((cmdCreated == null) ? 0 : cmdCreated.hashCode());
-	result = prime * result + ((message == null) ? 0 : message.hashCode());
-	return result;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
+        result = prime * result + ((code == null) ? 0 : code.hashCode());
+        result = prime * result
+                + ((cmdCreated == null) ? 0 : cmdCreated.hashCode());
+        result = prime * result + ((message == null) ? 0 : message.hashCode());
+        return result;
     }
 
     @Override
     public final boolean equals(Object obj) {
-	if (this == obj)
-	    return true;
-	if (obj == null)
-	    return false;
-	if (getClass() != obj.getClass())
-	    return false;
-	CmdResult other = (CmdResult) obj;
-	if (type == null) {
-	    if (other.type != null)
-		return false;
-	} else if (!type.equals(other.type))
-	    return false;
-	if (code == null) {
-	    if (other.code != null)
-		return false;
-	} else if (!code.equals(other.code))
-	    return false;
-	if (cmdCreated == null) {
-	    if (other.cmdCreated != null)
-		return false;
-	} else if (!cmdCreated.equals(other.cmdCreated))
-	    return false;
-	if (message == null) {
-	    if (other.message != null)
-		return false;
-	} else if (!message.equals(other.message))
-	    return false;
-	return true;
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        CmdResult other = (CmdResult) obj;
+        if (type == null) {
+            if (other.type != null)
+                return false;
+        } else if (!type.equals(other.type))
+            return false;
+        if (code == null) {
+            if (other.code != null)
+                return false;
+        } else if (!code.equals(other.code))
+            return false;
+        if (cmdCreated == null) {
+            if (other.cmdCreated != null)
+                return false;
+        } else if (!cmdCreated.equals(other.cmdCreated))
+            return false;
+        if (message == null) {
+            if (other.message != null)
+                return false;
+        } else if (!message.equals(other.message))
+            return false;
+        return true;
     }
 
     // CHECKSTYLE:OFF Generated code
 
     @Override
     public final String toString() {
-	return type + " " + message + " [" + code + "]";
+        return type + " " + message + " [" + code + "]";
     }
 
 }

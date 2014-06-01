@@ -39,8 +39,8 @@ public abstract class AbstractCommand implements Serializable {
      * Protected default constructor for de-serialization.
      */
     protected AbstractCommand() {
-	super();
-	this.created = new DateTime();
+        super();
+        this.created = new DateTime();
     }
 
     /**
@@ -49,7 +49,7 @@ public abstract class AbstractCommand implements Serializable {
      * @return Date/Time the object was created.
      */
     public final DateTime getCreated() {
-	return created;
+        return created;
     }
 
 }
