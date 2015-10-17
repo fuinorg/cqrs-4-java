@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.fuin</groupId>
         <artifactId>pom-osgi</artifactId>
-        <version>1.1.1</version>
+        <version>1.2.0</version>
     </parent>
 
     <artifactId>cqrs-4-java</artifactId>
@@ -47,13 +47,6 @@
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
             <version>1.1.0.Final</version>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.enterprise</groupId>
-            <artifactId>cdi-api</artifactId>
-            <version>1.2</version>
             <optional>true</optional>
         </dependency>
 
@@ -122,27 +115,6 @@
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>org.jboss.weld.se</groupId>
-            <artifactId>weld-se-core</artifactId>
-            <version>2.2.12.Final</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-entitymanager</artifactId>
-            <version>4.3.10.Final</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-            <version>1.8.0.10</version>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
 
     <build>
@@ -156,23 +128,6 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.7</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <additionalparam>-Xdoclint:none</additionalparam>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
 
         </plugins>
