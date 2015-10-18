@@ -17,21 +17,62 @@
  */
 package org.fuin.cqrs4j;
 
+import java.util.Set;
+
+import javax.validation.constraints.NotNull;
+
+import org.fuin.ddd4j.ddd.Event;
+import org.fuin.ddd4j.ddd.EventType;
+import org.fuin.objects4j.common.NotEmpty;
+
 /**
  * Reads events and updates it's view.
  */
 public interface Projector {
 
     /**
-     * Returns the name of the view the projector works on.
+     * Returns a unique identifier for the view.
      * 
-     * @return Unique view name.
+     * @return Unique ID.
      */
-    public String getName();
+    @NotEmpty
+    public String getViewId();
+
+    /**
+     * Returns a human readable name for the view.
+     * 
+     * @return Unique name.
+     */
+    @NotEmpty
+    public String getViewName();
+
+    /**
+     * Returns a brief description of what the view is good for.
+     * 
+     * @return Description.
+     */
+    @NotEmpty
+    public String getViewDescription();
 
     /**
      * Drops and recreates the view content.
      */
     public void rebuildView();
+
+    /**
+     * Returns the event types this projector is interested in.
+     * 
+     * @return Immutable set of events the projector wants to handle.
+     */
+    @NotNull
+    public Set<EventType> getEventTypes();
+
+    /**
+     * Handles the given event. Events the projector is not interested in are ignored.
+     * 
+     * @param event
+     *            Event to apply to the view.
+     */
+    public void handle(@NotNull Event event);
 
 }
