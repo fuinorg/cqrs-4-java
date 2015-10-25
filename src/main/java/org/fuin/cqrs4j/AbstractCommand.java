@@ -18,11 +18,10 @@
 package org.fuin.cqrs4j;
 
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlAttribute;
-
-import org.joda.time.DateTime;
 
 /**
  * Basic information shared by all commands.
@@ -33,14 +32,14 @@ public abstract class AbstractCommand implements Serializable {
 
     @NotNull
     @XmlAttribute(name = "created")
-    private DateTime created;
+    private ZonedDateTime created;
 
     /**
      * Protected default constructor for de-serialization.
      */
     protected AbstractCommand() {
         super();
-        this.created = new DateTime();
+        this.created = ZonedDateTime.now();
     }
 
     /**
@@ -48,7 +47,7 @@ public abstract class AbstractCommand implements Serializable {
      * 
      * @return Date/Time the object was created.
      */
-    public final DateTime getCreated() {
+    public final ZonedDateTime getCreated() {
         return created;
     }
 

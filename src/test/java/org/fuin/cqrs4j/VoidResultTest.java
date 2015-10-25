@@ -23,20 +23,21 @@ import static org.fuin.units4j.Units4JUtils.marshal;
 import static org.fuin.units4j.Units4JUtils.serialize;
 import static org.fuin.units4j.Units4JUtils.unmarshal;
 
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
+
 import org.junit.Test;
 
 // CHECKSTYLE:OFF
-public final class CmdResultTest {
+public final class VoidResultTest {
 
     @Test
     public final void testSerializeDeserialize() {
 
         // PREPARE
-        final CmdResult original = createTestee();
+        final VoidResult original = createTestee();
 
         // TEST
-        final CmdResult copy = deserialize(serialize(original));
+        final VoidResult copy = deserialize(serialize(original));
 
         // VERIFY
         assertThat(original).isEqualTo(copy);
@@ -47,19 +48,19 @@ public final class CmdResultTest {
     public final void testMarshalUnmarshal() {
 
         // PREPARE
-        final CmdResult original = createTestee();
+        final VoidResult original = createTestee();
 
         // TEST
-        final String xml = marshal(original, CmdResult.class);
-        final CmdResult copy = unmarshal(xml, CmdResult.class);
+        final String xml = marshal(original, VoidResult.class);
+        final VoidResult copy = unmarshal(xml, VoidResult.class);
 
         // VERIFY
         assertThat(original).isEqualTo(copy);
 
     }
 
-    private CmdResult createTestee() {
-        return new CmdResult(CmdResultType.OK, 0L, "Yes!", new DateTime());
+    private VoidResult createTestee() {
+        return new VoidResult(ResultType.OK, 0L, "Yes!", ZonedDateTime.now());
     }
 
 }

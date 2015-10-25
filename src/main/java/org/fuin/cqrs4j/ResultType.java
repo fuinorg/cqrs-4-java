@@ -20,7 +20,7 @@ package org.fuin.cqrs4j;
 /**
  * Type of the result.
  */
-public enum CmdResultType {
+public enum ResultType {
 
     /** Command was successfully executed. */
     OK,
