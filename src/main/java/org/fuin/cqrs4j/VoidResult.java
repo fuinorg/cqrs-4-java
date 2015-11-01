@@ -140,4 +140,18 @@ public final class VoidResult extends AbstractResult {
                 + "]";
     }
 
+    /**
+     * Creates a successful result.
+     * 
+     * @param message
+     *            Message.
+     * @param requestCreated
+     *            Date/Time the request was created.
+     * 
+     * @return OK result.
+     */
+    public static VoidResult ok(@NotNull final String message, @NotNull final ZonedDateTime requestCreated) {
+        return new VoidResult(ResultType.OK, 0L, message, requestCreated);
+    }
+    
 }
