@@ -120,9 +120,9 @@ public final class Projector {
     public final void readStreamEvents() {
         LOG.debug("Read stream events: {}", streamId);
 
-        final Integer lastEventNumber = projectionService.readProjectionPosition(streamId);
+        final Integer nextEventNumber = projectionService.readProjectionPosition(streamId);
 
-        int sliceStart = lastEventNumber;
+        int sliceStart = nextEventNumber;
         StreamEventsSlice currentSlice;
         do {
             final int sliceInc = streamReadPageSize;
