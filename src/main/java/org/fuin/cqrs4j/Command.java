@@ -17,13 +17,9 @@
  */
 package org.fuin.cqrs4j;
 
-import org.fuin.ddd4j.ddd.AbstractEvent;
-
 /**
- * Base class for all commands.
+ * Common behavior shared by all commands.
  */
-public abstract class AbstractCommand extends AbstractEvent implements Command {
-
-    private static final long serialVersionUID = 1000L;
+public interface Command {
 
 }

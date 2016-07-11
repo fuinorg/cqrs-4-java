@@ -27,7 +27,7 @@ import javax.validation.constraints.NotNull;
 import org.fuin.ddd4j.ddd.Event;
 import org.fuin.ddd4j.ddd.EventType;
 import org.fuin.esc.api.CommonEvent;
-import org.fuin.esc.api.ReadableEventStoreSync;
+import org.fuin.esc.api.ReadableEventStore;
 import org.fuin.esc.api.StreamDeletedException;
 import org.fuin.esc.api.StreamEventsSlice;
 import org.fuin.esc.api.StreamId;
@@ -44,7 +44,7 @@ public final class Projector {
 
     private static final Logger LOG = LoggerFactory.getLogger(Projector.class);
 
-    private final ReadableEventStoreSync eventStore;
+    private final ReadableEventStore eventStore;
 
     private final StreamId streamId;
 
@@ -68,7 +68,7 @@ public final class Projector {
      * @param eventHandlers
      *            Array of event handlers.
      */
-    public Projector(@NotNull final ReadableEventStoreSync eventStore, @NotNull final StreamId streamId,
+    public Projector(@NotNull final ReadableEventStore eventStore, @NotNull final StreamId streamId,
             final int streamReadPageSize, @NotNull final ProjectionService projectionService,
             @NotNull final EventHandler... eventHandlers) {
         this(eventStore, streamId, streamReadPageSize, projectionService, Arrays.asList(eventHandlers));
@@ -88,7 +88,7 @@ public final class Projector {
      * @param eventHandlers
      *            List of event handlers.
      */
-    public Projector(@NotNull final ReadableEventStoreSync eventStore, @NotNull final StreamId streamId,
+    public Projector(@NotNull final ReadableEventStore eventStore, @NotNull final StreamId streamId,
             final int streamReadPageSize, @NotNull final ProjectionService projectionService,
             @NotNull final List<EventHandler> eventHandlers) {
         super();
