@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<command-result>
+    <type>OK</type>
+    <code>0</code>
+    <message>Invoice successfully created</message>
+    <request-created>2016-07-01T18:00:00.000+02:00</request-created>
+    <response-created>2016-07-01T18:00:00.100+02:00</response-created>
+    <invoice-id>I-0123456</invoice-id>
+</command-result>
