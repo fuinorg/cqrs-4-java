@@ -48,8 +48,7 @@ public final class CommandResult implements Serializable {
     @NotNull
     @XmlElement(name = "message")
     private String message;
-
-    @NotNull
+    
     @XmlElement(name = "request-created")
     private ZonedDateTime requestCreated;
 
@@ -57,7 +56,6 @@ public final class CommandResult implements Serializable {
     @XmlElement(name = "response-created")
     private ZonedDateTime responseCreated;
 
-    @Nullable
     @Valid
     @XmlAnyElement(lax = true)
     private Object data;
@@ -112,7 +110,7 @@ public final class CommandResult implements Serializable {
      */
     // CHECKSTYLE:OFF:AvoidInlineConditionals
     public CommandResult(@NotNull final ResultType type, @NotNull final Long code,
-            @NotNull final Exception exception, @NotNull final ZonedDateTime requestCreated) {
+            @NotNull final Exception exception, @Nullable final ZonedDateTime requestCreated) {
         this(type, code, exception.getMessage() == null ? exception.getClass().getSimpleName() : exception
                 .getMessage(), requestCreated, null);
     }
