@@ -75,8 +75,8 @@ public class ConstraintViolationExceptionTest {
                                 + "<constraint-validation-exception>"
                                 + "<msg>Multiple constraints violated</msg>"
                                 + "<sid>CQRS4J-VALIDATION_FAILED</sid>" + "<constraint-violations>"
-                                + "<constraint-violation>B cannot be empty</constraint-violation>"
                                 + "<constraint-violation>A is required</constraint-violation>"
+                                + "<constraint-violation>B cannot be empty</constraint-violation>"
                                 + "</constraint-violations>" + "</constraint-validation-exception>")
                 .withTest(xml).ignoreWhitespace().build();
 

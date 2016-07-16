@@ -76,6 +76,7 @@ public final class ConstraintViolationException extends AbstractJaxbMarshallable
         for (final ConstraintViolation<T> violation : violations) {
             this.constraintViolations.add(violation.getMessage());
         }
+        Collections.sort(constraintViolations);
     }
 
     @Override
