@@ -25,14 +25,62 @@ import static org.fuin.utils4j.Utils4J.serialize;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 import org.fuin.ddd4j.ddd.AggregateNotFoundException;
+import org.fuin.ddd4j.ddd.AggregateRootId;
+import org.fuin.ddd4j.ddd.EntityType;
+import org.fuin.ddd4j.ddd.StringBasedEntityType;
 import org.junit.Test;
 import org.w3c.dom.Node;
 
 // CHECKSTYLE:OFF
 public final class CommandResultTest {
+
+    private static final EntityType TEST_TYPE = new StringBasedEntityType("Test");
+
+    @Test
+    public final void testConstructorAll() {
+
+        // PREPARE
+        final String data = "Whatever";
+        final ZonedDateTime requestCreated = ZonedDateTime.now();
+
+        // TEST
+        final CommandResult testee = new CommandResult(ResultType.OK, "0", "Yes!", requestCreated, data);
+
+        // VERIFY
+        assertThat(testee.getType()).isEqualTo(ResultType.OK);
+        assertThat(testee.getCode()).isEqualTo("0");
+        assertThat(testee.getMessage()).isEqualTo("Yes!");
+        assertThat(testee.getRequestCreated()).isEqualTo(requestCreated);
+        assertThat(testee.getResponseCreated()).isNotNull();
+        assertThat(testee.getData()).isEqualTo(data);
+
+    }
+
+    @Test
+    public final void testConstructorException() {
+
+        // PREPARE
+        final TestId id = new TestId();
+        final AggregateNotFoundException ex = new AggregateNotFoundException(TEST_TYPE, id);
+        System.out.println("MESSAGE=" + ex.getMessage());
+        final ZonedDateTime requestCreated = ZonedDateTime.now();
+
+        // TEST
+        final CommandResult testee = new CommandResult(ResultType.APPLICATION_ERROR, ex, requestCreated);
+
+        // VERIFY
+        assertThat(testee.getType()).isEqualTo(ResultType.APPLICATION_ERROR);
+        assertThat(testee.getCode()).isEqualTo("DDD4J-AGGREGATE_NOT_FOUND");
+        assertThat(testee.getMessage()).isEqualTo(TEST_TYPE + " with id " + id.asString() + " not found");
+        assertThat(testee.getRequestCreated()).isEqualTo(requestCreated);
+        assertThat(testee.getResponseCreated()).isNotNull();
+        assertThat(testee.getData()).isEqualTo(ex);
+
+    }
 
     @Test
     public final void testSerializeDeserialize() {
@@ -127,6 +175,59 @@ public final class CommandResultTest {
         assertThat(ex.getMessage()).isEqualTo(msg);
         assertThat(ex.getAggregateType()).isEqualTo("Invoice");
         assertThat(ex.getAggregateId()).isEqualTo("4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119");
+
+    }
+
+    private static class TestId implements AggregateRootId {
+
+        private static final long serialVersionUID = 1L;
+
+        private UUID id = UUID.randomUUID();
+
+        @Override
+        public EntityType getType() {
+            return TEST_TYPE;
+        }
+
+        @Override
+        public String asTypedString() {
+            return TEST_TYPE + " " + id;
+        }
+
+        @Override
+        public String asString() {
+            return id.toString();
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((id == null) ? 0 : id.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (!(obj instanceof TestId)) {
+                return false;
+            }
+            TestId other = (TestId) obj;
+            if (id == null) {
+                if (other.id != null) {
+                    return false;
+                }
+            } else if (!id.equals(other.id)) {
+                return false;
+            }
+            return true;
+        }
 
     }
 

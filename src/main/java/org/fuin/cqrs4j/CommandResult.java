@@ -118,7 +118,6 @@ public final class CommandResult implements Serializable {
             @Nullable final ZonedDateTime requestCreated) {
         super();
         Contract.requireArgNotNull("type", type);
-        Contract.requireArgNotNull("code", code);
         Contract.requireArgNotNull("exception", exception);
         this.type = type;
         if (exception instanceof ExceptionShortIdentifable) {
@@ -127,9 +126,9 @@ public final class CommandResult implements Serializable {
             this.code = exception.getClass().getName();
         }
         if (exception.getMessage() == null) {
-            this.message = exception.getMessage();
-        } else {
             this.message = exception.getClass().getSimpleName();
+        } else {
+            this.message = exception.getMessage();
         }
         this.requestCreated = requestCreated;
         this.responseCreated = ZonedDateTime.now();
