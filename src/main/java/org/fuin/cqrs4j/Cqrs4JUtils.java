@@ -28,11 +28,22 @@ import org.slf4j.LoggerFactory;
 /**
  * Provides some helper methods.
  */
-public final class CqrsUtils {
+public final class Cqrs4JUtils {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CqrsUtils.class);
+    /** Prefix for unique short identifiers. */
+    public static final String SHORT_ID_PREFIX = "CQRS4J";
 
-    private CqrsUtils() {
+    /** Classes used for JAX-B serialization. */
+    public static final Class<?>[] JAXB_CLASSES = new Class<?>[] { 
+        CommandResult.class
+    };
+
+    private static final Logger LOG = LoggerFactory.getLogger(Cqrs4JUtils.class);
+
+    /**
+     * Private by intention.
+     */
+    private Cqrs4JUtils() {
         throw new UnsupportedOperationException();
     }
 

@@ -21,7 +21,7 @@ import org.fuin.units4j.TestOmitted;
 
 // CHECKSTYLE:OFF
 @TestOmitted("TODO Implement!")
-public final class CqrsUtilsTest {
+public final class Cqrs4JUtilsTest {
 
     // TODO Implement tests!
     
