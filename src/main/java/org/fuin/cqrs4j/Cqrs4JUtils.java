@@ -17,8 +17,11 @@
  */
 package org.fuin.cqrs4j;
 
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import javax.validation.constraints.NotNull;
 
 import org.fuin.objects4j.common.Contract;
@@ -35,7 +38,7 @@ public final class Cqrs4JUtils {
 
     /** Classes used for JAX-B serialization. */
     public static final Class<?>[] JAXB_CLASSES = new Class<?>[] { 
-        CommandResult.class
+        CommandResult.class, ConstraintViolationException.class
     };
 
     private static final Logger LOG = LoggerFactory.getLogger(Cqrs4JUtils.class);
@@ -88,6 +91,27 @@ public final class Cqrs4JUtils {
             }
         } catch (final InterruptedException ex) {
             LOG.warn("Couldn't clear view", ex);
+        }
+    }
+
+    /**
+     * Validates the object and throws an exception if a violation was found.
+     * 
+     * @param validator
+     *            Validator to use.
+     * @param obj
+     *            Object to validate.
+     * @param groups
+     *            Validation groups.
+     * 
+     * @throws ConstraintViolationException
+     *             There was at least one constraint violation.
+     */
+    public static void validate(final Validator validator, final Object obj, final Class<?>... groups)
+            throws ConstraintViolationException {
+        final Set<ConstraintViolation<Object>> violations = validator.validate(obj, groups);
+        if (violations.size() > 0) {
+            throw new ConstraintViolationException(violations);
         }
     }
 

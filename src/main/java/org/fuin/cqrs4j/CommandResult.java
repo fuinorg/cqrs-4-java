@@ -116,6 +116,7 @@ public final class CommandResult implements Serializable {
     // CHECKSTYLE:OFF:AvoidInlineConditionals
     public CommandResult(@NotNull final ResultType type, @NotNull final Exception exception,
             @Nullable final ZonedDateTime requestCreated) {
+        // CHECKSTYLE:ON
         super();
         Contract.requireArgNotNull("type", type);
         Contract.requireArgNotNull("exception", exception);
@@ -138,8 +139,6 @@ public final class CommandResult implements Serializable {
             this.data = null;
         }
     }
-
-    // CHECKSTYLE:ON
 
     /**
      * Returns the result type.

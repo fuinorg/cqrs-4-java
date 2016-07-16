@@ -17,7 +17,7 @@
  */
 package org.fuin.cqrs4j;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.fuin.utils4j.JaxbUtils.marshal;
 import static org.fuin.utils4j.JaxbUtils.unmarshal;
 import static org.fuin.utils4j.Utils4J.deserialize;
