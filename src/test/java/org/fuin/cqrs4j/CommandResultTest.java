@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 
 import org.apache.commons.io.IOUtils;
+import org.fuin.ddd4j.ddd.AggregateNotFoundException;
 import org.junit.Test;
 import org.w3c.dom.Node;
 
@@ -73,7 +74,7 @@ public final class CommandResultTest {
         final CommandResult copy = unmarshal(xml, CommandResult.class);
 
         // VERIFY
-        assertThat(copy.getCode()).isEqualTo(0);
+        assertThat(copy.getCode()).isEqualTo("0");
         assertThat(copy.getType()).isEqualTo(ResultType.OK);
         assertThat(copy.getMessage()).isEqualTo("Customer successfully created");
         assertThat(copy.getRequestCreated()).isNotNull();
@@ -92,7 +93,7 @@ public final class CommandResultTest {
         final CommandResult copy = unmarshal(xml, CommandResult.class);
 
         // VERIFY
-        assertThat(copy.getCode()).isEqualTo(0);
+        assertThat(copy.getCode()).isEqualTo("0");
         assertThat(copy.getType()).isEqualTo(ResultType.OK);
         assertThat(copy.getMessage()).isEqualTo("Invoice successfully created");
         assertThat(copy.getRequestCreated()).isNotNull();
@@ -103,6 +104,31 @@ public final class CommandResultTest {
         assertThat(node.getTextContent()).isEqualTo("I-0123456");
 
     }
-    
+
+    @Test
+    public final void testUnmarshalExceptionResult() throws IOException {
+
+        // PREPARE
+        final String xml = IOUtils.toString(
+                this.getClass().getResourceAsStream("/command-result-exception.xml"), "utf-8");
+
+        // TEST
+        final CommandResult copy = unmarshal(xml, CommandResult.class, AggregateNotFoundException.class);
+
+        // VERIFY
+        final String msg = "Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found";
+        assertThat(copy.getCode()).isEqualTo("DDD4J-AGGREGATE_NOT_FOUND");
+        assertThat(copy.getType()).isEqualTo(ResultType.APPLICATION_ERROR);
+        assertThat(copy.getMessage()).isEqualTo(msg);
+        assertThat(copy.getRequestCreated()).isNotNull();
+        assertThat(copy.getResponseCreated()).isNotNull();
+        assertThat(copy.getData()).isInstanceOf(AggregateNotFoundException.class);
+        final AggregateNotFoundException ex = (AggregateNotFoundException) copy.getData();
+        assertThat(ex.getMessage()).isEqualTo(msg);
+        assertThat(ex.getAggregateType()).isEqualTo("Invoice");
+        assertThat(ex.getAggregateId()).isEqualTo("4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119");
+
+    }
+
 }
 // CHECKSTYLE:ON

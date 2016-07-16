@@ -27,10 +27,13 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.common.ExceptionJaxbMarshallable;
+import org.fuin.objects4j.common.ExceptionShortIdentifable;
 import org.fuin.objects4j.common.Nullable;
 
 /**
- * Result of request.
+ * Result of request. The only convention is to set the <code>code</code> to <code>"0"</code> for a success
+ * result with <code>type</code> of {@link ResultType#OK}.
  */
 @XmlRootElement(name = "command-result")
 public final class CommandResult implements Serializable {
@@ -43,12 +46,12 @@ public final class CommandResult implements Serializable {
 
     @NotNull
     @XmlElement(name = "code")
-    private Long code;
+    private String code;
 
     @NotNull
     @XmlElement(name = "message")
     private String message;
-    
+
     @XmlElement(name = "request-created")
     private ZonedDateTime requestCreated;
 
@@ -81,7 +84,7 @@ public final class CommandResult implements Serializable {
      * @param data
      *            Optional result data.
      */
-    public CommandResult(@NotNull final ResultType type, @NotNull final Long code,
+    public CommandResult(@NotNull final ResultType type, @NotNull final String code,
             @NotNull final String message, @Nullable final ZonedDateTime requestCreated,
             @Nullable final Object data) {
         Contract.requireArgNotNull("type", type);
@@ -96,12 +99,14 @@ public final class CommandResult implements Serializable {
     }
 
     /**
-     * Constructor with exception.
+     * Constructor with exception. If the exception is type {@link ExceptionJaxbMarshallable} then it will be
+     * used as <code>data</code> field, if not data will be <code>null</code>. An exception of type
+     * {@link ExceptionShortIdentifable} will be used to fill the <code>code</code> field with the identifier
+     * value. If it's not a {@link ExceptionShortIdentifable} the <code>code</code> field will be set using
+     * the full qualified class name of the exception.
      * 
      * @param type
      *            Type.
-     * @param code
-     *            Code.
      * @param exception
      *            The message for the result is equal to the exception message or the simple name of the
      *            exception class if the exception message is <code>null</code>.
@@ -109,10 +114,30 @@ public final class CommandResult implements Serializable {
      *            Date/Time the request was created.
      */
     // CHECKSTYLE:OFF:AvoidInlineConditionals
-    public CommandResult(@NotNull final ResultType type, @NotNull final Long code,
-            @NotNull final Exception exception, @Nullable final ZonedDateTime requestCreated) {
-        this(type, code, exception.getMessage() == null ? exception.getClass().getSimpleName() : exception
-                .getMessage(), requestCreated, null);
+    public CommandResult(@NotNull final ResultType type, @NotNull final Exception exception,
+            @Nullable final ZonedDateTime requestCreated) {
+        super();
+        Contract.requireArgNotNull("type", type);
+        Contract.requireArgNotNull("code", code);
+        Contract.requireArgNotNull("exception", exception);
+        this.type = type;
+        if (exception instanceof ExceptionShortIdentifable) {
+            this.code = ((ExceptionShortIdentifable) exception).getShortId();
+        } else {
+            this.code = exception.getClass().getName();
+        }
+        if (exception.getMessage() == null) {
+            this.message = exception.getMessage();
+        } else {
+            this.message = exception.getClass().getSimpleName();
+        }
+        this.requestCreated = requestCreated;
+        this.responseCreated = ZonedDateTime.now();
+        if (exception instanceof ExceptionJaxbMarshallable) {
+            this.data = exception;
+        } else {
+            this.data = null;
+        }
     }
 
     // CHECKSTYLE:ON
@@ -133,7 +158,7 @@ public final class CommandResult implements Serializable {
      * @return Code.
      */
     @NotNull
-    public final Long getCode() {
+    public final String getCode() {
         return code;
     }
 
@@ -265,7 +290,7 @@ public final class CommandResult implements Serializable {
      */
     public static CommandResult ok(@NotNull final String message, 
             @NotNull final ZonedDateTime requestCreated) {
-        return new CommandResult(ResultType.OK, 0L, message, requestCreated, null);
+        return new CommandResult(ResultType.OK, "0", message, requestCreated, null);
     }
 
 }

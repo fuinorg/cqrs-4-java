@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<command-result>
+    <type>APPLICATION_ERROR</type>
+    <code>DDD4J-AGGREGATE_NOT_FOUND</code>
+    <message>Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found</message>
+    <request-created>2016-07-01T18:00:00.000+02:00</request-created>
+    <response-created>2016-07-01T18:00:00.100+02:00</response-created>
+    <aggregate-not-found-exception>
+        <msg>Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found</msg>
+        <sid>DDD4J-AGGREGATE_NOT_FOUND</sid>
+        <aggregate-type>Invoice</aggregate-type>
+        <aggregate-id>4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119</aggregate-id>
+    </aggregate-not-found-exception>
+</command-result>
