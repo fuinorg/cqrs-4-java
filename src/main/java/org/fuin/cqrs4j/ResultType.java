@@ -25,13 +25,10 @@ public enum ResultType {
     /** Command was successfully executed. */
     OK,
 
-    /** A warning was raised. */
+    /** The command was executed, but there was some kind of issue. */
     WARNING,
 
-    /** A system error was raised. */
-    SYSTEM_ERROR,
-
-    /** An application error was raised. */
-    APPLICATION_ERROR
+    /** The command execution failed. */
+    ERROR
 
 }

@@ -24,8 +24,10 @@ import static org.fuin.utils4j.Utils4J.deserialize;
 import static org.fuin.utils4j.Utils4J.serialize;
 
 import java.io.IOException;
-import java.time.ZonedDateTime;
 import java.util.UUID;
+
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlValue;
 
 import org.apache.commons.io.IOUtils;
 import org.fuin.ddd4j.ddd.AggregateNotFoundException;
@@ -34,9 +36,11 @@ import org.fuin.ddd4j.ddd.EntityType;
 import org.fuin.ddd4j.ddd.StringBasedEntityType;
 import org.junit.Test;
 import org.w3c.dom.Node;
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.diff.Diff;
 
 // CHECKSTYLE:OFF
-public final class CommandResultTest {
+public final class ResultTest {
 
     private static final EntityType TEST_TYPE = new StringBasedEntityType("Test");
 
@@ -45,17 +49,14 @@ public final class CommandResultTest {
 
         // PREPARE
         final String data = "Whatever";
-        final ZonedDateTime requestCreated = ZonedDateTime.now();
 
         // TEST
-        final CommandResult testee = new CommandResult(ResultType.OK, "0", "Yes!", requestCreated, data);
+        final Result testee = new Result(ResultType.WARNING, "X1", "Yes!", data);
 
         // VERIFY
-        assertThat(testee.getType()).isEqualTo(ResultType.OK);
-        assertThat(testee.getCode()).isEqualTo("0");
+        assertThat(testee.getType()).isEqualTo(ResultType.WARNING);
+        assertThat(testee.getCode()).isEqualTo("X1");
         assertThat(testee.getMessage()).isEqualTo("Yes!");
-        assertThat(testee.getRequestCreated()).isEqualTo(requestCreated);
-        assertThat(testee.getResponseCreated()).isNotNull();
         assertThat(testee.getData()).isEqualTo(data);
 
     }
@@ -66,18 +67,14 @@ public final class CommandResultTest {
         // PREPARE
         final TestId id = new TestId();
         final AggregateNotFoundException ex = new AggregateNotFoundException(TEST_TYPE, id);
-        System.out.println("MESSAGE=" + ex.getMessage());
-        final ZonedDateTime requestCreated = ZonedDateTime.now();
 
         // TEST
-        final CommandResult testee = new CommandResult(ResultType.APPLICATION_ERROR, ex, requestCreated);
+        final Result testee = new Result(ex);
 
         // VERIFY
-        assertThat(testee.getType()).isEqualTo(ResultType.APPLICATION_ERROR);
+        assertThat(testee.getType()).isEqualTo(ResultType.ERROR);
         assertThat(testee.getCode()).isEqualTo("DDD4J-AGGREGATE_NOT_FOUND");
         assertThat(testee.getMessage()).isEqualTo(TEST_TYPE + " with id " + id.asString() + " not found");
-        assertThat(testee.getRequestCreated()).isEqualTo(requestCreated);
-        assertThat(testee.getResponseCreated()).isNotNull();
         assertThat(testee.getData()).isEqualTo(ex);
 
     }
@@ -86,10 +83,10 @@ public final class CommandResultTest {
     public final void testSerializeDeserialize() {
 
         // PREPARE
-        final CommandResult original = CommandResult.ok("Yes!", ZonedDateTime.now());
+        final Result original = Result.ok("Whatever");
 
         // TEST
-        final CommandResult copy = deserialize(serialize(original));
+        final Result copy = deserialize(serialize(original));
 
         // VERIFY
         assertThat(original).isEqualTo(copy);
@@ -100,11 +97,13 @@ public final class CommandResultTest {
     public final void testMarshalUnmarshal() {
 
         // PREPARE
-        final CommandResult original = CommandResult.ok("Yes!", ZonedDateTime.now());
+        final Result original = Result.ok(new Data(1));
 
         // TEST
-        final String xml = marshal(original, CommandResult.class);
-        final CommandResult copy = unmarshal(xml, CommandResult.class);
+        final String xml = marshal(original, Result.class, Data.class);
+        System.out.println(xml);
+        
+        final Result copy = unmarshal(xml, Result.class, Data.class);
 
         // VERIFY
         assertThat(original).isEqualTo(copy);
@@ -112,44 +111,52 @@ public final class CommandResultTest {
     }
 
     @Test
-    public final void testUnmarshalVoidResult() throws IOException {
+    public final void testUnmarshalMarshalVoidResult() throws IOException {
 
         // PREPARE
-        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/command-result-void.xml"),
-                "utf-8");
+        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/result-void.xml"), "utf-8");
 
         // TEST
-        final CommandResult copy = unmarshal(xml, CommandResult.class);
+        final Result copy = unmarshal(xml, Result.class);
 
         // VERIFY
-        assertThat(copy.getCode()).isEqualTo("0");
         assertThat(copy.getType()).isEqualTo(ResultType.OK);
-        assertThat(copy.getMessage()).isEqualTo("Customer successfully created");
-        assertThat(copy.getRequestCreated()).isNotNull();
-        assertThat(copy.getResponseCreated()).isNotNull();
+
+        // TEST
+        final String copyXml = marshal(copy, Result.class);
+
+        // VERIFY
+        final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
+
+        assertThat(documentDiff.hasDifferences()).describedAs(documentDiff.toString()).isFalse();
 
     }
 
     @Test
-    public final void testUnmarshalDataResult() throws IOException {
+    public final void testUnmarshalMarshalDataResult() throws IOException {
 
         // PREPARE
-        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/command-result-data.xml"),
-                "utf-8");
+        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/result-data.xml"), "utf-8");
 
         // TEST
-        final CommandResult copy = unmarshal(xml, CommandResult.class);
+        final Result copy = unmarshal(xml, Result.class);
 
         // VERIFY
-        assertThat(copy.getCode()).isEqualTo("0");
         assertThat(copy.getType()).isEqualTo(ResultType.OK);
-        assertThat(copy.getMessage()).isEqualTo("Invoice successfully created");
-        assertThat(copy.getRequestCreated()).isNotNull();
-        assertThat(copy.getResponseCreated()).isNotNull();
+        assertThat(copy.getCode()).isNull();
+        assertThat(copy.getMessage()).isNull();
         assertThat(copy.getData()).isInstanceOf(Node.class);
         final Node node = (Node) copy.getData();
         assertThat(node.getNodeName()).isEqualTo("invoice-id");
         assertThat(node.getTextContent()).isEqualTo("I-0123456");
+
+        // TEST
+        final String copyXml = marshal(copy, Result.class);
+
+        // VERIFY
+        final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
+
+        assertThat(documentDiff.hasDifferences()).describedAs(documentDiff.toString()).isFalse();
 
     }
 
@@ -157,24 +164,30 @@ public final class CommandResultTest {
     public final void testUnmarshalExceptionResult() throws IOException {
 
         // PREPARE
-        final String xml = IOUtils.toString(
-                this.getClass().getResourceAsStream("/command-result-exception.xml"), "utf-8");
+        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/result-exception.xml"),
+                "utf-8");
 
         // TEST
-        final CommandResult copy = unmarshal(xml, CommandResult.class, AggregateNotFoundException.class);
+        final Result copy = unmarshal(xml, Result.class, AggregateNotFoundException.class);
 
         // VERIFY
         final String msg = "Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found";
         assertThat(copy.getCode()).isEqualTo("DDD4J-AGGREGATE_NOT_FOUND");
-        assertThat(copy.getType()).isEqualTo(ResultType.APPLICATION_ERROR);
+        assertThat(copy.getType()).isEqualTo(ResultType.ERROR);
         assertThat(copy.getMessage()).isEqualTo(msg);
-        assertThat(copy.getRequestCreated()).isNotNull();
-        assertThat(copy.getResponseCreated()).isNotNull();
         assertThat(copy.getData()).isInstanceOf(AggregateNotFoundException.class);
         final AggregateNotFoundException ex = (AggregateNotFoundException) copy.getData();
         assertThat(ex.getMessage()).isEqualTo(msg);
         assertThat(ex.getAggregateType()).isEqualTo("Invoice");
         assertThat(ex.getAggregateId()).isEqualTo("4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119");
+
+        // TEST
+        final String copyXml = marshal(copy, Result.class, AggregateNotFoundException.class);
+
+        // VERIFY
+        final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
+
+        assertThat(documentDiff.hasDifferences()).describedAs(documentDiff.toString()).isFalse();
 
     }
 
@@ -229,6 +242,54 @@ public final class CommandResultTest {
             return true;
         }
 
+    }
+
+    @XmlRootElement(name = "data")
+    public static final class Data {
+
+        @XmlValue
+        private int id;
+
+        protected Data() {
+            super();
+        }
+
+        public Data(final int id) {
+            super();
+            this.id = id;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + id;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (!(obj instanceof Data)) {
+                return false;
+            }
+            Data other = (Data) obj;
+            if (id != other.id) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "" + id;
+        }
+        
     }
 
 }

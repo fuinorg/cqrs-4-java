@@ -18,7 +18,6 @@
 package org.fuin.cqrs4j;
 
 import java.io.Serializable;
-import java.time.ZonedDateTime;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -32,11 +31,12 @@ import org.fuin.objects4j.common.ExceptionShortIdentifable;
 import org.fuin.objects4j.common.Nullable;
 
 /**
- * Result of request. The only convention is to set the <code>code</code> to <code>"0"</code> for a success
- * result with <code>type</code> of {@link ResultType#OK}.
+ * Result of a request. The type signals if the execution was successful or not. In case the the result is not
+ * {@link ResultType#OK}, the fields code and message should contain unique information to help the
+ * user identifying the cause of the problem.
  */
-@XmlRootElement(name = "command-result")
-public final class CommandResult implements Serializable {
+@XmlRootElement(name = "result")
+public final class Result implements Serializable {
 
     private static final long serialVersionUID = 1000L;
 
@@ -44,20 +44,13 @@ public final class CommandResult implements Serializable {
     @XmlElement(name = "type")
     private ResultType type;
 
-    @NotNull
+    @Nullable
     @XmlElement(name = "code")
     private String code;
 
-    @NotNull
+    @Nullable
     @XmlElement(name = "message")
     private String message;
-
-    @XmlElement(name = "request-created")
-    private ZonedDateTime requestCreated;
-
-    @NotNull
-    @XmlElement(name = "response-created")
-    private ZonedDateTime responseCreated;
 
     @Valid
     @XmlAnyElement(lax = true)
@@ -66,7 +59,7 @@ public final class CommandResult implements Serializable {
     /**
      * Protected default constructor for de-serialization.
      */
-    protected CommandResult() {
+    protected Result() {
         super();
     }
 
@@ -79,22 +72,15 @@ public final class CommandResult implements Serializable {
      *            Code.
      * @param message
      *            Message.
-     * @param requestCreated
-     *            Date/Time the request was created (if available).
      * @param data
      *            Optional result data.
      */
-    public CommandResult(@NotNull final ResultType type, @NotNull final String code,
-            @NotNull final String message, @Nullable final ZonedDateTime requestCreated,
-            @Nullable final Object data) {
+    public Result(@NotNull final ResultType type, @Nullable final String code,
+            @Nullable final String message, @Nullable final Object data) {
         Contract.requireArgNotNull("type", type);
-        Contract.requireArgNotNull("code", code);
-        Contract.requireArgNotNull("message", message);
         this.type = type;
         this.code = code;
         this.message = message;
-        this.requestCreated = requestCreated;
-        this.responseCreated = ZonedDateTime.now();
         this.data = data;
     }
 
@@ -105,22 +91,16 @@ public final class CommandResult implements Serializable {
      * value. If it's not a {@link ExceptionShortIdentifable} the <code>code</code> field will be set using
      * the full qualified class name of the exception.
      * 
-     * @param type
-     *            Type.
      * @param exception
      *            The message for the result is equal to the exception message or the simple name of the
      *            exception class if the exception message is <code>null</code>.
-     * @param requestCreated
-     *            Date/Time the request was created.
      */
     // CHECKSTYLE:OFF:AvoidInlineConditionals
-    public CommandResult(@NotNull final ResultType type, @NotNull final Exception exception,
-            @Nullable final ZonedDateTime requestCreated) {
+    public Result(@NotNull final Exception exception) {
         // CHECKSTYLE:ON
         super();
-        Contract.requireArgNotNull("type", type);
         Contract.requireArgNotNull("exception", exception);
-        this.type = type;
+        this.type = ResultType.ERROR;
         if (exception instanceof ExceptionShortIdentifable) {
             this.code = ((ExceptionShortIdentifable) exception).getShortId();
         } else {
@@ -131,8 +111,6 @@ public final class CommandResult implements Serializable {
         } else {
             this.message = exception.getMessage();
         }
-        this.requestCreated = requestCreated;
-        this.responseCreated = ZonedDateTime.now();
         if (exception instanceof ExceptionJaxbMarshallable) {
             this.data = exception;
         } else {
@@ -171,26 +149,6 @@ public final class CommandResult implements Serializable {
     }
 
     /**
-     * Returns date/time the original request was created.
-     * 
-     * @return Timestamp.
-     */
-    @Nullable
-    public final ZonedDateTime getRequestCreated() {
-        return requestCreated;
-    }
-
-    /**
-     * Returns date/time the response was created.
-     * 
-     * @return Timestamp.
-     */
-    @NotNull
-    public final ZonedDateTime getResponseCreated() {
-        return responseCreated;
-    }
-
-    /**
      * Returns optional result data.
      * 
      * @return Additional response data.
@@ -207,8 +165,6 @@ public final class CommandResult implements Serializable {
         int result = 1;
         result = prime * result + ((code == null) ? 0 : code.hashCode());
         result = prime * result + ((message == null) ? 0 : message.hashCode());
-        result = prime * result + ((requestCreated == null) ? 0 : requestCreated.hashCode());
-        result = prime * result + ((responseCreated == null) ? 0 : responseCreated.hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         result = prime * result + ((data == null) ? 0 : data.hashCode());
         return result;
@@ -225,7 +181,7 @@ public final class CommandResult implements Serializable {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final CommandResult other = (CommandResult) obj;
+        final Result other = (Result) obj;
         if (code == null) {
             if (other.code != null) {
                 return false;
@@ -238,20 +194,6 @@ public final class CommandResult implements Serializable {
                 return false;
             }
         } else if (!message.equals(other.message)) {
-            return false;
-        }
-        if (requestCreated == null) {
-            if (other.requestCreated != null) {
-                return false;
-            }
-        } else if (!requestCreated.equals(other.requestCreated)) {
-            return false;
-        }
-        if (responseCreated == null) {
-            if (other.responseCreated != null) {
-                return false;
-            }
-        } else if (!responseCreated.equals(other.responseCreated)) {
             return false;
         }
         if (type != other.type) {
@@ -271,24 +213,20 @@ public final class CommandResult implements Serializable {
 
     @Override
     public final String toString() {
-        return "CommandResult [type=" + type + ", code=" + code + ", message=" + message
-                + ", requestCreated=" + requestCreated + ", responseCreated=" + responseCreated + ", data="
-                + data + "]";
+        return "CommandResult [type=" + type + ", code=" + code + ", message=" + message + ", data=" + data
+                + "]";
     }
 
     /**
-     * Creates a success result without any additional data returned.
+     * Create a success result.
      * 
-     * @param message
-     *            Message.
-     * @param requestCreated
-     *            Date/Time the command was created.
+     * @param data
+     *            Optional data.
      * 
-     * @return OK result.
+     * @return Result with type {@link ResultType#OK}.
      */
-    public static CommandResult ok(@NotNull final String message, 
-            @NotNull final ZonedDateTime requestCreated) {
-        return new CommandResult(ResultType.OK, "0", message, requestCreated, null);
+    public static Result ok(@Nullable final Object data) {
+        return new Result(ResultType.OK, null, null, data);
     }
 
 }
