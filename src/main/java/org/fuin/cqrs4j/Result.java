@@ -32,8 +32,8 @@ import org.fuin.objects4j.common.Nullable;
 
 /**
  * Result of a request. The type signals if the execution was successful or not. In case the the result is not
- * {@link ResultType#OK}, the fields code and message should contain unique information to help the
- * user identifying the cause of the problem.
+ * {@link ResultType#OK}, the fields code and message should contain unique information to help the user
+ * identifying the cause of the problem.
  */
 @XmlRootElement(name = "result")
 public final class Result implements Serializable {
@@ -213,12 +213,20 @@ public final class Result implements Serializable {
 
     @Override
     public final String toString() {
-        return "CommandResult [type=" + type + ", code=" + code + ", message=" + message + ", data=" + data
-                + "]";
+        return "Result [type=" + type + ", code=" + code + ", message=" + message + ", data=" + data + "]";
     }
 
     /**
-     * Create a success result.
+     * Create a success result without any data.
+     * 
+     * @return Result with type {@link ResultType#OK}.
+     */
+    public static Result ok() {
+        return new Result(ResultType.OK, null, null, null);
+    }
+
+    /**
+     * Create a success result with some data.
      * 
      * @param data
      *            Optional data.
