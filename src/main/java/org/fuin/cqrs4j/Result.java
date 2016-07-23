@@ -31,12 +31,17 @@ import org.fuin.objects4j.common.ExceptionShortIdentifable;
 import org.fuin.objects4j.common.Nullable;
 
 /**
- * Result of a request. The type signals if the execution was successful or not. In case the the result is not
- * {@link ResultType#OK}, the fields code and message should contain unique information to help the user
- * identifying the cause of the problem.
+ * Result of a request. The type signals if the execution was successful or not.
+ * In case the the result is not {@link ResultType#OK}, the fields code and
+ * message should contain unique information to help the user identifying the
+ * cause of the problem.
+ * 
+ * @param <DATA>
+ *            Type of data returned in case of success (type =
+ *            {@link ResultType#OK}).
  */
 @XmlRootElement(name = "result")
-public final class Result implements Serializable {
+public final class Result<DATA> implements Serializable {
 
     private static final long serialVersionUID = 1000L;
 
@@ -75,8 +80,8 @@ public final class Result implements Serializable {
      * @param data
      *            Optional result data.
      */
-    public Result(@NotNull final ResultType type, @Nullable final String code,
-            @Nullable final String message, @Nullable final Object data) {
+    public Result(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message,
+            @Nullable final DATA data) {
         Contract.requireArgNotNull("type", type);
         this.type = type;
         this.code = code;
@@ -85,15 +90,18 @@ public final class Result implements Serializable {
     }
 
     /**
-     * Constructor with exception. If the exception is type {@link ExceptionJaxbMarshallable} then it will be
-     * used as <code>data</code> field, if not data will be <code>null</code>. An exception of type
-     * {@link ExceptionShortIdentifable} will be used to fill the <code>code</code> field with the identifier
-     * value. If it's not a {@link ExceptionShortIdentifable} the <code>code</code> field will be set using
-     * the full qualified class name of the exception.
+     * Constructor with exception. If the exception is type
+     * {@link ExceptionJaxbMarshallable} then it will be used as
+     * <code>data</code> field, if not data will be <code>null</code>. An
+     * exception of type {@link ExceptionShortIdentifable} will be used to fill
+     * the <code>code</code> field with the identifier value. If it's not a
+     * {@link ExceptionShortIdentifable} the <code>code</code> field will be set
+     * using the full qualified class name of the exception.
      * 
      * @param exception
-     *            The message for the result is equal to the exception message or the simple name of the
-     *            exception class if the exception message is <code>null</code>.
+     *            The message for the result is equal to the exception message
+     *            or the simple name of the exception class if the exception
+     *            message is <code>null</code>.
      */
     // CHECKSTYLE:OFF:AvoidInlineConditionals
     public Result(@NotNull final Exception exception) {
@@ -149,13 +157,22 @@ public final class Result implements Serializable {
     }
 
     /**
-     * Returns optional result data.
+     * Returns the result data if {@link #getType()} is {@link ResultType#OK} or
+     * {@link ResultType#WARNING} and throw a runtime exception in case of
+     * {@link ResultType#ERROR}.
      * 
      * @return Additional response data.
      */
+    @SuppressWarnings("unchecked")
     @NotNull
-    public final Object getData() {
-        return data;
+    public final DATA getData() {
+        if (type == ResultType.ERROR) {
+            if (data instanceof RuntimeException) {
+                throw (RuntimeException) data;
+            }
+            throw new RuntimeException(message + " [" + code + "]");
+        }
+        return (DATA) data;
     }
 
     @Override
@@ -181,7 +198,7 @@ public final class Result implements Serializable {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Result other = (Result) obj;
+        final Result<?> other = (Result<?>) obj;
         if (code == null) {
             if (other.code != null) {
                 return false;
@@ -221,8 +238,8 @@ public final class Result implements Serializable {
      * 
      * @return Result with type {@link ResultType#OK}.
      */
-    public static Result ok() {
-        return new Result(ResultType.OK, null, null, null);
+    public static Result<Void> ok() {
+        return new Result<Void>(ResultType.OK, null, null, null);
     }
 
     /**
@@ -232,9 +249,12 @@ public final class Result implements Serializable {
      *            Optional data.
      * 
      * @return Result with type {@link ResultType#OK}.
+     * 
+     * @param <T>
+     *            Type of data.
      */
-    public static Result ok(@Nullable final Object data) {
-        return new Result(ResultType.OK, null, null, data);
+    public static <T> Result<T> ok(@Nullable final T data) {
+        return new Result<T>(ResultType.OK, null, null, data);
     }
 
 }
