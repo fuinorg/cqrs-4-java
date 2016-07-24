@@ -33,7 +33,7 @@ import org.fuin.esc.api.StreamEventsSlice;
 import org.fuin.esc.api.StreamId;
 import org.fuin.esc.api.StreamNotFoundException;
 import org.fuin.objects4j.common.Contract;
-import org.fuin.objects4j.common.ContractViolationException;
+import org.fuin.objects4j.common.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,12 +97,12 @@ public final class Projector {
         Contract.requireArgNotNull("projectionService", projectionService);
         Contract.requireArgNotNull("eventHandlers", eventHandlers);
         if (eventHandlers.size() == 0) {
-            throw new ContractViolationException("The argument 'eventHandlers' cannot be an empty list");
+            throw new ConstraintViolationException("The argument 'eventHandlers' cannot be an empty list");
         }
         this.eventHandlers = new HashMap<>();
         for (final EventHandler eventHandler : eventHandlers) {
             if (this.eventHandlers.containsKey(eventHandler.getEventType())) {
-                throw new ContractViolationException(
+                throw new ConstraintViolationException(
                         "The argument 'eventHandlers' contains multiple handlers for event: "
                                 + eventHandler.getEventType());
             }
