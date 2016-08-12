@@ -32,8 +32,8 @@ import org.fuin.esc.api.StreamDeletedException;
 import org.fuin.esc.api.StreamEventsSlice;
 import org.fuin.esc.api.StreamId;
 import org.fuin.esc.api.StreamNotFoundException;
-import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ConstraintViolationException;
+import org.fuin.objects4j.common.Contract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +60,8 @@ public final class Projector {
      * @param eventStore
      *            Event store used for reading the events.
      * @param streamId
-     *            Unique identifier of the stream the projector reads to update the view.
+     *            Unique identifier of the stream the projector reads to update
+     *            the view.
      * @param streamReadPageSize
      *            Page size to read.
      * @param projectionService
@@ -80,7 +81,8 @@ public final class Projector {
      * @param eventStore
      *            Event store used for reading the events.
      * @param streamId
-     *            Unique identifier of the stream the projector reads to update the view.
+     *            Unique identifier of the stream the projector reads to update
+     *            the view.
      * @param streamReadPageSize
      *            Page size to read.
      * @param projectionService
@@ -150,7 +152,8 @@ public final class Projector {
     }
 
     /**
-     * Handles the given event. Events the projector is not interested in are ignored.
+     * Handles the given event. Events the projector is not interested in are
+     * ignored.
      * 
      * @param event
      *            Event to apply to the view.
