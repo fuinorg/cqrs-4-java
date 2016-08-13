@@ -37,7 +37,7 @@ import org.fuin.objects4j.common.ExceptionShortIdentifable;
 /**
  * Validating an object failed.
  */
-@XmlRootElement(name = "constraint-validation-exception")
+@XmlRootElement(name = "constraint-violation-exception")
 @XmlAccessorType(XmlAccessType.NONE)
 public final class ConstraintViolationException extends AbstractJaxbMarshallableRuntimeException
         implements ExceptionShortIdentifable {
