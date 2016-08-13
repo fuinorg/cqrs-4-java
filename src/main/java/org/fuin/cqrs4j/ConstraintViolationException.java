@@ -17,8 +17,6 @@
  */
 package org.fuin.cqrs4j;
 
-import static org.fuin.cqrs4j.Cqrs4JUtils.SHORT_ID_PREFIX;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,8 +39,8 @@ import org.fuin.objects4j.common.ExceptionShortIdentifable;
  */
 @XmlRootElement(name = "constraint-validation-exception")
 @XmlAccessorType(XmlAccessType.NONE)
-public final class ConstraintViolationException extends AbstractJaxbMarshallableRuntimeException implements
-        ExceptionShortIdentifable {
+public final class ConstraintViolationException extends AbstractJaxbMarshallableRuntimeException
+        implements ExceptionShortIdentifable {
 
     private static final long serialVersionUID = 1L;
 
@@ -71,7 +69,7 @@ public final class ConstraintViolationException extends AbstractJaxbMarshallable
         super(violations.size() == 1 ? "One constraint violated" : "Multiple constraints violated");
         // CHECKSTYLE:ON
         Contract.requireArgMin("violations.size", violations.size(), 1);
-        this.sid = SHORT_ID_PREFIX + "-VALIDATION_FAILED";
+        this.sid = this.getClass().getName();
         this.constraintViolations = new ArrayList<>();
         for (final ConstraintViolation<T> violation : violations) {
             this.constraintViolations.add(violation.getMessage());

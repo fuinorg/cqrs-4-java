@@ -33,11 +33,8 @@ import org.slf4j.LoggerFactory;
  */
 public final class Cqrs4JUtils {
 
-    /** Prefix for unique short identifiers. */
-    public static final String SHORT_ID_PREFIX = "CQRS4J";
-
     /** Classes used for JAX-B serialization. */
-    public static final Class<?>[] JAXB_CLASSES = new Class<?>[] { 
+    public static final Class<?>[] JAXB_CLASSES = new Class<?>[] {
         Result.class, ConstraintViolationException.class
     };
 
