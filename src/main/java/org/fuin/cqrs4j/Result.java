@@ -115,7 +115,7 @@ public final class Result<DATA> implements Serializable {
             this.code = exception.getClass().getName();
         }
         if (exception.getMessage() == null) {
-            this.message = exception.getClass().getSimpleName();
+            this.message = "";
         } else {
             this.message = exception.getMessage();
         }
@@ -158,21 +158,31 @@ public final class Result<DATA> implements Serializable {
 
     /**
      * Returns the result data if {@link #getType()} is {@link ResultType#OK} or
-     * {@link ResultType#WARNING} and throw a runtime exception in case of
-     * {@link ResultType#ERROR}.
+     * {@link ResultType#WARNING} and <code>null</code> in all other cases.
      * 
-     * @return Additional response data.
+     * @return Response data.
      */
     @SuppressWarnings("unchecked")
     @NotNull
     public final DATA getData() {
-        if (type == ResultType.ERROR) {
-            if (data instanceof RuntimeException) {
-                throw (RuntimeException) data;
-            }
-            throw new RuntimeException(message + " [" + code + "]");
+        if ((type == ResultType.OK) || (type == ResultType.WARNING)) {
+            return (DATA) data;
         }
-        return (DATA) data;
+        return null;
+    }
+
+    /**
+     * Returns the exception if {@link #getType()} is {@link ResultType#ERROR}
+     * or <code>null</code> in all other cases.
+     * 
+     * @return Exception that caused the error.
+     */
+    @Nullable
+    public final Exception getException() {
+        if (type == ResultType.ERROR) {
+            return (Exception) data;
+        }
+        return null;
     }
 
     @Override
@@ -230,7 +240,7 @@ public final class Result<DATA> implements Serializable {
 
     @Override
     public final String toString() {
-        return "Result [type=" + type + ", code=" + code + ", message=" + message + ", data=" + data + "]";
+        return "Result [type=" + type + ", code=" + code + ", message=" + message + "]";
     }
 
     /**
