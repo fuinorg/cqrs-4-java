@@ -267,4 +267,23 @@ public final class Result<DATA> implements Serializable {
         return new Result<T>(ResultType.OK, null, null, data);
     }
 
+    /**
+     * Create an error result without any data.
+     * 
+     * @param code
+     *            Code.
+     * @param message
+     *            Message.
+     * 
+     * @return Error result with.
+     * 
+     * @param <T>
+     *            Not used.
+     */
+    public static <T> Result<T> error(@NotNull final String code, @NotNull final String message) {
+        Contract.requireArgNotNull("code", code);
+        Contract.requireArgNotNull("message", message);
+        return new Result<T>(ResultType.ERROR, code, message, null);
+    }
+
 }
