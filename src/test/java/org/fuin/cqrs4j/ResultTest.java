@@ -22,7 +22,6 @@ import static org.fuin.utils4j.JaxbUtils.marshal;
 import static org.fuin.utils4j.JaxbUtils.unmarshal;
 import static org.fuin.utils4j.Utils4J.deserialize;
 import static org.fuin.utils4j.Utils4J.serialize;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -76,12 +75,8 @@ public final class ResultTest {
         assertThat(testee.getType()).isEqualTo(ResultType.ERROR);
         assertThat(testee.getCode()).isEqualTo("DDD4J-AGGREGATE_NOT_FOUND");
         assertThat(testee.getMessage()).isEqualTo(TEST_TYPE + " with id " + id.asString() + " not found");
-        try {
-            testee.getData();
-            fail();
-        } catch (final AggregateNotFoundException anfe) {
-            // OK
-        }
+        assertThat(testee.getData()).isNull();
+        assertThat(testee.getException()).isInstanceOf(AggregateNotFoundException.class);
 
     }
 
@@ -168,8 +163,7 @@ public final class ResultTest {
     public final void testUnmarshalExceptionResult() throws IOException {
 
         // PREPARE
-        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/result-exception.xml"),
-                "utf-8");
+        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/result-exception.xml"), "utf-8");
 
         // TEST
         final Result<Void> copy = unmarshal(xml, Result.class, AggregateNotFoundException.class);
@@ -179,14 +173,12 @@ public final class ResultTest {
         assertThat(copy.getCode()).isEqualTo("DDD4J-AGGREGATE_NOT_FOUND");
         assertThat(copy.getType()).isEqualTo(ResultType.ERROR);
         assertThat(copy.getMessage()).isEqualTo(msg);
-        try {
-            copy.getData();
-            fail();
-        } catch (final AggregateNotFoundException ex) {
-            assertThat(ex.getMessage()).isEqualTo(msg);
-            assertThat(ex.getAggregateType()).isEqualTo("Invoice");
-            assertThat(ex.getAggregateId()).isEqualTo("4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119");
-        }
+        assertThat(copy.getData()).isNull();
+        assertThat(copy.getException()).isInstanceOf(AggregateNotFoundException.class);
+        final AggregateNotFoundException anfe = (AggregateNotFoundException) copy.getException();
+        assertThat(anfe.getMessage()).isEqualTo(msg);
+        assertThat(anfe.getAggregateType()).isEqualTo("Invoice");
+        assertThat(anfe.getAggregateId()).isEqualTo("4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119");
 
         // TEST
         final String copyXml = marshal(copy, Result.class, AggregateNotFoundException.class);
@@ -296,7 +288,7 @@ public final class ResultTest {
         public String toString() {
             return "" + id;
         }
-        
+
     }
 
 }
