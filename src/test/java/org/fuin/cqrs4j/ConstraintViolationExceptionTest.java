@@ -72,12 +72,12 @@ public class ConstraintViolationExceptionTest {
         final Diff documentDiff = DiffBuilder
                 .compare(
                         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-                                + "<constraint-validation-exception>"
+                                + "<constraint-violation-exception>"
                                 + "<msg>Multiple constraints violated</msg>"
-                                + "<sid>CQRS4J-VALIDATION_FAILED</sid>" + "<constraint-violations>"
+                                + "<sid>org.fuin.cqrs4j.ConstraintViolationException</sid>" + "<constraint-violations>"
                                 + "<constraint-violation>A is required</constraint-violation>"
                                 + "<constraint-violation>B cannot be empty</constraint-violation>"
-                                + "</constraint-violations>" + "</constraint-validation-exception>")
+                                + "</constraint-violations>" + "</constraint-violation-exception>")
                 .withTest(xml).ignoreWhitespace().build();
 
         assertThat(documentDiff.hasDifferences()).describedAs(documentDiff.toString()).isFalse();

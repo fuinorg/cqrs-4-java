@@ -22,8 +22,11 @@ import org.fuin.ddd4j.ddd.EventType;
 
 /**
  * Does something useful using the input from an event.
+ * 
+ * @param <TYPE>
+ *            Event type.
  */
-public interface EventHandler {
+public interface EventHandler<TYPE extends Event> {
 
     /**
      * Returns the type of event this handler operates on.
@@ -38,6 +41,6 @@ public interface EventHandler {
      * @param event
      *            Event to use.
      */
-    public void handle(Event event);
+    public void handle(TYPE event);
 
 }
