@@ -135,7 +135,9 @@ public final class Projector {
                 currentSlice = eventStore.readEventsForward(streamId, sliceStart, sliceCount);
                 LOG.debug("Result slice: {}", currentSlice);
             } catch (final StreamNotFoundException ex) {
-                throw new RuntimeException(ex);
+                // Nothing to read
+                LOG.debug(ex.getMessage());
+                break;
             } catch (final StreamDeletedException ex) {
                 throw new RuntimeException(ex);
             }
