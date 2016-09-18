@@ -55,6 +55,23 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
     }
 
     /**
+     * Constructor with entitiy id path and version.
+     * 
+     * @param entityIdPath
+     *            Path from root aggregate to target entity.
+     * @param aggregateVersion
+     *            Expected aggregate version.
+     */
+    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath,
+            @NotNull final AggregateVersion aggregateVersion) {
+        super();
+        Contract.requireArgNotNull("entityIdPath", entityIdPath);
+        Contract.requireArgNotNull("aggregateVersion", aggregateVersion);
+        this.entityIdPath = entityIdPath;
+        this.aggregateVersion = aggregateVersion;
+    }
+
+    /**
      * Constructor with event this one responds to. Convenience method to set
      * the correlation and causation identifiers correctly.
      * 

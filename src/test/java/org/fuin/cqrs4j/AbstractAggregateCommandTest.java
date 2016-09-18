@@ -32,6 +32,28 @@ public class AbstractAggregateCommandTest {
     private static final EventType MY_COMMAND_TYPE = new EventType("MyCommandt");
 
     @Test
+    public final void testConstructor() {
+
+        // PREPARE
+        final AId aid = new AId(123L);
+        final EntityIdPath entityIdPath = new EntityIdPath(aid);
+        final AggregateVersion version = new AggregateVersion(1);
+
+        // TEST
+        final AbstractAggregateCommand testee = new MyCommand(entityIdPath, version);
+
+        // VERIFY
+        assertThat((EntityId) testee.getEntityIdPath().first()).isEqualTo(aid);
+        assertThat(testee.getAggregateVersion()).isEqualTo(version);
+        assertThat(testee.getEventId()).isNotNull();
+        assertThat(testee.getTimestamp()).isNotNull();
+        assertThat(testee.getCausationId()).isNull();
+        assertThat(testee.getCorrelationId()).isNull();
+        assertThat(testee.getEventType()).isEqualTo(MY_COMMAND_TYPE);
+
+    }
+
+    @Test
     public final void testConstructorEvent() {
 
         // PREPARE
@@ -170,6 +192,10 @@ public class AbstractAggregateCommandTest {
 
         public MyCommand() {
             super();
+        }
+
+        public MyCommand(EntityIdPath entityIdPath, AggregateVersion aggregateVersion) {
+            super(entityIdPath, aggregateVersion);
         }
 
         public MyCommand(EntityIdPath entityIdPath, AggregateVersion aggregateVersion, Event respondTo) {
