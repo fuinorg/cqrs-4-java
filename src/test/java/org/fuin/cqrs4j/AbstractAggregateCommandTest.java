@@ -22,7 +22,6 @@ import org.fuin.ddd4j.ddd.EntityIdPathConverter;
 import org.fuin.ddd4j.ddd.Event;
 import org.fuin.ddd4j.ddd.EventId;
 import org.fuin.ddd4j.ddd.EventType;
-import org.fuin.ddd4j.test.VendorId;
 import org.junit.Test;
 
 //CHECKSTYLE:OFF Test code
@@ -216,9 +215,6 @@ public class AbstractAggregateCommandTest {
             if (type.equals("C")) {
                 return new CId(Long.valueOf(id));
             }
-            if (type.equals("Vendor")) {
-                return VendorId.valueOf(id);
-            }
             throw new IllegalArgumentException("Unknown type: '" + type + "'");
         }
 
@@ -231,9 +227,6 @@ public class AbstractAggregateCommandTest {
                 return true;
             }
             if (type.equals("C")) {
-                return true;
-            }
-            if (type.equals("Vendor")) {
                 return true;
             }
             return false;
