@@ -29,6 +29,10 @@ import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ExceptionJaxbMarshallable;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
 import org.fuin.objects4j.common.Nullable;
+import org.fuin.objects4j.ui.Label;
+import org.fuin.objects4j.ui.Prompt;
+import org.fuin.objects4j.ui.ShortLabel;
+import org.fuin.objects4j.ui.Tooltip;
 
 /**
  * Result of a request. The type signals if the execution was successful or not.
@@ -45,18 +49,34 @@ public final class Result<DATA> implements Serializable {
 
     private static final long serialVersionUID = 1000L;
 
+    @Label("Result Type")
+    @ShortLabel("TYPE")
+    @Tooltip("Type of the result")
+    @Prompt("ERROR")
     @NotNull
     @XmlElement(name = "type")
     private ResultType type;
 
+    @Label("Result Code")
+    @ShortLabel("CODE")
+    @Tooltip("Code that uniquely identifies the result. Mostly used in case of warnings or errors.")
+    @Prompt("E00001")
     @Nullable
     @XmlElement(name = "code")
     private String code;
 
+    @Label("Result Message")
+    @ShortLabel("MSG")
+    @Tooltip("Message that describes the result. Mostly used in case of warnings or errors.")
+    @Prompt("The field 'Xyz' is mandatory")
     @Nullable
     @XmlElement(name = "message")
     private String message;
 
+    @Label("Data")
+    @ShortLabel("DATA")
+    @Tooltip("Optional result data")
+    @Prompt("Optional Data")
     @Valid
     @XmlAnyElement(lax = true)
     private Object data;
