@@ -17,29 +17,38 @@
  */
 package org.fuin.cqrs4j;
 
+import java.util.Set;
+
+import javax.validation.constraints.NotNull;
+
 import org.fuin.ddd4j.ddd.EventType;
 
 /**
- * Does something useful using the input from a command.
+ * Executes one or more commands.
  * 
- * @param <TYPE>
- *            Command type.
+ * @param <RESULT>
+ *            Result of the command execution.
+ * @param <CMD>
+ *            Type of command to execute.
  */
-public interface CommandHandler<TYPE extends Command> {
+public interface CommandExecutor<RESULT, CMD extends Command> {
 
     /**
-     * Returns the type of event this handler operates on.
+     * Returns a list of commands this executor can handle.
      * 
-     * @return Unique event type.
+     * @return List of unique command types.
      */
-    public EventType getEventType();
+    @NotNull
+    public Set<EventType> getCommandTypes();
 
     /**
-     * Modifies the view using the given event.
+     * Executes the given command.
      * 
-     * @param event
-     *            Event to use.
+     * @param cmd
+     *            Command to execute.
+     * 
+     * @return Result.
      */
-    public void handle(TYPE event);
+    public RESULT execute(CMD cmd);
 
 }
