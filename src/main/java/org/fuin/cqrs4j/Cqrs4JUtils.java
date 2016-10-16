@@ -17,13 +17,11 @@
  */
 package org.fuin.cqrs4j;
 
-import java.util.Set;
 import java.util.concurrent.Semaphore;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
 import javax.validation.constraints.NotNull;
 
+import org.fuin.objects4j.common.ConstraintViolationException;
 import org.fuin.objects4j.common.Contract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +32,8 @@ import org.slf4j.LoggerFactory;
 public final class Cqrs4JUtils {
 
     /** Classes used for JAX-B serialization. */
-    public static final Class<?>[] JAXB_CLASSES = new Class<?>[] {
-        Result.class, ConstraintViolationException.class
-    };
+    public static final Class<?>[] JAXB_CLASSES = new Class<?>[] { Result.class,
+            ConstraintViolationException.class };
 
     private static final Logger LOG = LoggerFactory.getLogger(Cqrs4JUtils.class);
 
@@ -48,8 +45,8 @@ public final class Cqrs4JUtils {
     }
 
     /**
-     * Tries to acquire a lock and runs the code. If no lock can be acquired, the method terminates
-     * immediately without executing anything.
+     * Tries to acquire a lock and runs the code. If no lock can be acquired,
+     * the method terminates immediately without executing anything.
      * 
      * @param lock
      *            Semaphore to use.
@@ -69,7 +66,8 @@ public final class Cqrs4JUtils {
     }
 
     /**
-     * Waits until a lock is available and executes the code after it was acquired.
+     * Waits until a lock is available and executes the code after it was
+     * acquired.
      * 
      * @param lock
      *            Semaphore to use.
@@ -88,27 +86,6 @@ public final class Cqrs4JUtils {
             }
         } catch (final InterruptedException ex) {
             LOG.warn("Couldn't clear view", ex);
-        }
-    }
-
-    /**
-     * Validates the object and throws an exception if a violation was found.
-     * 
-     * @param validator
-     *            Validator to use.
-     * @param obj
-     *            Object to validate.
-     * @param groups
-     *            Validation groups.
-     * 
-     * @throws ConstraintViolationException
-     *             There was at least one constraint violation.
-     */
-    public static void validate(final Validator validator, final Object obj, final Class<?>... groups)
-            throws ConstraintViolationException {
-        final Set<ConstraintViolation<Object>> violations = validator.validate(obj, groups);
-        if (violations.size() > 0) {
-            throw new ConstraintViolationException(violations);
         }
     }
 
