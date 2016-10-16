@@ -32,7 +32,6 @@ import org.fuin.esc.api.StreamDeletedException;
 import org.fuin.esc.api.StreamEventsSlice;
 import org.fuin.esc.api.StreamId;
 import org.fuin.esc.api.StreamNotFoundException;
-import org.fuin.objects4j.common.ConstraintViolationException;
 import org.fuin.objects4j.common.Contract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +51,7 @@ public final class Projector {
 
     private final ProjectionService projectionService;
 
+    @SuppressWarnings("rawtypes")
     private final Map<EventType, EventHandler> eventHandlers;
 
     /**
@@ -69,6 +69,7 @@ public final class Projector {
      * @param eventHandlers
      *            Array of event handlers.
      */
+    @SuppressWarnings("rawtypes")
     public Projector(@NotNull final ReadableEventStore eventStore, @NotNull final StreamId streamId,
             final int streamReadPageSize, @NotNull final ProjectionService projectionService,
             @NotNull final EventHandler... eventHandlers) {
@@ -90,6 +91,7 @@ public final class Projector {
      * @param eventHandlers
      *            List of event handlers.
      */
+    @SuppressWarnings("rawtypes")
     public Projector(@NotNull final ReadableEventStore eventStore, @NotNull final StreamId streamId,
             final int streamReadPageSize, @NotNull final ProjectionService projectionService,
             @NotNull final List<EventHandler> eventHandlers) {
@@ -99,12 +101,12 @@ public final class Projector {
         Contract.requireArgNotNull("projectionService", projectionService);
         Contract.requireArgNotNull("eventHandlers", eventHandlers);
         if (eventHandlers.size() == 0) {
-            throw new ConstraintViolationException("The argument 'eventHandlers' cannot be an empty list");
+            throw new IllegalArgumentException("The argument 'eventHandlers' cannot be an empty list");
         }
         this.eventHandlers = new HashMap<>();
         for (final EventHandler eventHandler : eventHandlers) {
             if (this.eventHandlers.containsKey(eventHandler.getEventType())) {
-                throw new ConstraintViolationException(
+                throw new IllegalArgumentException(
                         "The argument 'eventHandlers' contains multiple handlers for event: "
                                 + eventHandler.getEventType());
             }
@@ -160,6 +162,7 @@ public final class Projector {
      * @param event
      *            Event to apply to the view.
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void handle(final Event event) {
         final EventHandler handler = eventHandlers.get(event.getEventType());
         if (handler != null) {
