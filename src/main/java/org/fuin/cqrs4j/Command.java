@@ -17,9 +17,11 @@
  */
 package org.fuin.cqrs4j;
 
+import org.fuin.ddd4j.ddd.Event;
+
 /**
  * Common behavior shared by all commands.
  */
-public interface Command {
+public interface Command extends Event {
 
 }
