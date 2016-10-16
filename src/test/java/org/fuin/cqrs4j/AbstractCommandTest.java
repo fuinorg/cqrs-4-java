@@ -23,7 +23,7 @@ public class AbstractCommandTest {
 
     private static final EventType MY_EVENT_TYPE = new EventType("MyEvent");
 
-    private static final EventType MY_COMMAND_TYPE = new EventType("MyCommandt");
+    private static final EventType MY_COMMAND_TYPE = new EventType("MyCommand");
 
     @Test
     public final void testConstructorDefault() {
