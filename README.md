@@ -7,6 +7,7 @@ Command Query Responsibility Segregation for Java
 Base classes for Command Query Responsibility Segregation (CQRS) with Java
 
 [![Build Status](https://fuin-org.ci.cloudbees.com/job/cqrs-4-java/badge/icon)](https://fuin-org.ci.cloudbees.com/job/cqrs-4-java/)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.fuin/cqrs-4-java/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.fuin/cqrs-4-java/)
 [![LGPLv3 License](http://img.shields.io/badge/license-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl.html)
 [![Java Development Kit 1.8](https://img.shields.io/badge/JDK-1.8-green.svg)](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
 
