@@ -100,6 +100,25 @@ public final class EventDispatcherTest {
 
     }
 
+    @Test
+    public final void testGetAllTypes() {
+
+        // PREPARE
+        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(
+                EVENT_TYPE_A);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(
+                EVENT_TYPE_B);
+        final EventDispatcher testee = new EventDispatcher(handlerA, handlerB);
+
+        final List<EventType> typeList = new ArrayList<>();
+        typeList.add(handlerA.getEventType());
+        typeList.add(handlerB.getEventType());
+
+        // TEST & VERIFY
+        assertThat(testee.getAllTypes()).hasSameElementsAs(typeList);
+
+    }
+
     private static CommonEvent asCommonEvent(final Event event) {
         final EventId eventId = new EventId(event.getEventId().asBaseType());
         final TypeName typeName = new TypeName(

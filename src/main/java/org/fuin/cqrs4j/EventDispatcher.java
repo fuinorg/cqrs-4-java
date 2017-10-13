@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -71,6 +72,15 @@ public final class EventDispatcher {
             }
             this.eventHandlers.put(eventHandler.getEventType(), eventHandler);
         }
+    }
+
+    /**
+     * Returns a set of all known types.
+     * 
+     * @return All known event types.
+     */
+    public final Set<EventType> getAllTypes() {
+        return eventHandlers.keySet();
     }
 
     /**
