@@ -17,10 +17,7 @@
  */
 package org.fuin.cqrs4j;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
@@ -28,60 +25,19 @@ import javax.validation.constraints.NotNull;
 import org.fuin.ddd4j.ddd.Event;
 import org.fuin.ddd4j.ddd.EventType;
 import org.fuin.esc.api.CommonEvent;
-import org.fuin.objects4j.common.Contract;
 
 /**
  * Registry with all event handlers.
  */
-public final class EventDispatcher {
-
-    @SuppressWarnings("rawtypes")
-    private final Map<EventType, EventHandler> eventHandlers;
-
-    /**
-     * Constructor with array of event handlers.
-     * 
-     * @param eventHandlers
-     *            Event handlers.
-     */
-    @SuppressWarnings("rawtypes")
-    public EventDispatcher(@NotNull final EventHandler... eventHandlers) {
-        this(Arrays.asList(eventHandlers));
-    }
-
-    /**
-     * Constructor with list of event handlers.
-     * 
-     * @param eventHandlers
-     *            Event handlers.
-     */
-    @SuppressWarnings("rawtypes")
-    public EventDispatcher(@NotNull final List<EventHandler> eventHandlers) {
-        super();
-        Contract.requireArgNotNull("eventHandlers", eventHandlers);
-        if (eventHandlers.size() == 0) {
-            throw new IllegalArgumentException(
-                    "The argument 'eventHandlers' cannot be an empty list");
-        }
-        this.eventHandlers = new HashMap<>();
-        for (final EventHandler eventHandler : eventHandlers) {
-            if (this.eventHandlers.containsKey(eventHandler.getEventType())) {
-                throw new IllegalArgumentException(
-                        "The argument 'eventHandlers' contains multiple handlers for event: "
-                                + eventHandler.getEventType());
-            }
-            this.eventHandlers.put(eventHandler.getEventType(), eventHandler);
-        }
-    }
+public interface EventDispatcher {
 
     /**
      * Returns a set of all known types.
      * 
      * @return All known event types.
      */
-    public final Set<EventType> getAllTypes() {
-        return eventHandlers.keySet();
-    }
+    @NotNull
+    public Set<EventType> getAllTypes();
 
     /**
      * Dispatch all common events to the appropriate event handler.
@@ -89,16 +45,7 @@ public final class EventDispatcher {
      * @param commonEvents
      *            Events to dispatch.
      */
-    public final void dispatchCommonEvents(
-            @NotNull final List<CommonEvent> commonEvents) {
-
-        Contract.requireArgNotNull("commonEvents", commonEvents);
-
-        for (final CommonEvent commonEvent : commonEvents) {
-            final Event event = (Event) commonEvent.getData();
-            dispatchEvent(event);
-        }
-    }
+    public void dispatchCommonEvents(@NotNull List<CommonEvent> commonEvents);
 
     /**
      * Dispatch all events to the appropriate event handler.
@@ -106,14 +53,7 @@ public final class EventDispatcher {
      * @param events
      *            Events to dispatch.
      */
-    public final void dispatchEvents(@NotNull final List<Event> events) {
-
-        Contract.requireArgNotNull("events", events);
-
-        for (final Event event : events) {
-            dispatchEvent(event);
-        }
-    }
+    public void dispatchEvents(@NotNull List<Event> events);
 
     /**
      * Dispatches the given event to the appropriate event handler. The event is
@@ -122,15 +62,6 @@ public final class EventDispatcher {
      * @param event
      *            Event to dispatch.
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public final void dispatchEvent(@NotNull final Event event) {
-
-        Contract.requireArgNotNull("event", event);
-
-        final EventHandler handler = eventHandlers.get(event.getEventType());
-        if (handler != null) {
-            handler.handle(event);
-        }
-    }
+    public void dispatchEvent(@NotNull Event event);
 
 }

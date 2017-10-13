@@ -32,7 +32,7 @@ import org.fuin.esc.api.TypeName;
 import org.junit.Test;
 
 //CHECKSTYLE:OFF
-public final class EventDispatcherTest {
+public final class SimpleEventDispatcherTest {
 
     private static final EventType EVENT_TYPE_A = new EventType("EventA");
 
@@ -46,7 +46,8 @@ public final class EventDispatcherTest {
                 EVENT_TYPE_A);
         final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(
                 EVENT_TYPE_B);
-        final EventDispatcher testee = new EventDispatcher(handlerA, handlerB);
+        final EventDispatcher testee = new SimpleEventDispatcher(handlerA,
+                handlerB);
 
         final List<Event> events = new ArrayList<>();
         final EventA a1 = new EventA();
@@ -77,7 +78,8 @@ public final class EventDispatcherTest {
                 EVENT_TYPE_A);
         final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(
                 EVENT_TYPE_B);
-        final EventDispatcher testee = new EventDispatcher(handlerA, handlerB);
+        final EventDispatcher testee = new SimpleEventDispatcher(handlerA,
+                handlerB);
 
         final List<CommonEvent> events = new ArrayList<>();
         final EventA a1 = new EventA();
@@ -108,7 +110,8 @@ public final class EventDispatcherTest {
                 EVENT_TYPE_A);
         final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(
                 EVENT_TYPE_B);
-        final EventDispatcher testee = new EventDispatcher(handlerA, handlerB);
+        final EventDispatcher testee = new SimpleEventDispatcher(handlerA,
+                handlerB);
 
         final List<EventType> typeList = new ArrayList<>();
         typeList.add(handlerA.getEventType());
