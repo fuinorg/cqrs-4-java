@@ -11,7 +11,7 @@
 	</parent>
 
 	<artifactId>cqrs-4-java</artifactId>
-	<version>0.1.0</version>
+	<version>0.1.1-SNAPSHOT</version>
 	<packaging>bundle</packaging>
 	<name>Command Query Responsibility Segregation for Java</name>
 	<description>Base classes for Command Query Responsibility Segregation (CQRS) with Java</description>
@@ -34,7 +34,7 @@
 		<dependency>
 			<groupId>org.fuin</groupId>
 			<artifactId>ddd-4-java</artifactId>
-			<version>0.1.0</version>
+			<version>0.1.1-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
@@ -61,7 +61,7 @@
 		<dependency>
 			<groupId>org.fuin.esc</groupId>
 			<artifactId>esc-mem</artifactId>
-			<version>0.1.0</version>
+			<version>0.2.1-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 
