@@ -17,6 +17,7 @@
  */
 package org.fuin.cqrs4j;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +37,7 @@ import org.fuin.objects4j.common.Contract;
 public final class SimpleEventDispatcher implements EventDispatcher {
 
     @SuppressWarnings("rawtypes")
-    private final Map<EventType, EventHandler> eventHandlers;
+    private final Map<EventType, List<EventHandler>> eventHandlers;
 
     /**
      * Constructor with array of event handlers.
@@ -66,12 +67,12 @@ public final class SimpleEventDispatcher implements EventDispatcher {
         }
         this.eventHandlers = new HashMap<>();
         for (final EventHandler eventHandler : eventHandlers) {
-            if (this.eventHandlers.containsKey(eventHandler.getEventType())) {
-                throw new IllegalArgumentException(
-                        "The argument 'eventHandlers' contains multiple handlers for event: "
-                                + eventHandler.getEventType());
+            List<EventHandler> handlers = this.eventHandlers.get(eventHandler.getEventType());
+            if (handlers == null) {
+                handlers = new ArrayList<>();
+                this.eventHandlers.put(eventHandler.getEventType(), handlers);
             }
-            this.eventHandlers.put(eventHandler.getEventType(), eventHandler);
+            handlers.add(eventHandler);          
         }
     }
 
@@ -109,9 +110,11 @@ public final class SimpleEventDispatcher implements EventDispatcher {
 
         Contract.requireArgNotNull("event", event);
 
-        final EventHandler handler = eventHandlers.get(event.getEventType());
-        if (handler != null) {
-            handler.handle(event);
+        final List<EventHandler> handlers = eventHandlers.get(event.getEventType());
+        if (handlers != null) {
+            for (final EventHandler handler : handlers) {
+                handler.handle(event);
+            }
         }
     }
 

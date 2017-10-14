@@ -122,6 +122,41 @@ public final class SimpleEventDispatcherTest {
 
     }
 
+    @Test
+    public final void testMultipleEventHandlersForOneEvent() {
+
+        // PREPARE
+        final CollectingEventHandler<EventA> handlerA1 = new CollectingEventHandler<>(
+                EVENT_TYPE_A);
+        final CollectingEventHandler<EventA> handlerA2 = new CollectingEventHandler<>(
+                EVENT_TYPE_A);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(
+                EVENT_TYPE_B);
+        final EventDispatcher testee = new SimpleEventDispatcher(handlerA1,
+                handlerA2, handlerB);
+
+        final List<Event> events = new ArrayList<>();
+        final EventA a1 = new EventA();
+        events.add(a1);
+        final EventA a2 = new EventA();
+        events.add(a2);
+        final EventA a3 = new EventA();
+        events.add(a3);
+        final EventB b1 = new EventB();
+        events.add(b1);
+        final EventB b2 = new EventB();
+        events.add(b2);
+
+        // TEST
+        testee.dispatchEvents(events);
+
+        // VERIFY
+        assertThat(handlerA1.getEvents()).containsExactly(a1, a2, a3);
+        assertThat(handlerA1.getEvents()).containsExactly(a1, a2, a3);
+        assertThat(handlerB.getEvents()).containsExactly(b1, b2);
+
+    }
+
     private static CommonEvent asCommonEvent(final Event event) {
         final EventId eventId = new EventId(event.getEventId().asBaseType());
         final TypeName typeName = new TypeName(
