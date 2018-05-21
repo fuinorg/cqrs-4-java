@@ -17,8 +17,6 @@
  */
 package org.fuin.cqrs4j;
 
-import java.io.Serializable;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlAnyElement;
@@ -45,9 +43,7 @@ import org.fuin.objects4j.ui.Tooltip;
  *            {@link ResultType#OK}).
  */
 @XmlRootElement(name = "result")
-public final class Result<DATA> implements Serializable {
-
-    private static final long serialVersionUID = 1000L;
+public final class Result<DATA> {
 
     @Label("Result Type")
     @ShortLabel("TYPE")
