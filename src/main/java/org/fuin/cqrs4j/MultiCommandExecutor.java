@@ -44,7 +44,7 @@ public final class MultiCommandExecutor implements CommandExecutor<Object, Comma
      *            Array of command executors.
      */
     public MultiCommandExecutor(@NotNull final CommandExecutor... cmdExecutors) {
-        this(cmdExecutors == null ? null : Arrays.asList(cmdExecutors));
+        this(Arrays.asList(cmdExecutors));
     }
 
     /**
