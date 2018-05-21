@@ -84,7 +84,7 @@ public final class Cqrs4JUtils {
             } finally {
                 lock.release();
             }
-        } catch (final InterruptedException ex) {
+        } catch (final InterruptedException ex) { //NOSONAR
             LOG.warn("Couldn't clear view", ex);
         }
     }
