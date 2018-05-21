@@ -81,20 +81,6 @@ public final class ResultTest {
     }
 
     @Test
-    public final void testSerializeDeserialize() {
-
-        // PREPARE
-        final Result<String> original = Result.ok("Whatever");
-
-        // TEST
-        final Result<String> copy = deserialize(serialize(original));
-
-        // VERIFY
-        assertThat(original).isEqualTo(copy);
-
-    }
-
-    @Test
     public final void testMarshalUnmarshal() {
 
         // PREPARE
