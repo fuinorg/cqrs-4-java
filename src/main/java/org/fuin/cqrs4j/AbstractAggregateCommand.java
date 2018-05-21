@@ -50,7 +50,7 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
     /**
      * Default constructor for JAXB.
      */
-    protected AbstractAggregateCommand() {
+    protected AbstractAggregateCommand() { //NOSONAR Ignore uninitialized fields 
         super();
     }
 
