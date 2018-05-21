@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <fileset-config file-format-version="1.2.0" simple-config="false" sync-formatter="true">
-  <local-check-config name="maven-checkstyle-plugin default" location="http://www.fuin.org/files/checkstyle-2015-09-12.xml" type="remote" description="maven-checkstyle-plugin configuration default">
+  <local-check-config name="maven-checkstyle-plugin default" location="http://www.fuin.org/files/checkstyle-2018-05-01.xml" type="remote" description="maven-checkstyle-plugin configuration default">
     <property name="checkstyle.cache.file" value="${project_loc}/target/checkstyle-cachefile"/>
     <property name="checkstyle.header.file" value="/home/developer/eclipse/oxygen-jee/ws/.metadata/.plugins/org.eclipse.core.resources/.projects/cqrs-4-java/com.basistech.m2e.code.quality.checkstyleConfigurator/checkstyle-header-default.txt"/>
   </local-check-config>
