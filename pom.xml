@@ -13,7 +13,6 @@
 	<artifactId>cqrs-4-java</artifactId>
 	<version>0.2.0-SNAPSHOT</version>
 	<packaging>bundle</packaging>
-	<name>Command Query Responsibility Segregation for Java</name>
 	<description>Base classes for Command Query Responsibility Segregation (CQRS) with Java</description>
 
 	<scm>
