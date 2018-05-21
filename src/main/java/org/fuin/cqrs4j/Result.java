@@ -28,7 +28,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ExceptionJaxbMarshallable;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
-import org.fuin.objects4j.common.Nullable;
+import javax.annotation.Nullable;
 import org.fuin.objects4j.ui.Label;
 import org.fuin.objects4j.ui.Prompt;
 import org.fuin.objects4j.ui.ShortLabel;
@@ -84,7 +84,7 @@ public final class Result<DATA> implements Serializable {
     /**
      * Protected default constructor for de-serialization.
      */
-    protected Result() {
+    protected Result() { //NOSONAR Ignore uninitialized fields
         super();
     }
 
@@ -183,7 +183,7 @@ public final class Result<DATA> implements Serializable {
      * @return Response data.
      */
     @SuppressWarnings("unchecked")
-    @NotNull
+    @Nullable
     public final DATA getData() {
         if ((type == ResultType.OK) || (type == ResultType.WARNING)) {
             return (DATA) data;

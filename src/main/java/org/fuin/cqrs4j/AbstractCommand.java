@@ -22,7 +22,7 @@ import javax.validation.constraints.NotNull;
 import org.fuin.ddd4j.ddd.AbstractEvent;
 import org.fuin.ddd4j.ddd.Event;
 import org.fuin.ddd4j.ddd.EventId;
-import org.fuin.objects4j.common.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * Base class for all commands.
