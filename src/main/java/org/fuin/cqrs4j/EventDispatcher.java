@@ -56,8 +56,8 @@ public interface EventDispatcher {
     public void dispatchEvents(@NotNull List<Event> events);
 
     /**
-     * Dispatches the given event to the appropriate event handler. The event is
-     * ignored if no event handler can be found that is capable of handling it.
+     * Dispatches the given event to the appropriate event handler. The event is ignored if no event handler can be found that is capable of
+     * handling it.
      * 
      * @param event
      *            Event to dispatch.

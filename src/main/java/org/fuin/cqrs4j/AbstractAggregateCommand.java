@@ -17,6 +17,7 @@
  */
 package org.fuin.cqrs4j;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -28,7 +29,6 @@ import org.fuin.ddd4j.ddd.EntityIdPathConverter;
 import org.fuin.ddd4j.ddd.Event;
 import org.fuin.ddd4j.ddd.EventId;
 import org.fuin.objects4j.common.Contract;
-import javax.annotation.Nullable;
 
 /**
  * Base class for all commands that are directed to an existing aggregate.
@@ -50,7 +50,7 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
     /**
      * Default constructor for JAXB.
      */
-    protected AbstractAggregateCommand() { //NOSONAR Ignore uninitialized fields 
+    protected AbstractAggregateCommand() { // NOSONAR Ignore uninitialized fields
         super();
     }
 
@@ -62,8 +62,7 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
      * @param aggregateVersion
      *            Expected aggregate version.
      */
-    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath,
-            @NotNull final AggregateVersion aggregateVersion) {
+    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath, @NotNull final AggregateVersion aggregateVersion) {
         super();
         Contract.requireArgNotNull("entityIdPath", entityIdPath);
         Contract.requireArgNotNull("aggregateVersion", aggregateVersion);
@@ -72,8 +71,7 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
     }
 
     /**
-     * Constructor with event this one responds to. Convenience method to set
-     * the correlation and causation identifiers correctly.
+     * Constructor with event this one responds to. Convenience method to set the correlation and causation identifiers correctly.
      * 
      * @param entityIdPath
      *            Path from root aggregate to target entity.
@@ -82,8 +80,8 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
      * @param respondTo
      *            Causing event.
      */
-    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath,
-            @NotNull final AggregateVersion aggregateVersion, @NotNull final Event respondTo) {
+    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath, @NotNull final AggregateVersion aggregateVersion,
+            @NotNull final Event respondTo) {
         super(respondTo);
         Contract.requireArgNotNull("entityIdPath", entityIdPath);
         Contract.requireArgNotNull("aggregateVersion", aggregateVersion);
@@ -103,9 +101,8 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
      * @param causationId
      *            ID of the event that caused this one.
      */
-    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath,
-            @NotNull final AggregateVersion aggregateVersion, @Nullable final EventId correlationId,
-            @Nullable final EventId causationId) {
+    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath, @NotNull final AggregateVersion aggregateVersion,
+            @Nullable final EventId correlationId, @Nullable final EventId causationId) {
         super(correlationId, causationId);
         Contract.requireArgNotNull("entityIdPath", entityIdPath);
         Contract.requireArgNotNull("aggregateVersion", aggregateVersion);

@@ -17,12 +17,12 @@
  */
 package org.fuin.cqrs4j;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.fuin.ddd4j.ddd.AbstractEvent;
 import org.fuin.ddd4j.ddd.Event;
 import org.fuin.ddd4j.ddd.EventId;
-import javax.annotation.Nullable;
 
 /**
  * Base class for all commands.
@@ -39,8 +39,7 @@ public abstract class AbstractCommand extends AbstractEvent implements Command {
     }
 
     /**
-     * Constructor with event this one responds to. Convenience method to set the correlation and causation
-     * identifiers correctly.
+     * Constructor with event this one responds to. Convenience method to set the correlation and causation identifiers correctly.
      * 
      * @param respondTo
      *            Causing event.

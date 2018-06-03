@@ -89,8 +89,7 @@ public class AbstractAggregateCommandTest {
         final EventId causationId = new EventId();
 
         // TEST
-        final AbstractAggregateCommand testee = new MyCommand(entityIdPath, version, correlationId,
-                causationId);
+        final AbstractAggregateCommand testee = new MyCommand(entityIdPath, version, correlationId, causationId);
 
         // VERIFY
         assertThat((EntityId) testee.getEntityIdPath().first()).isEqualTo(aid);
@@ -160,8 +159,7 @@ public class AbstractAggregateCommandTest {
     public final void testUnmarshal() {
 
         // PREPARE
-        final String xml = "<my-command><entity-id-path>A 1/B 2/C 3</entity-id-path>"
-                + "<aggregate-version>1</aggregate-version>"
+        final String xml = "<my-command><entity-id-path>A 1/B 2/C 3</entity-id-path>" + "<aggregate-version>1</aggregate-version>"
                 + "<event-id>f910c6d7-debc-46e1-ae02-9ca6f4658cf5</event-id>"
                 + "<event-timestamp>2016-09-18T10:38:08.0+02:00[Europe/Berlin]</event-timestamp>"
                 + "<correlation-id>2a5893a9-00da-4003-b280-98324eccdef1</correlation-id>"
@@ -173,15 +171,11 @@ public class AbstractAggregateCommandTest {
         // VERIFY
         assertThat(copy.getEntityIdPath()).isEqualTo(new EntityIdPath(new AId(1L), new BId(2L), new CId(3L)));
         assertThat(copy.getAggregateVersion()).isEqualTo(new AggregateVersion(1));
-        assertThat(copy.getCausationId())
-                .isEqualTo(new EventId(UUID.fromString("f13d3481-51b7-423f-8fe7-5c342f7d7c46")));
-        assertThat(copy.getCorrelationId())
-                .isEqualTo(new EventId(UUID.fromString("2a5893a9-00da-4003-b280-98324eccdef1")));
-        assertThat(copy.getEventId())
-                .isEqualTo(new EventId(UUID.fromString("f910c6d7-debc-46e1-ae02-9ca6f4658cf5")));
+        assertThat(copy.getCausationId()).isEqualTo(new EventId(UUID.fromString("f13d3481-51b7-423f-8fe7-5c342f7d7c46")));
+        assertThat(copy.getCorrelationId()).isEqualTo(new EventId(UUID.fromString("2a5893a9-00da-4003-b280-98324eccdef1")));
+        assertThat(copy.getEventId()).isEqualTo(new EventId(UUID.fromString("f910c6d7-debc-46e1-ae02-9ca6f4658cf5")));
         assertThat(copy.getEventType()).isEqualTo(copy.getEventType());
-        assertThat(copy.getTimestamp())
-                .isEqualTo(ZonedDateTime.of(2016, 9, 18, 10, 38, 8, 0, ZoneId.of("Europe/Berlin")));
+        assertThat(copy.getTimestamp()).isEqualTo(ZonedDateTime.of(2016, 9, 18, 10, 38, 8, 0, ZoneId.of("Europe/Berlin")));
 
     }
 
@@ -202,8 +196,7 @@ public class AbstractAggregateCommandTest {
             super(entityIdPath, aggregateVersion, respondTo);
         }
 
-        public MyCommand(EntityIdPath entityIdPath, AggregateVersion aggregateVersion, EventId correlationId,
-                EventId causationId) {
+        public MyCommand(EntityIdPath entityIdPath, AggregateVersion aggregateVersion, EventId correlationId, EventId causationId) {
             super(entityIdPath, aggregateVersion, correlationId, causationId);
         }
 

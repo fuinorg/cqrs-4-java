@@ -42,12 +42,9 @@ public final class SimpleEventDispatcherTest {
     public final void testDispatchEvents() {
 
         // PREPARE
-        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(
-                EVENT_TYPE_A);
-        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(
-                EVENT_TYPE_B);
-        final EventDispatcher testee = new SimpleEventDispatcher(handlerA,
-                handlerB);
+        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(EVENT_TYPE_A);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
+        final EventDispatcher testee = new SimpleEventDispatcher(handlerA, handlerB);
 
         final List<Event> events = new ArrayList<>();
         final EventA a1 = new EventA();
@@ -74,12 +71,9 @@ public final class SimpleEventDispatcherTest {
     public final void testDispatchCommonEvents() {
 
         // PREPARE
-        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(
-                EVENT_TYPE_A);
-        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(
-                EVENT_TYPE_B);
-        final EventDispatcher testee = new SimpleEventDispatcher(handlerA,
-                handlerB);
+        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(EVENT_TYPE_A);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
+        final EventDispatcher testee = new SimpleEventDispatcher(handlerA, handlerB);
 
         final List<CommonEvent> events = new ArrayList<>();
         final EventA a1 = new EventA();
@@ -106,12 +100,9 @@ public final class SimpleEventDispatcherTest {
     public final void testGetAllTypes() {
 
         // PREPARE
-        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(
-                EVENT_TYPE_A);
-        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(
-                EVENT_TYPE_B);
-        final EventDispatcher testee = new SimpleEventDispatcher(handlerA,
-                handlerB);
+        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(EVENT_TYPE_A);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
+        final EventDispatcher testee = new SimpleEventDispatcher(handlerA, handlerB);
 
         final List<EventType> typeList = new ArrayList<>();
         typeList.add(handlerA.getEventType());
@@ -126,14 +117,10 @@ public final class SimpleEventDispatcherTest {
     public final void testMultipleEventHandlersForOneEvent() {
 
         // PREPARE
-        final CollectingEventHandler<EventA> handlerA1 = new CollectingEventHandler<>(
-                EVENT_TYPE_A);
-        final CollectingEventHandler<EventA> handlerA2 = new CollectingEventHandler<>(
-                EVENT_TYPE_A);
-        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(
-                EVENT_TYPE_B);
-        final EventDispatcher testee = new SimpleEventDispatcher(handlerA1,
-                handlerA2, handlerB);
+        final CollectingEventHandler<EventA> handlerA1 = new CollectingEventHandler<>(EVENT_TYPE_A);
+        final CollectingEventHandler<EventA> handlerA2 = new CollectingEventHandler<>(EVENT_TYPE_A);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
+        final EventDispatcher testee = new SimpleEventDispatcher(handlerA1, handlerA2, handlerB);
 
         final List<Event> events = new ArrayList<>();
         final EventA a1 = new EventA();
@@ -159,8 +146,7 @@ public final class SimpleEventDispatcherTest {
 
     private static CommonEvent asCommonEvent(final Event event) {
         final EventId eventId = new EventId(event.getEventId().asBaseType());
-        final TypeName typeName = new TypeName(
-                event.getEventType().asBaseType());
+        final TypeName typeName = new TypeName(event.getEventType().asBaseType());
         return new SimpleCommonEvent(eventId, typeName, event);
     }
 
@@ -187,8 +173,7 @@ public final class SimpleEventDispatcherTest {
     }
 
     @SuppressWarnings({ "unused" })
-    private static class CollectingEventHandler<TYPE extends Event>
-            implements EventHandler<TYPE> {
+    private static class CollectingEventHandler<TYPE extends Event> implements EventHandler<TYPE> {
 
         private EventType type;
 

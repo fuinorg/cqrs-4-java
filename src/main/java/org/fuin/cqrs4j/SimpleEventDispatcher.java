@@ -57,13 +57,11 @@ public final class SimpleEventDispatcher implements EventDispatcher {
      *            Event handlers.
      */
     @SuppressWarnings("rawtypes")
-    public SimpleEventDispatcher(
-            @NotNull final List<EventHandler> eventHandlers) {
+    public SimpleEventDispatcher(@NotNull final List<EventHandler> eventHandlers) {
         super();
         Contract.requireArgNotNull("eventHandlers", eventHandlers);
         if (eventHandlers.size() == 0) {
-            throw new IllegalArgumentException(
-                    "The argument 'eventHandlers' cannot be an empty list");
+            throw new IllegalArgumentException("The argument 'eventHandlers' cannot be an empty list");
         }
         this.eventHandlers = new HashMap<>();
         for (final EventHandler eventHandler : eventHandlers) {
@@ -72,7 +70,7 @@ public final class SimpleEventDispatcher implements EventDispatcher {
                 handlers = new ArrayList<>();
                 this.eventHandlers.put(eventHandler.getEventType(), handlers);
             }
-            handlers.add(eventHandler);          
+            handlers.add(eventHandler);
         }
     }
 
@@ -83,8 +81,7 @@ public final class SimpleEventDispatcher implements EventDispatcher {
     }
 
     @Override
-    public final void dispatchCommonEvents(
-            @NotNull final List<CommonEvent> commonEvents) {
+    public final void dispatchCommonEvents(@NotNull final List<CommonEvent> commonEvents) {
 
         Contract.requireArgNotNull("commonEvents", commonEvents);
 

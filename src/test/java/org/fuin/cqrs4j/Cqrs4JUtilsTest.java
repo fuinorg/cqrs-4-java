@@ -24,6 +24,6 @@ import org.fuin.units4j.TestOmitted;
 public final class Cqrs4JUtilsTest {
 
     // TODO Implement tests!
-    
+
 }
 // CHECKSTYLE:ON

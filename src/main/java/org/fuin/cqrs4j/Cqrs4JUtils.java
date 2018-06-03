@@ -36,7 +36,7 @@ public final class Cqrs4JUtils {
 
     /** Classes used for JAX-B serialization. */
     public static final List<Class<?>> JAXB_CLASSES = Collections
-	    .unmodifiableList(Arrays.asList(Result.class, ConstraintViolationException.class));
+            .unmodifiableList(Arrays.asList(Result.class, ConstraintViolationException.class));
 
     private static final Logger LOG = LoggerFactory.getLogger(Cqrs4JUtils.class);
 
@@ -44,12 +44,11 @@ public final class Cqrs4JUtils {
      * Private by intention.
      */
     private Cqrs4JUtils() {
-	throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException();
     }
 
     /**
-     * Tries to acquire a lock and runs the code. If no lock can be acquired,
-     * the method terminates immediately without executing anything.
+     * Tries to acquire a lock and runs the code. If no lock can be acquired, the method terminates immediately without executing anything.
      * 
      * @param lock
      *            Semaphore to use.
@@ -57,20 +56,19 @@ public final class Cqrs4JUtils {
      *            Code to run.
      */
     public static void tryLocked(@NotNull final Semaphore lock, @NotNull final Runnable code) {
-	Contract.requireArgNotNull("lock", lock);
-	Contract.requireArgNotNull("code", code);
-	if (lock.tryAcquire()) {
-	    try {
-		code.run();
-	    } finally {
-		lock.release();
-	    }
-	}
+        Contract.requireArgNotNull("lock", lock);
+        Contract.requireArgNotNull("code", code);
+        if (lock.tryAcquire()) {
+            try {
+                code.run();
+            } finally {
+                lock.release();
+            }
+        }
     }
 
     /**
-     * Waits until a lock is available and executes the code after it was
-     * acquired.
+     * Waits until a lock is available and executes the code after it was acquired.
      * 
      * @param lock
      *            Semaphore to use.
@@ -78,18 +76,18 @@ public final class Cqrs4JUtils {
      *            Code to run.
      */
     public static void runLocked(@NotNull final Semaphore lock, @NotNull final Runnable code) {
-	Contract.requireArgNotNull("lock", lock);
-	Contract.requireArgNotNull("code", code);
-	try {
-	    lock.acquire();
-	    try {
-		code.run();
-	    } finally {
-		lock.release();
-	    }
-	} catch (final InterruptedException ex) { // NOSONAR
-	    LOG.warn("Couldn't clear view", ex);
-	}
+        Contract.requireArgNotNull("lock", lock);
+        Contract.requireArgNotNull("code", code);
+        try {
+            lock.acquire();
+            try {
+                code.run();
+            } finally {
+                lock.release();
+            }
+        } catch (final InterruptedException ex) { // NOSONAR
+            LOG.warn("Couldn't clear view", ex);
+        }
     }
 
 }

@@ -17,6 +17,7 @@
  */
 package org.fuin.cqrs4j;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlAnyElement;
@@ -26,21 +27,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ExceptionJaxbMarshallable;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
-import javax.annotation.Nullable;
 import org.fuin.objects4j.ui.Label;
 import org.fuin.objects4j.ui.Prompt;
 import org.fuin.objects4j.ui.ShortLabel;
 import org.fuin.objects4j.ui.Tooltip;
 
 /**
- * Result of a request. The type signals if the execution was successful or not.
- * In case the the result is not {@link ResultType#OK}, the fields code and
- * message should contain unique information to help the user identifying the
- * cause of the problem.
+ * Result of a request. The type signals if the execution was successful or not. In case the the result is not {@link ResultType#OK}, the
+ * fields code and message should contain unique information to help the user identifying the cause of the problem.
  * 
  * @param <DATA>
- *            Type of data returned in case of success (type =
- *            {@link ResultType#OK}).
+ *            Type of data returned in case of success (type = {@link ResultType#OK}).
  */
 @XmlRootElement(name = "result")
 public final class Result<DATA> {
@@ -80,7 +77,7 @@ public final class Result<DATA> {
     /**
      * Protected default constructor for de-serialization.
      */
-    protected Result() { //NOSONAR Ignore uninitialized fields
+    protected Result() { // NOSONAR Ignore uninitialized fields
         super();
     }
 
@@ -96,8 +93,7 @@ public final class Result<DATA> {
      * @param data
      *            Optional result data.
      */
-    public Result(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message,
-            @Nullable final DATA data) {
+    public Result(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message, @Nullable final DATA data) {
         Contract.requireArgNotNull("type", type);
         this.type = type;
         this.code = code;
@@ -106,17 +102,13 @@ public final class Result<DATA> {
     }
 
     /**
-     * Constructor with exception. If the exception is type
-     * {@link ExceptionJaxbMarshallable} then it will be used as
-     * <code>data</code> field, if not data will be <code>null</code>. An
-     * exception of type {@link ExceptionShortIdentifable} will be used to fill
-     * the <code>code</code> field with the identifier value. If it's not a
-     * {@link ExceptionShortIdentifable} the <code>code</code> field will be set
-     * using the full qualified class name of the exception.
+     * Constructor with exception. If the exception is type {@link ExceptionJaxbMarshallable} then it will be used as <code>data</code>
+     * field, if not data will be <code>null</code>. An exception of type {@link ExceptionShortIdentifable} will be used to fill the
+     * <code>code</code> field with the identifier value. If it's not a {@link ExceptionShortIdentifable} the <code>code</code> field will
+     * be set using the full qualified class name of the exception.
      * 
      * @param exception
-     *            The message for the result is equal to the exception message
-     *            or the simple name of the exception class if the exception
+     *            The message for the result is equal to the exception message or the simple name of the exception class if the exception
      *            message is <code>null</code>.
      */
     // CHECKSTYLE:OFF:AvoidInlineConditionals
@@ -173,8 +165,8 @@ public final class Result<DATA> {
     }
 
     /**
-     * Returns the result data if {@link #getType()} is {@link ResultType#OK} or
-     * {@link ResultType#WARNING} and <code>null</code> in all other cases.
+     * Returns the result data if {@link #getType()} is {@link ResultType#OK} or {@link ResultType#WARNING} and <code>null</code> in all
+     * other cases.
      * 
      * @return Response data.
      */
@@ -188,8 +180,7 @@ public final class Result<DATA> {
     }
 
     /**
-     * Returns the exception if {@link #getType()} is {@link ResultType#ERROR}
-     * or <code>null</code> in all other cases.
+     * Returns the exception if {@link #getType()} is {@link ResultType#ERROR} or <code>null</code> in all other cases.
      * 
      * @return Exception that caused the error.
      */

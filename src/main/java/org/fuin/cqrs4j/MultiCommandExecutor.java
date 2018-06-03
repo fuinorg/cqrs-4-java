@@ -62,15 +62,13 @@ public final class MultiCommandExecutor implements CommandExecutor<Object, Comma
         this.commandExecutors = new HashMap<>();
         for (final CommandExecutor cmdExecutor : cmdExecutors) {
             if (cmdExecutor == null) {
-                throw new ConstraintViolationException(
-                        "Null is not allowed in the list of 'cmdExecutors': " + cmdExecutors);
+                throw new ConstraintViolationException("Null is not allowed in the list of 'cmdExecutors': " + cmdExecutors);
             }
             final Set<EventType> cmdTypes = cmdExecutor.getCommandTypes();
             for (final EventType cmdType : cmdTypes) {
                 if (this.commandExecutors.containsKey(cmdType)) {
                     throw new ConstraintViolationException(
-                            "The argument 'cmdExecutors' contains multiple executors for command: "
-                                    + cmdType);
+                            "The argument 'cmdExecutors' contains multiple executors for command: " + cmdType);
                 }
                 this.commandExecutors.put(cmdType, cmdExecutor);
             }

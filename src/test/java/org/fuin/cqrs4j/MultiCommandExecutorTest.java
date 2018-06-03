@@ -160,8 +160,7 @@ public class MultiCommandExecutorTest {
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage())
-                    .isEqualTo("The argument 'cmdExecutors' contains multiple executors for command: "
-                            + MyCommand.EVENT_TYPE);
+                    .isEqualTo("The argument 'cmdExecutors' contains multiple executors for command: " + MyCommand.EVENT_TYPE);
         }
 
     }
