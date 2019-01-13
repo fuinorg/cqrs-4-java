@@ -1,154 +1,161 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.fuin</groupId>
-		<artifactId>pom-osgi</artifactId>
-		<version>1.6.0</version>
-	</parent>
+    <parent>
+        <groupId>org.fuin</groupId>
+        <artifactId>pom-osgi</artifactId>
+        <version>1.6.0</version>
+    </parent>
 
-	<artifactId>cqrs-4-java</artifactId>
-	<version>0.2.1-SNAPSHOT</version>
-	<packaging>bundle</packaging>
-	<description>Base classes for Command Query Responsibility Segregation (CQRS) with Java</description>
+    <artifactId>cqrs-4-java</artifactId>
+    <version>0.2.1-SNAPSHOT</version>
+    <packaging>bundle</packaging>
+    <description>Base classes for Command Query Responsibility Segregation (CQRS) with Java</description>
 
-	<scm>
-		<url>https://github.com/fuinorg/cqrs-4-java/</url>
-		<connection>scm:git:git://github.com/fuinorg/cqrs-4-java.git</connection>
-		<developerConnection>scm:git:git@github.com:fuinorg/cqrs-4-java.git</developerConnection>
-	</scm>
+    <scm>
+        <url>https://github.com/fuinorg/cqrs-4-java/</url>
+        <connection>scm:git:git://github.com/fuinorg/cqrs-4-java.git</connection>
+        <developerConnection>scm:git:git@github.com:fuinorg/cqrs-4-java.git</developerConnection>
+    </scm>
 
-	<issueManagement>
-		<system>GitHub Issues</system>
-		<url>https://github.com/fuinorg/cqrs-4-java/issues</url>
-	</issueManagement>
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/fuinorg/cqrs-4-java/issues</url>
+    </issueManagement>
 
-	<properties>
-		<esc.version>0.3.0</esc.version>
-	</properties>
+    <properties>
+        <esc.version>0.3.0</esc.version>
+    </properties>
 
-	<dependencies>
+    <dependencies>
 
-		<!-- Compile -->
+        <!-- Compile -->
 
-		<dependency>
-			<groupId>org.fuin</groupId>
-			<artifactId>ddd-4-java</artifactId>
-			<version>0.2.1-SNAPSHOT</version>
-		</dependency>
+        <dependency>
+            <groupId>org.fuin</groupId>
+            <artifactId>ddd-4-java</artifactId>
+            <version>0.2.1-SNAPSHOT</version>
+        </dependency>
 
-		<dependency>
-			<groupId>javax.validation</groupId>
-			<artifactId>validation-api</artifactId>
-			<version>2.0.1.Final</version>
-			<optional>true</optional>
-		</dependency>
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>2.0.1.Final</version>
+            <optional>true</optional>
+        </dependency>
 
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.7</version>
-		</dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.7</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.7.25</version>
-		</dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.25</version>
+        </dependency>
 
-		<!-- Test -->
+        <dependency>
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.1-api</artifactId>
+            <version>1.0.2</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.fuin.esc</groupId>
-			<artifactId>esc-mem</artifactId>
-			<version>${esc.version}</version>
-			<scope>test</scope>
-		</dependency>
+        <!-- Test -->
 
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.fuin.esc</groupId>
+            <artifactId>esc-mem</artifactId>
+            <version>${esc.version}</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>org.assertj</groupId>
-			<artifactId>assertj-core</artifactId>
-			<version>3.10.0</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>org.fuin</groupId>
-			<artifactId>units4j</artifactId>
-			<version>0.8.3</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.10.0</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-validator</artifactId>
-			<version>6.0.10.Final</version>
-			<scope>test</scope>
-			<exclusions>
-				<exclusion>
-					<artifactId>jaxb-impl</artifactId>
-					<groupId>com.sun.xml.bind</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jaxb-api</artifactId>
-					<groupId>javax.xml.bind</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+        <dependency>
+            <groupId>org.fuin</groupId>
+            <artifactId>units4j</artifactId>
+            <version>0.8.3</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>org.xmlunit</groupId>
-			<artifactId>xmlunit-core</artifactId>
-			<version>2.6.0</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <version>6.0.10.Final</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>jaxb-impl</artifactId>
+                    <groupId>com.sun.xml.bind</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jaxb-api</artifactId>
+                    <groupId>javax.xml.bind</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-		<dependency>
-			<groupId>nl.jqno.equalsverifier</groupId>
-			<artifactId>equalsverifier</artifactId>
-			<version>2.4.6</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.xmlunit</groupId>
+            <artifactId>xmlunit-core</artifactId>
+            <version>2.6.0</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>2.6</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>nl.jqno.equalsverifier</groupId>
+            <artifactId>equalsverifier</artifactId>
+            <version>2.4.6</version>
+            <scope>test</scope>
+        </dependency>
 
-	</dependencies>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
+            <scope>test</scope>
+        </dependency>
 
-	<build>
+    </dependencies>
 
-		<plugins>
+    <build>
 
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.1</version>
-				<executions>
-					<execution>
-						<id>prepare-agent</id>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+        <plugins>
 
-		</plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.1</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
-	</build>
+        </plugins>
+
+    </build>
 
 </project>
