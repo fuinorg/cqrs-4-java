@@ -18,6 +18,8 @@
 package org.fuin.cqrs4j;
 
 import javax.annotation.Nullable;
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbTypeAdapter;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -38,11 +40,15 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
     private static final long serialVersionUID = 1000L;
 
     @NotNull
+    @JsonbTypeAdapter(EntityIdPathConverter.class)
+    @JsonbProperty("entity-id-path")
     @XmlJavaTypeAdapter(EntityIdPathConverter.class)
     @XmlElement(name = "entity-id-path")
     private EntityIdPath entityIdPath;
 
     @NotNull
+    @JsonbTypeAdapter(AggregateVersionConverter.class)
+    @JsonbProperty("aggregate-version")
     @XmlJavaTypeAdapter(AggregateVersionConverter.class)
     @XmlElement(name = "aggregate-version")
     private AggregateVersion aggregateVersion;

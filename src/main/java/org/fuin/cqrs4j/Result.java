@@ -18,6 +18,7 @@
 package org.fuin.cqrs4j;
 
 import javax.annotation.Nullable;
+import javax.json.bind.annotation.JsonbProperty;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlAnyElement;
@@ -47,6 +48,7 @@ public final class Result<DATA> {
     @Tooltip("Type of the result")
     @Prompt("ERROR")
     @NotNull
+    @JsonbProperty("type")
     @XmlElement(name = "type")
     private ResultType type;
 
@@ -55,6 +57,7 @@ public final class Result<DATA> {
     @Tooltip("Code that uniquely identifies the result. Mostly used in case of warnings or errors.")
     @Prompt("E00001")
     @Nullable
+    @JsonbProperty("code")
     @XmlElement(name = "code")
     private String code;
 
@@ -63,6 +66,7 @@ public final class Result<DATA> {
     @Tooltip("Message that describes the result. Mostly used in case of warnings or errors.")
     @Prompt("The field 'Xyz' is mandatory")
     @Nullable
+    @JsonbProperty("message")
     @XmlElement(name = "message")
     private String message;
 
