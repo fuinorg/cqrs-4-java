@@ -54,6 +54,6 @@ public interface ProjectionService {
      * @param nextEventNumber
      *            Number of the next event to read.
      */
-    public void updateProjectionPosition(@NotNull StreamId streamId, @NotNull Integer nextEventNumber);
+    public void updateProjectionPosition(@NotNull StreamId streamId, @NotNull Long nextEventNumber);
 
 }
