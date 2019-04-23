@@ -44,7 +44,7 @@ public interface ProjectionService {
      * @return Number of the next event to read.
      */
     @NotNull
-    public Integer readProjectionPosition(@NotNull StreamId streamId);
+    public Long readProjectionPosition(@NotNull StreamId streamId);
 
     /**
      * Updates the position to read next time.
