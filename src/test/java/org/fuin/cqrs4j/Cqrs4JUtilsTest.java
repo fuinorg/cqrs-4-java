@@ -19,7 +19,6 @@ package org.fuin.cqrs4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 import org.fuin.ddd4j.ddd.EventType;
@@ -34,12 +33,11 @@ public final class Cqrs4JUtilsTest {
     public void testVerifyPrecondition() {
 
         final MyClass myObj1 = new MyClass();
-        assertThat(Cqrs4JUtils.verifyPrecondition(Contract.getValidator(), myObj1)).isEqualTo(new Result<>(ResultType.ERROR,
-                Cqrs4JUtils.PRECONDITION_VIOLATED, "MyClass.email must not be null, MyClass.name must not be empty", null));
+        assertThat(Cqrs4JUtils.verifyPrecondition(Contract.getValidator(), myObj1))
+                .isEqualTo(new Result<>(ResultType.ERROR, Cqrs4JUtils.PRECONDITION_VIOLATED, "MyClass.email must not be null", null));
 
         final MyClass myObj2 = new MyClass();
         myObj2.email = "test@fuin.org";
-        myObj2.name = "test";
         assertThat(Cqrs4JUtils.verifyPrecondition(Contract.getValidator(), myObj2)).isNull();
 
     }
@@ -75,9 +73,6 @@ public final class Cqrs4JUtilsTest {
     }
 
     private static class MyClass {
-
-        @NotEmpty
-        private String name;
 
         @NotNull
         @EmailAddressStr
