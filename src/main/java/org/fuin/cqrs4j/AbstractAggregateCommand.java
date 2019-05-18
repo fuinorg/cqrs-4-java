@@ -50,7 +50,7 @@ public abstract class AbstractAggregateCommand<ID extends AggregateRootId> exten
     @XmlElement(name = "entity-id-path")
     private EntityIdPath entityIdPath;
 
-    @NotNull
+    @Nullable
     @JsonbTypeAdapter(AggregateVersionConverter.class)
     @JsonbProperty("aggregate-version")
     @XmlJavaTypeAdapter(AggregateVersionConverter.class)
@@ -72,7 +72,7 @@ public abstract class AbstractAggregateCommand<ID extends AggregateRootId> exten
      * @param aggregateVersion
      *            Expected aggregate version.
      */
-    public AbstractAggregateCommand(@NotNull final AggregateRootId aggregateRootId, @NotNull final AggregateVersion aggregateVersion) {
+    public AbstractAggregateCommand(@NotNull final AggregateRootId aggregateRootId, @Nullable final AggregateVersion aggregateVersion) {
         this(new EntityIdPath(aggregateRootId), aggregateVersion);
     }
 
@@ -84,10 +84,9 @@ public abstract class AbstractAggregateCommand<ID extends AggregateRootId> exten
      * @param aggregateVersion
      *            Expected aggregate version.
      */
-    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath, @NotNull final AggregateVersion aggregateVersion) {
+    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath, @Nullable final AggregateVersion aggregateVersion) {
         super();
         Contract.requireArgNotNull("entityIdPath", entityIdPath);
-        Contract.requireArgNotNull("aggregateVersion", aggregateVersion);
         this.entityIdPath = entityIdPath;
         this.aggregateVersion = aggregateVersion;
     }
@@ -102,11 +101,10 @@ public abstract class AbstractAggregateCommand<ID extends AggregateRootId> exten
      * @param respondTo
      *            Causing event.
      */
-    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath, @NotNull final AggregateVersion aggregateVersion,
+    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath, @Nullable final AggregateVersion aggregateVersion,
             @NotNull final Event respondTo) {
         super(respondTo);
         Contract.requireArgNotNull("entityIdPath", entityIdPath);
-        Contract.requireArgNotNull("aggregateVersion", aggregateVersion);
         this.entityIdPath = entityIdPath;
         this.aggregateVersion = aggregateVersion;
     }
