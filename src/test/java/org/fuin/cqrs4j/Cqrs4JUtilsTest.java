@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import javax.validation.constraints.NotNull;
 
+import org.fuin.ddd4j.ddd.AggregateVersion;
 import org.fuin.ddd4j.ddd.EventType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.vo.EmailAddressStr;
@@ -47,22 +48,9 @@ public final class Cqrs4JUtilsTest {
 
         // PREPARE
         AId aid1 = new AId(1L);
+        AggregateVersion version = new AggregateVersion(0);
         AId aid2 = new AId(2L);
-        final DomainCommand<AId> cmd = new AbstractDomainCommand<AId>() {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            @NotNull
-            public AId getAggregateRootId() {
-                return aid1;
-            }
-
-            @Override
-            @NotNull
-            public EventType getEventType() {
-                return new EventType("MyCommand");
-            }
-        };
+        final AggregateCommand<AId> cmd = new MyCommand(aid1, version);
 
         // TEST & VERIFY
         assertThat(Cqrs4JUtils.verifyParamIdEqualsCmdAggregateId(aid1, cmd)).isNull();
@@ -77,6 +65,22 @@ public final class Cqrs4JUtilsTest {
         @NotNull
         @EmailAddressStr
         private String email;
+
+    }
+
+    private static class MyCommand extends AbstractAggregateCommand<AId> {
+
+        private static final long serialVersionUID = 1L;
+
+        public MyCommand(AId id, AggregateVersion aggregateVersion) {
+            super(id, aggregateVersion);
+        }
+
+        @Override
+        @NotNull
+        public EventType getEventType() {
+            return new EventType("MyCommand");
+        }
 
     }
 

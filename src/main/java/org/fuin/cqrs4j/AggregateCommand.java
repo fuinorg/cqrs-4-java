@@ -17,9 +17,11 @@
  */
 package org.fuin.cqrs4j;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.fuin.ddd4j.ddd.AggregateRootId;
+import org.fuin.ddd4j.ddd.AggregateVersion;
 
 /**
  * Common behavior shared by all commands related to an aggregate.
@@ -27,9 +29,8 @@ import org.fuin.ddd4j.ddd.AggregateRootId;
  * @param <ID>
  *            Type of the aggregate root identifier.
  */
-public interface DomainCommand<ID extends AggregateRootId> extends Command {
+public interface AggregateCommand<ID extends AggregateRootId> extends Command {
 
-    
     /**
      * Returns the identifier of the aggregate root this command targets.
      * 
@@ -37,5 +38,13 @@ public interface DomainCommand<ID extends AggregateRootId> extends Command {
      */
     @NotNull
     public ID getAggregateRootId();
-    
+
+    /**
+     * Returns the aggregate version.
+     * 
+     * @return Expected version.
+     */
+    @Nullable
+    public AggregateVersion getAggregateVersion();
+
 }

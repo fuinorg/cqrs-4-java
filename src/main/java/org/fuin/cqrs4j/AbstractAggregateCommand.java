@@ -24,6 +24,7 @@ import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+import org.fuin.ddd4j.ddd.AggregateRootId;
 import org.fuin.ddd4j.ddd.AggregateVersion;
 import org.fuin.ddd4j.ddd.AggregateVersionConverter;
 import org.fuin.ddd4j.ddd.EntityIdPath;
@@ -34,8 +35,11 @@ import org.fuin.objects4j.common.Contract;
 
 /**
  * Base class for all commands that are directed to an existing aggregate.
+ * 
+ * @param <ID>
+ *            Type of the aggregate root identifier.
  */
-public abstract class AbstractAggregateCommand extends AbstractCommand {
+public abstract class AbstractAggregateCommand<ID extends AggregateRootId> extends AbstractCommand implements AggregateCommand<ID> {
 
     private static final long serialVersionUID = 1000L;
 
@@ -58,6 +62,18 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
      */
     protected AbstractAggregateCommand() { // NOSONAR Ignore uninitialized fields
         super();
+    }
+
+    /**
+     * Constructor with aggregate root id and version.
+     * 
+     * @param aggregateRootId
+     *            Aggregate root identifier.
+     * @param aggregateVersion
+     *            Expected aggregate version.
+     */
+    public AbstractAggregateCommand(@NotNull final AggregateRootId aggregateRootId, @NotNull final AggregateVersion aggregateVersion) {
+        this(new EntityIdPath(aggregateRootId), aggregateVersion);
     }
 
     /**
@@ -107,11 +123,10 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
      * @param causationId
      *            ID of the event that caused this one.
      */
-    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath, @NotNull final AggregateVersion aggregateVersion,
+    public AbstractAggregateCommand(@NotNull final EntityIdPath entityIdPath, @Nullable final AggregateVersion aggregateVersion,
             @Nullable final EventId correlationId, @Nullable final EventId causationId) {
         super(correlationId, causationId);
         Contract.requireArgNotNull("entityIdPath", entityIdPath);
-        Contract.requireArgNotNull("aggregateVersion", aggregateVersion);
         this.entityIdPath = entityIdPath;
         this.aggregateVersion = aggregateVersion;
     }
@@ -126,11 +141,14 @@ public abstract class AbstractAggregateCommand extends AbstractCommand {
         return entityIdPath;
     }
 
-    /**
-     * Returns the aggregate version.
-     * 
-     * @return Expected version.
-     */
+    @Override
+    @Nullable
+    public final ID getAggregateRootId() {
+        return entityIdPath.first();
+    }
+
+    @Override
+    @Nullable
     public final AggregateVersion getAggregateVersion() {
         return aggregateVersion;
     }

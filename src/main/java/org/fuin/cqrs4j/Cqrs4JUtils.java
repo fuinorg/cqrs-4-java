@@ -47,7 +47,7 @@ public final class Cqrs4JUtils {
     /** Some constraints were violated. */
     public static final String PRECONDITION_VIOLATED = "PRECONDITION_VIOLATED";
 
-    /** Result code for {@link #verifyParamIdEqualsCmdAggregateId(AggregateRootId, DomainCommand)} failures. */
+    /** Result code for {@link #verifyParamIdEqualsCmdAggregateId(AggregateRootId, AggregateCommand)} failures. */
     public static final String PARAM_ID_NOT_EQUAL_CMD_AGGREGATE_ID = "PARAM_ID_NOT_EQUAL_CMD_AGGREGATE_ID";
 
     /**
@@ -141,7 +141,7 @@ public final class Cqrs4JUtils {
      *            Type of the aggregate root identifier.
      */
     public static <ID extends AggregateRootId> Result<?> verifyParamIdEqualsCmdAggregateId(@NotNull final ID aggregateRootId,
-            @NotNull final DomainCommand<ID> cmd) {
+            @NotNull final AggregateCommand<ID> cmd) {
 
         Contract.requireArgNotNull("aggregateRootId", aggregateRootId);
         Contract.requireArgNotNull("cmd", cmd);
