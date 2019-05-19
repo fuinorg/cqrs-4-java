@@ -142,6 +142,9 @@ public abstract class AbstractAggregateCommand<ID extends AggregateRootId> exten
     @Override
     @Nullable
     public final ID getAggregateRootId() {
+        if (entityIdPath == null) {
+            return null;
+        }
         return entityIdPath.first();
     }
 
