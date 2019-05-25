@@ -48,7 +48,7 @@ public interface AggregateCommand<ID extends AggregateRootId> extends Command {
     public AggregateVersion getAggregateVersion();
 
     /**
-     * Returns the aggregate version as integer. This is a null safe shortcut for {@link #getAggregateVersion().asBaseType()}
+     * Returns the aggregate version as integer. This is a null safe shortcut for <code>getAggregateVersion().asBaseType()</code>-
      * 
      * @return Expected version or {@literal null}.
      */
