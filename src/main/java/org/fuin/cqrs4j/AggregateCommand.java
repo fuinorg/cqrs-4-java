@@ -47,4 +47,12 @@ public interface AggregateCommand<ID extends AggregateRootId> extends Command {
     @Nullable
     public AggregateVersion getAggregateVersion();
 
+    /**
+     * Returns the aggregate version as integer. This is a null safe shortcut for {@link #getAggregateVersion().asBaseType()}
+     * 
+     * @return Expected version or {@literal null}.
+     */
+    @Nullable
+    public Integer getAggregateVersionInteger();
+
 }

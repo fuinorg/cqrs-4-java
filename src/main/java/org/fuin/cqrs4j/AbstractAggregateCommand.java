@@ -154,4 +154,13 @@ public abstract class AbstractAggregateCommand<ID extends AggregateRootId> exten
         return aggregateVersion;
     }
 
+    @Override
+    @Nullable
+    public final Integer getAggregateVersionInteger() {
+        if (aggregateVersion == null) {
+            return null;
+        }
+        return aggregateVersion.asBaseType();
+    }
+
 }
