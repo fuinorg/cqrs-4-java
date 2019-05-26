@@ -27,7 +27,8 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.constraints.NotNull;
 
-import org.fuin.ddd4j.ddd.AggregateRootId;
+import org.fuin.ddd4j.ddd.EntityId;
+import org.fuin.ddd4j.ddd.EntityIdPath;
 import org.fuin.objects4j.common.ConstraintViolationException;
 import org.fuin.objects4j.common.Contract;
 import org.slf4j.Logger;
@@ -47,8 +48,8 @@ public final class Cqrs4JUtils {
     /** Some constraints were violated. */
     public static final String PRECONDITION_VIOLATED = "PRECONDITION_VIOLATED";
 
-    /** Result code for {@link #verifyParamIdEqualsCmdAggregateId(AggregateRootId, AggregateCommand)} failures. */
-    public static final String PARAM_ID_NOT_EQUAL_CMD_AGGREGATE_ID = "PARAM_ID_NOT_EQUAL_CMD_AGGREGATE_ID";
+    /** Result code for {@link #verifyParamEntityIdPathEqualsCmdEntityIdPath(AggregateCommand, EntityId...)} failures. */
+    public static final String PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH = "PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH";
 
     /**
      * Private by intention.
@@ -130,29 +131,40 @@ public final class Cqrs4JUtils {
      * Example: POST /customer/f832a5a4-dd80-49df-856a-7274de82cd6b/create<br>
      * The ID from the URL must match the aggregate ID that is passed via the command in the body.
      * 
-     * @param aggregateRootId
-     *            Identifier to compare with.
      * @param cmd
-     *            Command that has the aggregate ID to compare with.
+     *            Command that has the entity identifier path to compare with.
+     * @param entityIds
+     *            Identifiers to compare with.
      * 
      * @return Error result or {@literal null} if validation was successful.
      * 
      * @param <ID>
      *            Type of the aggregate root identifier.
      */
-    public static <ID extends AggregateRootId> Result<?> verifyParamIdEqualsCmdAggregateId(@NotNull final ID aggregateRootId,
-            @NotNull final AggregateCommand<ID> cmd) {
+    @SafeVarargs
+    public static <ID extends EntityId> Result<?> verifyParamEntityIdPathEqualsCmdEntityIdPath(@NotNull final AggregateCommand<?> cmd,
+            @NotNull final ID... entityIds) {
 
-        Contract.requireArgNotNull("aggregateRootId", aggregateRootId);
         Contract.requireArgNotNull("cmd", cmd);
+        Contract.requireArgNotNull("entityIds", entityIds);
 
-        if (aggregateRootId.equals(cmd.getAggregateRootId())) {
+        final EntityIdPath paramPath = new EntityIdPath(entityIds);
+        if (paramPath.equals(cmd.getEntityIdPath())) {
             return null;
         }
-        final String msg = "URL parameter ID '" + aggregateRootId + "' is not the same as command's aggregate root ID: '"
-                + cmd.getAggregateRootId() + "'";
-        LOG.error(msg + " [" + PARAM_ID_NOT_EQUAL_CMD_AGGREGATE_ID + "]");
-        return Result.error(PARAM_ID_NOT_EQUAL_CMD_AGGREGATE_ID, msg);
+
+        final StringBuilder sb = new StringBuilder();
+        for (final ID entityId : entityIds) {
+            if (sb.length() > 0) {
+                sb.append(", ");
+            }
+            sb.append(entityId.asTypedString());
+        }
+
+        final String msg = "Entity path constructred from URL parameters " + sb + " is not the same as command's entityPath: '"
+                + cmd.getEntityIdPath() + "'";
+        LOG.error(msg + " [" + PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH + "]");
+        return Result.error(PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH, msg);
 
     }
 

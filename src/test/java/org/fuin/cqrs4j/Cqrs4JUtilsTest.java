@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import javax.validation.constraints.NotNull;
 
 import org.fuin.ddd4j.ddd.AggregateVersion;
+import org.fuin.ddd4j.ddd.EntityIdPath;
 import org.fuin.ddd4j.ddd.EventType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.vo.EmailAddressStr;
@@ -49,14 +50,18 @@ public final class Cqrs4JUtilsTest {
         // PREPARE
         AId aid1 = new AId(1L);
         AggregateVersion version = new AggregateVersion(0);
+        BId bid123 = new BId(123L);
         AId aid2 = new AId(2L);
-        final AggregateCommand<AId> cmd = new MyCommand(aid1, version);
+        final AggregateCommand<AId> cmd = new MyCommand(aid1, version, bid123);
 
         // TEST & VERIFY
-        assertThat(Cqrs4JUtils.verifyParamIdEqualsCmdAggregateId(aid1, cmd)).isNull();
-        assertThat(Cqrs4JUtils.verifyParamIdEqualsCmdAggregateId(aid2, cmd))
-                .isEqualTo(new Result<>(ResultType.ERROR, Cqrs4JUtils.PARAM_ID_NOT_EQUAL_CMD_AGGREGATE_ID,
-                        "URL parameter ID 'AId [id=2]' is not the same as command's aggregate root ID: 'AId [id=1]'", null));
+        assertThat(Cqrs4JUtils.verifyParamEntityIdPathEqualsCmdEntityIdPath(cmd, aid1, bid123)).isNull();
+        assertThat(Cqrs4JUtils.verifyParamEntityIdPathEqualsCmdEntityIdPath(cmd, aid1))
+                .isEqualTo(new Result<>(ResultType.ERROR, Cqrs4JUtils.PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH, 
+                        "Entity path constructred from URL parameters A 1 is not the same as command's entityPath: 'A 1/B 123'", null));
+        assertThat(Cqrs4JUtils.verifyParamEntityIdPathEqualsCmdEntityIdPath(cmd, aid2, bid123))
+                .isEqualTo(new Result<>(ResultType.ERROR, Cqrs4JUtils.PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH, 
+                        "Entity path constructred from URL parameters A 2, B 123 is not the same as command's entityPath: 'A 1/B 123'", null));
 
     }
 
@@ -72,8 +77,8 @@ public final class Cqrs4JUtilsTest {
 
         private static final long serialVersionUID = 1L;
 
-        public MyCommand(AId id, AggregateVersion aggregateVersion) {
-            super(id, aggregateVersion);
+        public MyCommand(AId id, AggregateVersion aggregateVersion, final BId bid) {
+            super(new EntityIdPath(id, bid), aggregateVersion);
         }
 
         @Override
