@@ -129,16 +129,21 @@ public abstract class AbstractAggregateCommand<ID extends AggregateRootId> exten
         this.aggregateVersion = aggregateVersion;
     }
 
-    /**
-     * Returns the entity identifier path.
-     * 
-     * @return Path from root aggregate to target entity.
-     */
-    @NotNull
+    @Override
+    @NotNull    
     public final EntityIdPath getEntityIdPath() {
         return entityIdPath;
     }
 
+    @Override
+    @NotNull    
+    public final ID getEntityId() {
+        if (entityIdPath == null) {
+            return null;
+        }
+        return entityIdPath.last();
+    }
+    
     @Override
     @Nullable
     public final ID getAggregateRootId() {

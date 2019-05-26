@@ -22,6 +22,7 @@ import javax.validation.constraints.NotNull;
 
 import org.fuin.ddd4j.ddd.AggregateRootId;
 import org.fuin.ddd4j.ddd.AggregateVersion;
+import org.fuin.ddd4j.ddd.DomainEvent;
 
 /**
  * Common behavior shared by all commands related to an aggregate.
@@ -29,7 +30,7 @@ import org.fuin.ddd4j.ddd.AggregateVersion;
  * @param <ID>
  *            Type of the aggregate root identifier.
  */
-public interface AggregateCommand<ID extends AggregateRootId> extends Command {
+public interface AggregateCommand<ID extends AggregateRootId> extends Command, DomainEvent<ID> {
 
     /**
      * Returns the identifier of the aggregate root this command targets.
