@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <result>
     <type>OK</type>
-    <invoice-id>I-0123456</invoice-id>
+    <data>
+        <type>invoice-id</type>
+        <invoice-id>I-0123456</invoice-id>
+    </data>
 </result>

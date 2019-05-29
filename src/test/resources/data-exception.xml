@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<data>
+    <content-type>DDD4J-AGGREGATE_NOT_FOUND</content-type>
+    <aggregate-not-found-exception>
+        <msg>Invoice with id d89fc328-c53f-4250-bcba-439501d002cf not found</msg>
+        <sid>DDD4J-AGGREGATE_NOT_FOUND</sid>
+        <aggregate-type>Invoice</aggregate-type>
+        <aggregate-id>d89fc328-c53f-4250-bcba-439501d002cf</aggregate-id>
+    </aggregate-not-found-exception>
+</data>

@@ -1,0 +1,7 @@
+{
+	"type": "OK",
+	"data": {
+		"type": "invoice-id",
+		"invoice-id": "I-0123456"
+	}
+}

@@ -19,9 +19,7 @@ package org.fuin.cqrs4j;
 
 import javax.annotation.Nullable;
 import javax.json.bind.annotation.JsonbProperty;
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -37,11 +35,11 @@ import org.fuin.objects4j.ui.Tooltip;
  * Result of a request. The type signals if the execution was successful or not. In case the the result is not {@link ResultType#OK}, the
  * fields code and message should contain unique information to help the user identifying the cause of the problem.
  * 
- * @param <DATA>
- *            Type of data returned in case of success (type = {@link ResultType#OK}).
+ * @param <CONTENT>
+ *            Type of content inside the "data" element returned in case of success (type = {@link ResultType#OK}).
  */
 @XmlRootElement(name = "result")
-public final class Result<DATA> {
+public final class Result<CONTENT> {
 
     @Label("Result Type")
     @ShortLabel("TYPE")
@@ -70,13 +68,10 @@ public final class Result<DATA> {
     @XmlElement(name = "message")
     private String message;
 
-    @Label("Data")
-    @ShortLabel("DATA")
-    @Tooltip("Optional result data")
-    @Prompt("Optional Data")
-    @Valid
-    @XmlAnyElement(lax = true)
-    private Object data;
+    @Nullable
+    @JsonbProperty("data")
+    @XmlElement(name = "data")
+    private Data<CONTENT> data;
 
     /**
      * Protected default constructor for de-serialization.
@@ -97,7 +92,8 @@ public final class Result<DATA> {
      * @param data
      *            Optional result data.
      */
-    public Result(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message, @Nullable final DATA data) {
+    public Result(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message,
+            @Nullable final Data<CONTENT> data) {
         Contract.requireArgNotNull("type", type);
         this.type = type;
         this.code = code;
@@ -106,18 +102,20 @@ public final class Result<DATA> {
     }
 
     /**
-     * Constructor with exception. If the exception is type {@link ExceptionJaxbMarshallable} then it will be used as <code>data</code>
-     * field, if not data will be <code>null</code>. An exception of type {@link ExceptionShortIdentifable} will be used to fill the
-     * <code>code</code> field with the identifier value. If it's not a {@link ExceptionShortIdentifable} the <code>code</code> field will
-     * be set using the full qualified class name of the exception.
-     * 
+     * Constructor with exception. If the exception is type {@link ExceptionJaxbMarshallable} then it will be used as content for the
+     * <code>data</code> field, if not data will be <code>null</code>. An exception of type {@link ExceptionShortIdentifable} will be used
+     * to fill the <code>code</code> field with the identifier value. If it's not a {@link ExceptionShortIdentifable} the <code>code</code>
+     * field will be set using the full qualified class name of the exception.
+     *
      * @param exception
      *            The message for the result is equal to the exception message or the simple name of the exception class if the exception
      *            message is <code>null</code>.
+     * @param contentType
+     *            Content type representing the type of exception. May only be null in case the exception is not
+     *            {@link ExceptionJaxbMarshallable}.
      */
-    // CHECKSTYLE:OFF:AvoidInlineConditionals
-    public Result(@NotNull final Exception exception) {
-        // CHECKSTYLE:ON
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public Result(@NotNull final Exception exception, @Nullable final String contentType) {
         super();
         Contract.requireArgNotNull("exception", exception);
         this.type = ResultType.ERROR;
@@ -132,7 +130,7 @@ public final class Result<DATA> {
             this.message = exception.getMessage();
         }
         if (exception instanceof ExceptionJaxbMarshallable) {
-            this.data = exception;
+            this.data = new Data(contentType, exception);
         } else {
             this.data = null;
         }
@@ -174,24 +172,43 @@ public final class Result<DATA> {
      * 
      * @return Response data.
      */
-    @SuppressWarnings("unchecked")
     @Nullable
-    public final DATA getData() {
+    public final Data<CONTENT> getData() {
         if ((type == ResultType.OK) || (type == ResultType.WARNING)) {
-            return (DATA) data;
+            return data;
         }
         return null;
     }
 
     /**
-     * Returns the exception if {@link #getType()} is {@link ResultType#ERROR} or <code>null</code> in all other cases.
+     * Returns the result content if {@link #getType()} is {@link ResultType#OK} or {@link ResultType#WARNING} and <code>null</code> in all
+     * other cases.
+     * 
+     * @return Response data.
+     */
+    @Nullable
+    public final CONTENT getContentData() {
+        if (data == null) {
+            return null;
+        }
+        if ((type == ResultType.OK) || (type == ResultType.WARNING)) {
+            return data.getContentData();
+        }
+        return null;
+    }
+
+    /**
+     * Returns the result content as exception if {@link #getType()} is {@link ResultType#ERROR} or <code>null</code> in all other cases.
      * 
      * @return Exception that caused the error.
      */
     @Nullable
     public final Exception getException() {
+        if (data == null) {
+            return null;
+        }
         if (type == ResultType.ERROR) {
-            return (Exception) data;
+            return (Exception) data.getContentData();
         }
         return null;
     }
@@ -274,7 +291,7 @@ public final class Result<DATA> {
      * @param <T>
      *            Type of data.
      */
-    public static <T> Result<T> ok(@Nullable final T data) {
+    public static <T> Result<T> ok(@Nullable final Data<T> data) {
         return new Result<T>(ResultType.OK, null, null, data);
     }
 
