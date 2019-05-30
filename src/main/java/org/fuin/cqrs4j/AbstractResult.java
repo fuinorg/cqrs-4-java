@@ -17,6 +17,8 @@
  */
 package org.fuin.cqrs4j;
 
+import java.io.Serializable;
+
 import javax.annotation.Nullable;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.validation.constraints.NotNull;
@@ -37,7 +39,9 @@ import org.fuin.objects4j.ui.Tooltip;
  * @param <DATA>
  *            Type of data returned.
  */
-public abstract class AbstractResult<DATA> implements Result<DATA> {
+public abstract class AbstractResult<DATA> implements Result<DATA>, Serializable {
+
+    private static final long serialVersionUID = 1000L;
 
     @Label("Result Type")
     @ShortLabel("TYPE")
