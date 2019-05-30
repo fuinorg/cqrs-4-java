@@ -41,7 +41,7 @@ public final class Cqrs4JUtils {
 
     /** Classes used for JAX-B serialization. */
     public static final List<Class<?>> JAXB_CLASSES = Collections
-            .unmodifiableList(Arrays.asList(Result.class, ConstraintViolationException.class));
+            .unmodifiableList(Arrays.asList(XmlResult.class, SimpleResult.class, ConstraintViolationException.class));
 
     private static final Logger LOG = LoggerFactory.getLogger(Cqrs4JUtils.class);
 
@@ -122,7 +122,7 @@ public final class Cqrs4JUtils {
         }
         final String errors = Contract.asString(violations, ", ");
         LOG.error(errors);
-        return Result.error(PRECONDITION_VIOLATED, errors);
+        return SimpleResult.error(PRECONDITION_VIOLATED, errors);
     }
 
     /**
@@ -164,7 +164,7 @@ public final class Cqrs4JUtils {
         final String msg = "Entity path constructred from URL parameters " + sb + " is not the same as command's entityPath: '"
                 + cmd.getEntityIdPath() + "'";
         LOG.error(msg + " [" + PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH + "]");
-        return Result.error(PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH, msg);
+        return SimpleResult.error(PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH, msg);
 
     }
 

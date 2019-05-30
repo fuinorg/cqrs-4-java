@@ -40,7 +40,7 @@ public class AbstractAggregateCommandTest {
         final AggregateVersion version = new AggregateVersion(1);
 
         // TEST
-        final AbstractAggregateCommand testee = new MyCommand(entityIdPath, version);
+        final AbstractAggregateCommand<?> testee = new MyCommand(entityIdPath, version);
 
         // VERIFY
         assertThat((EntityId) testee.getEntityIdPath().first()).isEqualTo(aid);
@@ -65,7 +65,7 @@ public class AbstractAggregateCommandTest {
         final MyEvent event = new MyEvent(correlationId, causationId);
 
         // TEST
-        final AbstractAggregateCommand testee = new MyCommand(entityIdPath, version, event);
+        final AbstractAggregateCommand<?> testee = new MyCommand(entityIdPath, version, event);
 
         // VERIFY
         assertThat((EntityId) testee.getEntityIdPath().first()).isEqualTo(aid);
@@ -89,7 +89,7 @@ public class AbstractAggregateCommandTest {
         final EventId causationId = new EventId();
 
         // TEST
-        final AbstractAggregateCommand testee = new MyCommand(entityIdPath, version, correlationId, causationId);
+        final AbstractAggregateCommand<?> testee = new MyCommand(entityIdPath, version, correlationId, causationId);
 
         // VERIFY
         assertThat((EntityId) testee.getEntityIdPath().first()).isEqualTo(aid);
@@ -180,7 +180,7 @@ public class AbstractAggregateCommandTest {
     }
 
     @XmlRootElement(name = "my-command")
-    public static class MyCommand extends AbstractAggregateCommand {
+    public static class MyCommand extends AbstractAggregateCommand<AId> {
 
         private static final long serialVersionUID = 1L;
 

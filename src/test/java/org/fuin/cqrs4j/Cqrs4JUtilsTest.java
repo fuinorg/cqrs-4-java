@@ -36,7 +36,7 @@ public final class Cqrs4JUtilsTest {
 
         final MyClass myObj1 = new MyClass();
         assertThat(Cqrs4JUtils.verifyPrecondition(Contract.getValidator(), myObj1))
-                .isEqualTo(new Result<>(ResultType.ERROR, Cqrs4JUtils.PRECONDITION_VIOLATED, "MyClass.email must not be null", null));
+                .isEqualTo(new SimpleResult(ResultType.ERROR, Cqrs4JUtils.PRECONDITION_VIOLATED, "MyClass.email must not be null"));
 
         final MyClass myObj2 = new MyClass();
         myObj2.email = "test@fuin.org";
@@ -57,11 +57,11 @@ public final class Cqrs4JUtilsTest {
         // TEST & VERIFY
         assertThat(Cqrs4JUtils.verifyParamEntityIdPathEqualsCmdEntityIdPath(cmd, aid1, bid123)).isNull();
         assertThat(Cqrs4JUtils.verifyParamEntityIdPathEqualsCmdEntityIdPath(cmd, aid1))
-                .isEqualTo(new Result<>(ResultType.ERROR, Cqrs4JUtils.PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH, 
-                        "Entity path constructred from URL parameters A 1 is not the same as command's entityPath: 'A 1/B 123'", null));
+                .isEqualTo(new SimpleResult(ResultType.ERROR, Cqrs4JUtils.PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH,
+                        "Entity path constructred from URL parameters A 1 is not the same as command's entityPath: 'A 1/B 123'"));
         assertThat(Cqrs4JUtils.verifyParamEntityIdPathEqualsCmdEntityIdPath(cmd, aid2, bid123))
-                .isEqualTo(new Result<>(ResultType.ERROR, Cqrs4JUtils.PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH, 
-                        "Entity path constructred from URL parameters A 2, B 123 is not the same as command's entityPath: 'A 1/B 123'", null));
+                .isEqualTo(new SimpleResult(ResultType.ERROR, Cqrs4JUtils.PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH,
+                        "Entity path constructred from URL parameters A 2, B 123 is not the same as command's entityPath: 'A 1/B 123'"));
 
     }
 

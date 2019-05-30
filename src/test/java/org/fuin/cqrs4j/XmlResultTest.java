@@ -38,7 +38,7 @@ import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.Diff;
 
 // CHECKSTYLE:OFF
-public final class ResultTest {
+public final class XmlResultTest {
 
     private static final EntityType TEST_TYPE = new StringBasedEntityType("Test");
 
@@ -49,7 +49,7 @@ public final class ResultTest {
         final String data = "Whatever";
 
         // TEST
-        final Result<String> testee = new Result<>(ResultType.WARNING, "X1", "Yes!", data);
+        final XmlResult<String> testee = new XmlResult<>(ResultType.WARNING, "X1", "Yes!", data);
 
         // VERIFY
         assertThat(testee.getType()).isEqualTo(ResultType.WARNING);
@@ -67,7 +67,7 @@ public final class ResultTest {
         final AggregateNotFoundException ex = new AggregateNotFoundException(TEST_TYPE, id);
 
         // TEST
-        final Result<Void> testee = new Result<>(ex);
+        final XmlResult<Void> testee = new XmlResult<>(ex);
 
         // VERIFY
         assertThat(testee.getType()).isEqualTo(ResultType.ERROR);
@@ -82,11 +82,11 @@ public final class ResultTest {
     public final void testMarshalUnmarshal() {
 
         // PREPARE
-        final Result<Data> original = Result.ok(new Data(1));
+        final XmlResult<Data> original = XmlResult.ok(new Data(1));
 
         // TEST
-        final String xml = marshal(original, Result.class, Data.class);
-        final Result<Data> copy = unmarshal(xml, Result.class, Data.class);
+        final String xml = marshal(original, XmlResult.class, Data.class);
+        final XmlResult<Data> copy = unmarshal(xml, XmlResult.class, Data.class);
 
         // VERIFY
         assertThat(original).isEqualTo(copy);
@@ -97,16 +97,16 @@ public final class ResultTest {
     public final void testUnmarshalMarshalVoidResult() throws IOException {
 
         // PREPARE
-        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/result-void.xml"), "utf-8");
+        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/xml-result-void.xml"), "utf-8");
 
         // TEST
-        final Result<Void> copy = unmarshal(xml, Result.class);
+        final XmlResult<Void> copy = unmarshal(xml, XmlResult.class);
 
         // VERIFY
         assertThat(copy.getType()).isEqualTo(ResultType.OK);
 
         // TEST
-        final String copyXml = marshal(copy, Result.class);
+        final String copyXml = marshal(copy, XmlResult.class);
 
         // VERIFY
         final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
@@ -119,10 +119,10 @@ public final class ResultTest {
     public final void testUnmarshalMarshalDataResult() throws IOException {
 
         // PREPARE
-        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/result-data.xml"), "utf-8");
+        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/xml-result-data.xml"), "utf-8");
 
         // TEST
-        final Result<Node> copy = unmarshal(xml, Result.class);
+        final XmlResult<Node> copy = unmarshal(xml, XmlResult.class);
 
         // VERIFY
         assertThat(copy.getType()).isEqualTo(ResultType.OK);
@@ -134,7 +134,7 @@ public final class ResultTest {
         assertThat(node.getTextContent()).isEqualTo("I-0123456");
 
         // TEST
-        final String copyXml = marshal(copy, Result.class);
+        final String copyXml = marshal(copy, XmlResult.class);
 
         // VERIFY
         final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
@@ -147,10 +147,10 @@ public final class ResultTest {
     public final void testUnmarshalExceptionResult() throws IOException {
 
         // PREPARE
-        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/result-exception.xml"), "utf-8");
+        final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/xml-result-exception.xml"), "utf-8");
 
         // TEST
-        final Result<Void> copy = unmarshal(xml, Result.class, AggregateNotFoundException.class);
+        final XmlResult<Void> copy = unmarshal(xml, XmlResult.class, AggregateNotFoundException.class);
 
         // VERIFY
         final String msg = "Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found";
@@ -165,7 +165,7 @@ public final class ResultTest {
         assertThat(anfe.getAggregateId()).isEqualTo("4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119");
 
         // TEST
-        final String copyXml = marshal(copy, Result.class, AggregateNotFoundException.class);
+        final String copyXml = marshal(copy, XmlResult.class, AggregateNotFoundException.class);
 
         // VERIFY
         final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
