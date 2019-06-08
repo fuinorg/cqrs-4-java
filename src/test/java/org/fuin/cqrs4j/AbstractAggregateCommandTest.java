@@ -250,6 +250,11 @@ public class AbstractAggregateCommandTest {
             }
             return false;
         }
+
+        @Override
+        public boolean isValid(String type, String id) {
+            return true;
+        }
     }
 
     @SuppressWarnings("rawtypes")
