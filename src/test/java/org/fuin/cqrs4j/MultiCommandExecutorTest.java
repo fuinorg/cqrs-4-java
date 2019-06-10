@@ -60,7 +60,7 @@ public class MultiCommandExecutorTest {
         };
         final List<CommandExecutor> list = new ArrayList<>();
         list.add(cmdHandler1);
-        final MultiCommandExecutor<MyContext> testee = new MultiCommandExecutor<>(list);
+        final MultiCommandExecutor<MyContext, Long> testee = new MultiCommandExecutor<>(list);
         final MyContext ctx = new MyContext(InetAddress.getLocalHost());
 
         // TEST call twice
@@ -76,7 +76,7 @@ public class MultiCommandExecutorTest {
     public final void testCreateNullArray() {
 
         try {
-            new MultiCommandExecutor<MyContext>();
+            new MultiCommandExecutor<MyContext, Long>();
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage()).isEqualTo("The argument 'cmdExecutors' cannot be an empty list");
@@ -89,7 +89,7 @@ public class MultiCommandExecutorTest {
     public final void testCreateNullList() {
 
         try {
-            new MultiCommandExecutor<MyContext>((List<CommandExecutor>) null);
+            new MultiCommandExecutor<MyContext, Long>((List<CommandExecutor>) null);
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage()).isEqualTo("The argument 'cmdExecutors' cannot be null");
@@ -101,7 +101,7 @@ public class MultiCommandExecutorTest {
     public final void testCreateEmptyArray() {
 
         try {
-            new MultiCommandExecutor<MyContext>(new CommandExecutor[] {});
+            new MultiCommandExecutor<MyContext, Long>(new CommandExecutor[] {});
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage()).isEqualTo("The argument 'cmdExecutors' cannot be an empty list");
@@ -114,7 +114,7 @@ public class MultiCommandExecutorTest {
     public final void testCreateEmptyList() {
 
         try {
-            new MultiCommandExecutor<MyContext>(new ArrayList<CommandExecutor>());
+            new MultiCommandExecutor<MyContext, Long>(new ArrayList<CommandExecutor>());
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage()).isEqualTo("The argument 'cmdExecutors' cannot be an empty list");
@@ -159,7 +159,7 @@ public class MultiCommandExecutorTest {
 
         // TEST
         try {
-            new MultiCommandExecutor<MyContext>(list);
+            new MultiCommandExecutor<MyContext, Void>(list);
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage())

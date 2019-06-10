@@ -34,9 +34,11 @@ import org.fuin.objects4j.common.Contract;
  * 
  * @param <CONTEXT>
  *            Type of context for the command execution.
+ * @param <RESULT>
+ *            Result of the command execution.
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public final class MultiCommandExecutor<CONTEXT> implements CommandExecutor<CONTEXT, Object, Command> {
+public final class MultiCommandExecutor<CONTEXT, RESULT> implements CommandExecutor<CONTEXT, RESULT, Command> {
 
     private final Map<EventType, CommandExecutor> commandExecutors;
 
@@ -84,10 +86,10 @@ public final class MultiCommandExecutor<CONTEXT> implements CommandExecutor<CONT
     }
 
     @Override
-    public final Object execute(final CONTEXT ctx, final Command cmd) {
+    public final RESULT execute(final CONTEXT ctx, final Command cmd) {
         Contract.requireArgNotNull("ctx", ctx);
         Contract.requireArgNotNull("cmd", cmd);
-        final CommandExecutor cmdExecutor = commandExecutors.get(cmd.getEventType());
+        final CommandExecutor<CONTEXT, RESULT, Command> cmdExecutor = commandExecutors.get(cmd.getEventType());
         if (cmdExecutor == null) {
             throw new IllegalArgumentException("No executor found for command: " + cmd.getEventType());
         }
