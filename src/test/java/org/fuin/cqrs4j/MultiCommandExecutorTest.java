@@ -20,6 +20,8 @@ package org.fuin.cqrs4j;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -35,13 +37,13 @@ import org.junit.Test;
  */
 public class MultiCommandExecutorTest {
 
-    @SuppressWarnings("rawtypes")
     @Test
-    public final void testDispatch() {
+    @SuppressWarnings("rawtypes")
+    public final void testDispatch() throws UnknownHostException {
 
         // PREPARE
         final CountDownLatch done = new CountDownLatch(2);
-        final CommandExecutor cmdHandler1 = new CommandExecutor<Long, MyCommand>() {
+        final CommandExecutor<MyContext, Long, MyCommand> cmdHandler1 = new CommandExecutor<MyContext, Long, MyCommand>() {
             @Override
             public final Set<EventType> getCommandTypes() {
                 final Set<EventType> set = new HashSet<>();
@@ -50,7 +52,7 @@ public class MultiCommandExecutorTest {
             }
 
             @Override
-            public final Long execute(final MyCommand cmd) {
+            public final Long execute(final MyContext ctx, final MyCommand cmd) {
                 done.countDown();
                 return done.getCount();
             }
@@ -58,11 +60,12 @@ public class MultiCommandExecutorTest {
         };
         final List<CommandExecutor> list = new ArrayList<>();
         list.add(cmdHandler1);
-        final MultiCommandExecutor testee = new MultiCommandExecutor(list);
+        final MultiCommandExecutor<MyContext> testee = new MultiCommandExecutor<>(list);
+        final MyContext ctx = new MyContext(InetAddress.getLocalHost());
 
         // TEST call twice
-        testee.execute(new MyCommand());
-        testee.execute(new MyCommand());
+        testee.execute(ctx, new MyCommand());
+        testee.execute(ctx, new MyCommand());
 
         // VERIFY
         assertThat(done.getCount()).isEqualTo(0);
@@ -73,7 +76,7 @@ public class MultiCommandExecutorTest {
     public final void testCreateNullArray() {
 
         try {
-            new MultiCommandExecutor();
+            new MultiCommandExecutor<MyContext>();
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage()).isEqualTo("The argument 'cmdExecutors' cannot be an empty list");
@@ -81,12 +84,12 @@ public class MultiCommandExecutorTest {
 
     }
 
-    @SuppressWarnings("rawtypes")
     @Test
+    @SuppressWarnings("rawtypes")
     public final void testCreateNullList() {
 
         try {
-            new MultiCommandExecutor((List<CommandExecutor>) null);
+            new MultiCommandExecutor<MyContext>((List<CommandExecutor>) null);
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage()).isEqualTo("The argument 'cmdExecutors' cannot be null");
@@ -98,7 +101,7 @@ public class MultiCommandExecutorTest {
     public final void testCreateEmptyArray() {
 
         try {
-            new MultiCommandExecutor(new CommandExecutor[] {});
+            new MultiCommandExecutor<MyContext>(new CommandExecutor[] {});
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage()).isEqualTo("The argument 'cmdExecutors' cannot be an empty list");
@@ -106,12 +109,12 @@ public class MultiCommandExecutorTest {
 
     }
 
-    @SuppressWarnings("rawtypes")
     @Test
+    @SuppressWarnings("rawtypes")
     public final void testCreateEmptyList() {
 
         try {
-            new MultiCommandExecutor(new ArrayList<CommandExecutor>());
+            new MultiCommandExecutor<MyContext>(new ArrayList<CommandExecutor>());
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage()).isEqualTo("The argument 'cmdExecutors' cannot be an empty list");
@@ -119,12 +122,12 @@ public class MultiCommandExecutorTest {
 
     }
 
-    @SuppressWarnings("rawtypes")
     @Test
+    @SuppressWarnings("rawtypes")
     public final void testCreateDuplicate() {
 
         // PREPARE
-        final CommandExecutor cmdHandler1 = new CommandExecutor<Void, MyCommand>() {
+        final CommandExecutor<MyContext, Void, MyCommand> cmdHandler1 = new CommandExecutor<MyContext, Void, MyCommand>() {
             @Override
             public final Set<EventType> getCommandTypes() {
                 final Set<EventType> set = new HashSet<>();
@@ -133,11 +136,11 @@ public class MultiCommandExecutorTest {
             }
 
             @Override
-            public final Void execute(final MyCommand event) {
+            public final Void execute(final MyContext ctx, final MyCommand event) {
                 return null;
             }
         };
-        final CommandExecutor cmdHandler2 = new CommandExecutor<Void, MyCommand>() {
+        final CommandExecutor<MyContext, Void, MyCommand> cmdHandler2 = new CommandExecutor<MyContext, Void, MyCommand>() {
             @Override
             public final Set<EventType> getCommandTypes() {
                 final Set<EventType> set = new HashSet<>();
@@ -146,7 +149,7 @@ public class MultiCommandExecutorTest {
             }
 
             @Override
-            public final Void execute(final MyCommand event) {
+            public final Void execute(final MyContext ctx, final MyCommand event) {
                 return null;
             }
         };
@@ -156,7 +159,7 @@ public class MultiCommandExecutorTest {
 
         // TEST
         try {
-            new MultiCommandExecutor(list);
+            new MultiCommandExecutor<MyContext>(list);
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage())
@@ -178,6 +181,21 @@ public class MultiCommandExecutorTest {
         @Override
         public EventType getEventType() {
             return EVENT_TYPE;
+        }
+
+    }
+
+    public static class MyContext {
+
+        private InetAddress ipAddr;
+
+        public MyContext(final InetAddress ipAddr) {
+            super();
+            this.ipAddr = ipAddr;
+        }
+
+        public InetAddress getIpAddr() {
+            return ipAddr;
         }
 
     }

@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 
 import org.fuin.ddd4j.ddd.EventType;
 import org.fuin.objects4j.common.ConstraintViolationException;
@@ -31,9 +31,12 @@ import org.fuin.objects4j.common.Contract;
 
 /**
  * Handles multiple commands by delegating the call to other executors.
+ * 
+ * @param <CONTEXT>
+ *            Type of context for the command execution.
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public final class MultiCommandExecutor implements CommandExecutor<Object, Command> {
+public final class MultiCommandExecutor<CONTEXT> implements CommandExecutor<CONTEXT, Object, Command> {
 
     private final Map<EventType, CommandExecutor> commandExecutors;
 
@@ -43,7 +46,7 @@ public final class MultiCommandExecutor implements CommandExecutor<Object, Comma
      * @param cmdExecutors
      *            Array of command executors.
      */
-    public MultiCommandExecutor(@NotNull final CommandExecutor... cmdExecutors) {
+    public MultiCommandExecutor(@NotEmpty final CommandExecutor... cmdExecutors) {
         this(Arrays.asList(cmdExecutors));
     }
 
@@ -53,7 +56,7 @@ public final class MultiCommandExecutor implements CommandExecutor<Object, Comma
      * @param cmdExecutors
      *            List of command executors.
      */
-    public MultiCommandExecutor(@NotNull final List<CommandExecutor> cmdExecutors) {
+    public MultiCommandExecutor(@NotEmpty final List<CommandExecutor> cmdExecutors) {
         super();
         Contract.requireArgNotNull("cmdExecutors", cmdExecutors);
         if (cmdExecutors.size() == 0) {
@@ -81,13 +84,14 @@ public final class MultiCommandExecutor implements CommandExecutor<Object, Comma
     }
 
     @Override
-    public final Object execute(final Command cmd) {
+    public final Object execute(final CONTEXT ctx, final Command cmd) {
+        Contract.requireArgNotNull("ctx", ctx);
         Contract.requireArgNotNull("cmd", cmd);
         final CommandExecutor cmdExecutor = commandExecutors.get(cmd.getEventType());
         if (cmdExecutor == null) {
             throw new IllegalArgumentException("No executor found for command: " + cmd.getEventType());
         }
-        return cmdExecutor.execute(cmd);
+        return cmdExecutor.execute(ctx, cmd);
     }
 
 }

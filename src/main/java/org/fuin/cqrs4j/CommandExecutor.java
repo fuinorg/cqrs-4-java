@@ -26,12 +26,14 @@ import org.fuin.ddd4j.ddd.EventType;
 /**
  * Executes one or more commands.
  * 
+ * @param <CONTEXT>
+ *            Type of context for the command execution.
  * @param <RESULT>
  *            Result of the command execution.
  * @param <CMD>
  *            Type of command to execute.
  */
-public interface CommandExecutor<RESULT, CMD extends Command> {
+public interface CommandExecutor<CONTEXT, RESULT, CMD extends Command> {
 
     /**
      * Returns a list of commands this executor can handle.
@@ -44,11 +46,13 @@ public interface CommandExecutor<RESULT, CMD extends Command> {
     /**
      * Executes the given command.
      * 
+     * @param ctx
+     *            Context of the execute.
      * @param cmd
      *            Command to execute.
      * 
      * @return Result.
      */
-    public RESULT execute(CMD cmd);
+    public RESULT execute(@NotNull CONTEXT ctx, @NotNull CMD cmd);
 
 }
