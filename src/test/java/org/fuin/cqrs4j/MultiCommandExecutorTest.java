@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +38,7 @@ public class MultiCommandExecutorTest {
 
     @Test
     @SuppressWarnings("rawtypes")
-    public final void testDispatch() throws UnknownHostException {
+    public final void testDispatch() throws Exception {
 
         // PREPARE
         final CountDownLatch done = new CountDownLatch(2);

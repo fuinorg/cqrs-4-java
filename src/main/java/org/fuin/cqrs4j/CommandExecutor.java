@@ -21,6 +21,11 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.fuin.ddd4j.ddd.AggregateAlreadyExistsException;
+import org.fuin.ddd4j.ddd.AggregateDeletedException;
+import org.fuin.ddd4j.ddd.AggregateNotFoundException;
+import org.fuin.ddd4j.ddd.AggregateVersionConflictException;
+import org.fuin.ddd4j.ddd.AggregateVersionNotFoundException;
 import org.fuin.ddd4j.ddd.EventType;
 
 /**
@@ -44,7 +49,8 @@ public interface CommandExecutor<CONTEXT, RESULT, CMD extends Command> {
     public Set<EventType> getCommandTypes();
 
     /**
-     * Executes the given command.
+     * Executes the given command. Only the main aggregate related exceptions are modeled via throws. All other checked exceptions must be
+     * wrapped into a {@link CommandExecutionFailedException}.
      * 
      * @param ctx
      *            Context of the execute.
@@ -52,7 +58,21 @@ public interface CommandExecutor<CONTEXT, RESULT, CMD extends Command> {
      *            Command to execute.
      * 
      * @return Result.
+     * 
+     * @throws AggregateVersionConflictException
+     *             There is a conflict between an expected and an actual version for the aggregate targeted by the command.
+     * @throws AggregateNotFoundException
+     *             The aggregate targeted by the command with a given type and identifier was not found in the repository.
+     * @throws AggregateVersionNotFoundException
+     *             The requested version for the aggregate targeted by the command does not exist.
+     * @throws AggregateDeletedException
+     *             The aggregate targeted by the command was deleted from the repository.
+     * @throws AggregateAlreadyExistsException
+     *             The aggregate targeted by the command already exists when trying to create it.
+     * @throws CommandExecutionFailedException
+     *             Other checked exceptions are wrapped into this one.
      */
-    public RESULT execute(@NotNull CONTEXT ctx, @NotNull CMD cmd);
+    public RESULT execute(@NotNull CONTEXT ctx, @NotNull CMD cmd) throws AggregateVersionConflictException, AggregateNotFoundException,
+            AggregateVersionNotFoundException, AggregateDeletedException, AggregateAlreadyExistsException, CommandExecutionFailedException;
 
 }

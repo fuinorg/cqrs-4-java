@@ -25,6 +25,11 @@ import java.util.Set;
 
 import javax.validation.constraints.NotEmpty;
 
+import org.fuin.ddd4j.ddd.AggregateAlreadyExistsException;
+import org.fuin.ddd4j.ddd.AggregateDeletedException;
+import org.fuin.ddd4j.ddd.AggregateNotFoundException;
+import org.fuin.ddd4j.ddd.AggregateVersionConflictException;
+import org.fuin.ddd4j.ddd.AggregateVersionNotFoundException;
 import org.fuin.ddd4j.ddd.EventType;
 import org.fuin.objects4j.common.ConstraintViolationException;
 import org.fuin.objects4j.common.Contract;
@@ -86,7 +91,8 @@ public abstract class AbstractMultiCommandExecutor<CONTEXT, RESULT> implements C
     }
 
     @Override
-    public final RESULT execute(final CONTEXT ctx, final Command cmd) {
+    public final RESULT execute(final CONTEXT ctx, final Command cmd) throws AggregateVersionConflictException, AggregateNotFoundException,
+            AggregateVersionNotFoundException, AggregateDeletedException, AggregateAlreadyExistsException, CommandExecutionFailedException {
         Contract.requireArgNotNull("ctx", ctx);
         Contract.requireArgNotNull("cmd", cmd);
         final CommandExecutor<CONTEXT, RESULT, Command> cmdExecutor = commandExecutors.get(cmd.getEventType());

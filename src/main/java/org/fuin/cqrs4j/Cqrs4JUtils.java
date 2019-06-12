@@ -51,6 +51,9 @@ public final class Cqrs4JUtils {
     /** Result code for {@link #verifyParamEntityIdPathEqualsCmdEntityIdPath(AggregateCommand, EntityId...)} failures. */
     public static final String PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH = "PARAM_ENTITY_PATH_NOT_EQUAL_CMD_ENTITY_PATH";
 
+    /** Prefix for unique short identifiers. */
+    public static final String SHORT_ID_PREFIX = "CQRS4J";
+    
     /**
      * Private by intention.
      */
