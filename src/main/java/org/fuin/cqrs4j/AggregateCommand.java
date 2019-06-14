@@ -23,14 +23,17 @@ import javax.validation.constraints.NotNull;
 import org.fuin.ddd4j.ddd.AggregateRootId;
 import org.fuin.ddd4j.ddd.AggregateVersion;
 import org.fuin.ddd4j.ddd.DomainEvent;
+import org.fuin.ddd4j.ddd.EntityId;
 
 /**
  * Common behavior shared by all commands related to an aggregate.
  * 
- * @param <ID>
+ * @param <ROOT_ID>
  *            Type of the aggregate root identifier.
+ * @param <ENTITY_ID>
+ *            Type of the identifier (the last one in the path).
  */
-public interface AggregateCommand<ID extends AggregateRootId> extends Command, DomainEvent<ID> {
+public interface AggregateCommand<ROOT_ID extends AggregateRootId, ENTITY_ID extends EntityId> extends Command, DomainEvent<ENTITY_ID> {
 
     /**
      * Returns the identifier of the aggregate root this command targets.
@@ -38,7 +41,7 @@ public interface AggregateCommand<ID extends AggregateRootId> extends Command, D
      * @return Aggregate root identifier.
      */
     @NotNull
-    public ID getAggregateRootId();
+    public ROOT_ID getAggregateRootId();
 
     /**
      * Returns the aggregate version.

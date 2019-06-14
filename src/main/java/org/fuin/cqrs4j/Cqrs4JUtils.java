@@ -53,7 +53,7 @@ public final class Cqrs4JUtils {
 
     /** Prefix for unique short identifiers. */
     public static final String SHORT_ID_PREFIX = "CQRS4J";
-    
+
     /**
      * Private by intention.
      */
@@ -145,7 +145,7 @@ public final class Cqrs4JUtils {
      *            Type of the aggregate root identifier.
      */
     @SafeVarargs
-    public static <ID extends EntityId> Result<?> verifyParamEntityIdPathEqualsCmdEntityIdPath(@NotNull final AggregateCommand<?> cmd,
+    public static <ID extends EntityId> Result<?> verifyParamEntityIdPathEqualsCmdEntityIdPath(@NotNull final AggregateCommand<?, ?> cmd,
             @NotNull final ID... entityIds) {
 
         Contract.requireArgNotNull("cmd", cmd);

@@ -52,7 +52,7 @@ public final class Cqrs4JUtilsTest {
         AggregateVersion version = new AggregateVersion(0);
         BId bid123 = new BId(123L);
         AId aid2 = new AId(2L);
-        final AggregateCommand<AId> cmd = new MyCommand(aid1, version, bid123);
+        final AggregateCommand<AId,BId> cmd = new MyCommand(aid1, version, bid123);
 
         // TEST & VERIFY
         assertThat(Cqrs4JUtils.verifyParamEntityIdPathEqualsCmdEntityIdPath(cmd, aid1, bid123)).isNull();
@@ -73,7 +73,7 @@ public final class Cqrs4JUtilsTest {
 
     }
 
-    private static class MyCommand extends AbstractAggregateCommand<AId> {
+    private static class MyCommand extends AbstractAggregateCommand<AId, BId> {
 
         private static final long serialVersionUID = 1L;
 

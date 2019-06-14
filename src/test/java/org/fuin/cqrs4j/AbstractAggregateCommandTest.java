@@ -40,10 +40,60 @@ public class AbstractAggregateCommandTest {
         final AggregateVersion version = new AggregateVersion(1);
 
         // TEST
-        final AbstractAggregateCommand<?> testee = new MyCommand(entityIdPath, version);
+        final AbstractAggregateCommand<AId, AId> testee = new MyCommand(entityIdPath, version);
 
         // VERIFY
-        assertThat((EntityId) testee.getEntityIdPath().first()).isEqualTo(aid);
+        assertThat(testee.getAggregateRootId()).isEqualTo(aid);
+        assertThat(testee.getEntityId()).isEqualTo(aid);
+        assertThat(testee.getAggregateVersion()).isEqualTo(version);
+        assertThat(testee.getEventId()).isNotNull();
+        assertThat(testee.getTimestamp()).isNotNull();
+        assertThat(testee.getCausationId()).isNull();
+        assertThat(testee.getCorrelationId()).isNull();
+        assertThat(testee.getEventType()).isEqualTo(MY_COMMAND_TYPE);
+
+    }
+
+    @Test
+    public final void testConstructor2() {
+
+        // PREPARE
+        final AId aid = new AId(123L);
+        final BId bid = new BId(1L);
+        final EntityIdPath entityIdPath = new EntityIdPath(aid, bid);
+        final AggregateVersion version = new AggregateVersion(1);
+
+        // TEST
+        final AbstractAggregateCommand<AId, BId> testee = new MyCommand2(entityIdPath, version);
+
+        // VERIFY
+        assertThat(testee.getAggregateRootId()).isEqualTo(aid);
+        assertThat(testee.getEntityId()).isEqualTo(bid);
+        assertThat(testee.getAggregateVersion()).isEqualTo(version);
+        assertThat(testee.getEventId()).isNotNull();
+        assertThat(testee.getTimestamp()).isNotNull();
+        assertThat(testee.getCausationId()).isNull();
+        assertThat(testee.getCorrelationId()).isNull();
+        assertThat(testee.getEventType()).isEqualTo(MY_COMMAND_TYPE);
+
+    }
+
+    @Test
+    public final void testConstructor3() {
+
+        // PREPARE
+        final AId aid = new AId(123L);
+        final BId bid = new BId(1L);
+        final CId cid = new CId(2L);
+        final EntityIdPath entityIdPath = new EntityIdPath(aid, bid, cid);
+        final AggregateVersion version = new AggregateVersion(1);
+
+        // TEST
+        final AbstractAggregateCommand<AId, CId> testee = new MyCommand3(entityIdPath, version);
+
+        // VERIFY
+        assertThat(testee.getAggregateRootId()).isEqualTo(aid);
+        assertThat(testee.getEntityId()).isEqualTo(cid);
         assertThat(testee.getAggregateVersion()).isEqualTo(version);
         assertThat(testee.getEventId()).isNotNull();
         assertThat(testee.getTimestamp()).isNotNull();
@@ -65,10 +115,11 @@ public class AbstractAggregateCommandTest {
         final MyEvent event = new MyEvent(correlationId, causationId);
 
         // TEST
-        final AbstractAggregateCommand<?> testee = new MyCommand(entityIdPath, version, event);
+        final AbstractAggregateCommand<?, ?> testee = new MyCommand(entityIdPath, version, event);
 
         // VERIFY
-        assertThat((EntityId) testee.getEntityIdPath().first()).isEqualTo(aid);
+        assertThat(testee.getAggregateRootId()).isEqualTo(aid);
+        assertThat(testee.getEntityId()).isEqualTo(aid);
         assertThat(testee.getAggregateVersion()).isEqualTo(version);
         assertThat(testee.getEventId()).isNotNull();
         assertThat(testee.getTimestamp()).isNotNull();
@@ -89,10 +140,11 @@ public class AbstractAggregateCommandTest {
         final EventId causationId = new EventId();
 
         // TEST
-        final AbstractAggregateCommand<?> testee = new MyCommand(entityIdPath, version, correlationId, causationId);
+        final AbstractAggregateCommand<?, ?> testee = new MyCommand(entityIdPath, version, correlationId, causationId);
 
         // VERIFY
-        assertThat((EntityId) testee.getEntityIdPath().first()).isEqualTo(aid);
+        assertThat(testee.getAggregateRootId()).isEqualTo(aid);
+        assertThat(testee.getEntityId()).isEqualTo(aid);
         assertThat(testee.getAggregateVersion()).isEqualTo(version);
         assertThat(testee.getEventId()).isNotNull();
         assertThat(testee.getTimestamp()).isNotNull();
@@ -180,7 +232,7 @@ public class AbstractAggregateCommandTest {
     }
 
     @XmlRootElement(name = "my-command")
-    public static class MyCommand extends AbstractAggregateCommand<AId> {
+    public static class MyCommand extends AbstractAggregateCommand<AId, AId> {
 
         private static final long serialVersionUID = 1L;
 
@@ -197,6 +249,62 @@ public class AbstractAggregateCommandTest {
         }
 
         public MyCommand(EntityIdPath entityIdPath, AggregateVersion aggregateVersion, EventId correlationId, EventId causationId) {
+            super(entityIdPath, aggregateVersion, correlationId, causationId);
+        }
+
+        @Override
+        public EventType getEventType() {
+            return MY_COMMAND_TYPE;
+        }
+
+    }
+
+    @XmlRootElement(name = "my-command-2")
+    public static class MyCommand2 extends AbstractAggregateCommand<AId, BId> {
+
+        private static final long serialVersionUID = 1L;
+
+        public MyCommand2() {
+            super();
+        }
+
+        public MyCommand2(EntityIdPath entityIdPath, AggregateVersion aggregateVersion) {
+            super(entityIdPath, aggregateVersion);
+        }
+
+        public MyCommand2(EntityIdPath entityIdPath, AggregateVersion aggregateVersion, Event respondTo) {
+            super(entityIdPath, aggregateVersion, respondTo);
+        }
+
+        public MyCommand2(EntityIdPath entityIdPath, AggregateVersion aggregateVersion, EventId correlationId, EventId causationId) {
+            super(entityIdPath, aggregateVersion, correlationId, causationId);
+        }
+
+        @Override
+        public EventType getEventType() {
+            return MY_COMMAND_TYPE;
+        }
+
+    }
+
+    @XmlRootElement(name = "my-command-3")
+    public static class MyCommand3 extends AbstractAggregateCommand<AId, CId> {
+
+        private static final long serialVersionUID = 1L;
+
+        public MyCommand3() {
+            super();
+        }
+
+        public MyCommand3(EntityIdPath entityIdPath, AggregateVersion aggregateVersion) {
+            super(entityIdPath, aggregateVersion);
+        }
+
+        public MyCommand3(EntityIdPath entityIdPath, AggregateVersion aggregateVersion, Event respondTo) {
+            super(entityIdPath, aggregateVersion, respondTo);
+        }
+
+        public MyCommand3(EntityIdPath entityIdPath, AggregateVersion aggregateVersion, EventId correlationId, EventId causationId) {
             super(entityIdPath, aggregateVersion, correlationId, causationId);
         }
 

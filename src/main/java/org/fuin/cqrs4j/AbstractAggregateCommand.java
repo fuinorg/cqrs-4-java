@@ -27,6 +27,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.fuin.ddd4j.ddd.AggregateRootId;
 import org.fuin.ddd4j.ddd.AggregateVersion;
 import org.fuin.ddd4j.ddd.AggregateVersionConverter;
+import org.fuin.ddd4j.ddd.EntityId;
 import org.fuin.ddd4j.ddd.EntityIdPath;
 import org.fuin.ddd4j.ddd.EntityIdPathConverter;
 import org.fuin.ddd4j.ddd.Event;
@@ -36,10 +37,13 @@ import org.fuin.objects4j.common.Contract;
 /**
  * Base class for all commands that are directed to an existing aggregate.
  * 
- * @param <ID>
+ * @param <ROOT_ID>
  *            Type of the aggregate root identifier.
+ * @param <ENTITY_ID>
+ *            Type of the identifier (the last one in the path).
  */
-public abstract class AbstractAggregateCommand<ID extends AggregateRootId> extends AbstractCommand implements AggregateCommand<ID> {
+public abstract class AbstractAggregateCommand<ROOT_ID extends AggregateRootId, ENTITY_ID extends EntityId> extends AbstractCommand
+        implements AggregateCommand<ROOT_ID, ENTITY_ID> {
 
     private static final long serialVersionUID = 1000L;
 
@@ -130,23 +134,23 @@ public abstract class AbstractAggregateCommand<ID extends AggregateRootId> exten
     }
 
     @Override
-    @NotNull    
+    @NotNull
     public final EntityIdPath getEntityIdPath() {
         return entityIdPath;
     }
 
     @Override
-    @NotNull    
-    public final ID getEntityId() {
+    @NotNull
+    public final ENTITY_ID getEntityId() {
         if (entityIdPath == null) {
             return null;
         }
         return entityIdPath.last();
     }
-    
+
     @Override
     @Nullable
-    public final ID getAggregateRootId() {
+    public final ROOT_ID getAggregateRootId() {
         if (entityIdPath == null) {
             return null;
         }
