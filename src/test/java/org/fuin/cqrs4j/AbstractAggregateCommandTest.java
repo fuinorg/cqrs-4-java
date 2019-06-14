@@ -10,6 +10,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import javax.validation.Validation;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
@@ -221,8 +222,34 @@ public class AbstractAggregateCommandTest {
         final MyCommand copy = unmarshal(xml, createXmlAdapter(), MyCommand.class);
 
         // VERIFY
+        Cqrs4JUtils.verifyPrecondition(Validation.buildDefaultValidatorFactory().getValidator(), copy);
         assertThat(copy.getEntityIdPath()).isEqualTo(new EntityIdPath(new AId(1L), new BId(2L), new CId(3L)));
         assertThat(copy.getAggregateVersion()).isEqualTo(new AggregateVersion(1));
+        assertThat(copy.getCausationId()).isEqualTo(new EventId(UUID.fromString("f13d3481-51b7-423f-8fe7-5c342f7d7c46")));
+        assertThat(copy.getCorrelationId()).isEqualTo(new EventId(UUID.fromString("2a5893a9-00da-4003-b280-98324eccdef1")));
+        assertThat(copy.getEventId()).isEqualTo(new EventId(UUID.fromString("f910c6d7-debc-46e1-ae02-9ca6f4658cf5")));
+        assertThat(copy.getEventType()).isEqualTo(copy.getEventType());
+        assertThat(copy.getTimestamp()).isEqualTo(ZonedDateTime.of(2016, 9, 18, 10, 38, 8, 0, ZoneId.of("Europe/Berlin")));
+
+    }
+
+    @Test
+    public final void testUnmarshalNullVersion() {
+
+        // PREPARE
+        final String xml = "<my-command><entity-id-path>A 1/B 2/C 3</entity-id-path>"
+                + "<event-id>f910c6d7-debc-46e1-ae02-9ca6f4658cf5</event-id>"
+                + "<event-timestamp>2016-09-18T10:38:08.0+02:00[Europe/Berlin]</event-timestamp>"
+                + "<correlation-id>2a5893a9-00da-4003-b280-98324eccdef1</correlation-id>"
+                + "<causation-id>f13d3481-51b7-423f-8fe7-5c342f7d7c46</causation-id></my-command>";
+
+        // TEST
+        final MyCommand copy = unmarshal(xml, createXmlAdapter(), MyCommand.class);
+
+        // VERIFY
+        Cqrs4JUtils.verifyPrecondition(Validation.buildDefaultValidatorFactory().getValidator(), copy);
+        assertThat(copy.getEntityIdPath()).isEqualTo(new EntityIdPath(new AId(1L), new BId(2L), new CId(3L)));
+        assertThat(copy.getAggregateVersion()).isNull();
         assertThat(copy.getCausationId()).isEqualTo(new EventId(UUID.fromString("f13d3481-51b7-423f-8fe7-5c342f7d7c46")));
         assertThat(copy.getCorrelationId()).isEqualTo(new EventId(UUID.fromString("2a5893a9-00da-4003-b280-98324eccdef1")));
         assertThat(copy.getEventId()).isEqualTo(new EventId(UUID.fromString("f910c6d7-debc-46e1-ae02-9ca6f4658cf5")));
