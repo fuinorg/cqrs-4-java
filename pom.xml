@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>cqrs-4-java</artifactId>
-    <version>0.2.1-SNAPSHOT</version>
+    <version>0.2.1</version>
     <packaging>bundle</packaging>
     <description>Base classes for Command Query Responsibility Segregation (CQRS) with Java</description>
 
