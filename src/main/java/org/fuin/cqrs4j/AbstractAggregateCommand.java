@@ -17,7 +17,7 @@
  */
 package org.fuin.cqrs4j;
 
-import javax.annotation.Nullable;
+import org.fuin.objects4j.common.Nullable;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbTypeAdapter;
 import javax.validation.constraints.NotNull;

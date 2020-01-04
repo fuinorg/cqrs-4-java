@@ -19,7 +19,7 @@ package org.fuin.cqrs4j;
 
 import java.io.Serializable;
 
-import javax.annotation.Nullable;
+import org.fuin.objects4j.common.Nullable;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlElement;
