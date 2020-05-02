@@ -32,6 +32,8 @@ import org.fuin.objects4j.common.ExceptionShortIdentifable;
 @XmlRootElement(name = "result")
 public final class SimpleResult extends AbstractResult<Void> {
 
+    private static final long serialVersionUID = 1000L;
+
     /**
      * Protected default constructor for de-serialization.
      */

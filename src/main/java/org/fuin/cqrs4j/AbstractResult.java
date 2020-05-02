@@ -43,13 +43,19 @@ public abstract class AbstractResult<DATA> implements Result<DATA>, Serializable
 
     private static final long serialVersionUID = 1000L;
 
+    static final String TYPE_PROPERTY = "type"; 
+    
+    static final String CODE_PROPERTY = "code"; 
+    
+    static final String MESSAGE_PROPERTY = "message"; 
+    
     @Label("Result Type")
     @ShortLabel("TYPE")
     @Tooltip("Type of the result")
     @Prompt("ERROR")
     @NotNull
-    @JsonbProperty("type")
-    @XmlElement(name = "type")
+    @JsonbProperty(TYPE_PROPERTY)
+    @XmlElement(name = TYPE_PROPERTY)
     private ResultType type;
 
     @Label("Result Code")
@@ -57,8 +63,8 @@ public abstract class AbstractResult<DATA> implements Result<DATA>, Serializable
     @Tooltip("Code that uniquely identifies the result. Mostly used in case of warnings or errors.")
     @Prompt("E00001")
     @Nullable
-    @JsonbProperty("code")
-    @XmlElement(name = "code")
+    @JsonbProperty(CODE_PROPERTY)
+    @XmlElement(name = CODE_PROPERTY)
     private String code;
 
     @Label("Result Message")
@@ -66,8 +72,8 @@ public abstract class AbstractResult<DATA> implements Result<DATA>, Serializable
     @Tooltip("Message that describes the result. Mostly used in case of warnings or errors.")
     @Prompt("The field 'Xyz' is mandatory")
     @Nullable
-    @JsonbProperty("message")
-    @XmlElement(name = "message")
+    @JsonbProperty(MESSAGE_PROPERTY)
+    @XmlElement(name = MESSAGE_PROPERTY)
     private String message;
 
     /**

@@ -17,15 +17,17 @@
  */
 package org.fuin.cqrs4j;
 
-import org.fuin.objects4j.common.Nullable;
+import javax.json.bind.annotation.JsonbProperty;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.fuin.objects4j.common.Contract;
-import org.fuin.objects4j.common.ExceptionJaxbMarshallable;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
+import org.fuin.objects4j.common.MarshalUnmarshalInformation;
+import org.fuin.objects4j.common.Nullable;
 import org.fuin.objects4j.ui.Label;
 import org.fuin.objects4j.ui.Prompt;
 import org.fuin.objects4j.ui.ShortLabel;
@@ -40,6 +42,20 @@ import org.fuin.objects4j.ui.Tooltip;
  */
 @XmlRootElement(name = "result")
 public final class XmlResult<DATA> extends AbstractResult<DATA> {
+
+    private static final long serialVersionUID = 1000L;
+
+    static final String DATA_CLASS_PROPERTY = "data-class";
+
+    static final String DATA_ELEMENT_PROPERTY = "data-element";
+
+    @JsonbProperty(DATA_CLASS_PROPERTY)
+    @XmlTransient
+    private String dataClass;
+
+    @JsonbProperty(DATA_ELEMENT_PROPERTY)
+    @XmlTransient
+    private String dataElement;
 
     @Label("Data")
     @ShortLabel("DATA")
@@ -57,7 +73,7 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
     }
 
     /**
-     * Constructor with all data.
+     * Constructor without data element name.
      * 
      * @param type
      *            Type.
@@ -71,11 +87,47 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
     public XmlResult(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message,
             @Nullable final DATA data) {
         super(type, code, message);
-        this.data = data;
+        if (data instanceof MarshalUnmarshalInformation) {
+            final MarshalUnmarshalInformation mui = (MarshalUnmarshalInformation) data;
+            this.data = mui.getData();
+            this.dataClass = mui.getDataClass().getName();
+            this.dataElement = mui.getDataElement();
+        } else {
+            this.data = data;
+            this.dataClass = null;
+            this.dataElement = null;
+        }
     }
 
     /**
-     * Constructor with exception. If the exception is type {@link ExceptionJaxbMarshallable} then it will be used as <code>data</code>
+     * Constructor with all data.
+     * 
+     * @param type
+     *            Type.
+     * @param code
+     *            Code.
+     * @param message
+     *            Message.
+     * @param data
+     *            Optional result data.
+     * @param dataElement
+     *            Optional name of the data element.
+     */
+    public XmlResult(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message, @Nullable final DATA data,
+            final String dataElement) {
+        super(type, code, message);
+        this.data = data;
+        if (data == null) {
+            this.dataClass = null;
+            this.dataElement = null;
+        } else {
+            this.dataClass = data.getClass().getName();
+            this.dataElement = dataElement;
+        }
+    }
+
+    /**
+     * Constructor with exception. If the exception is type {@link MarshalUnmarshalInformation} then it will be used as <code>data</code>
      * field, if not data will be <code>null</code>. An exception of type {@link ExceptionShortIdentifable} will be used to fill the
      * <code>code</code> field with the identifier value. If it's not a {@link ExceptionShortIdentifable} the <code>code</code> field will
      * be set using the full qualified class name of the exception.
@@ -88,39 +140,45 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
     public XmlResult(@NotNull final Exception exception) {
         // CHECKSTYLE:ON
         super(exception);
-        if (exception instanceof ExceptionJaxbMarshallable) {
-            this.data = exception;
+        if (exception instanceof MarshalUnmarshalInformation) {
+            final MarshalUnmarshalInformation mui = (MarshalUnmarshalInformation) exception;
+            this.data = mui.getData();
+            this.dataClass = mui.getDataClass().getName();
+            this.dataElement = mui.getDataElement();
         } else {
             this.data = null;
+            this.dataClass = null;
+            this.dataElement = null;
         }
     }
 
     /**
-     * Returns the result data if {@link #getType()} is {@link ResultType#OK} or {@link ResultType#WARNING} and <code>null</code> in all
-     * other cases.
+     * Returns the name of the class contained in the data element.
+     * 
+     * @return Full qualified class name.
+     */
+    public final String getDataClass() {
+        return dataClass;
+    }
+
+    /**
+     * Returns the name of the data attribute.
+     * 
+     * @return Data element name.
+     */
+    public final String getDataElement() {
+        return dataElement;
+    }
+
+    /**
+     * Returns the result data.
      * 
      * @return Response data.
      */
     @SuppressWarnings("unchecked")
     @Nullable
     public final DATA getData() {
-        if ((getType() == ResultType.OK) || (getType() == ResultType.WARNING)) {
-            return (DATA) data;
-        }
-        return null;
-    }
-
-    /**
-     * Returns the exception if {@link #getType()} is {@link ResultType#ERROR} or <code>null</code> in all other cases.
-     * 
-     * @return Exception that caused the error.
-     */
-    @Nullable
-    public final Exception getException() {
-        if (getType() == ResultType.ERROR) {
-            return (Exception) data;
-        }
-        return null;
+        return (DATA) data;
     }
 
     @Override
@@ -131,6 +189,8 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
         result = prime * result + ((getCode() == null) ? 0 : getCode().hashCode());
         result = prime * result + ((getMessage() == null) ? 0 : getMessage().hashCode());
         result = prime * result + ((getType() == null) ? 0 : getType().hashCode());
+        result = prime * result + ((dataClass == null) ? 0 : dataClass.hashCode());
+        result = prime * result + ((dataElement == null) ? 0 : dataElement.hashCode());
         result = prime * result + ((data == null) ? 0 : data.hashCode());
         return result;
     }
@@ -164,6 +224,20 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
         if (getType() != other.getType()) {
             return false;
         }
+        if (dataClass == null) {
+            if (other.dataClass != null) {
+                return false;
+            }
+        } else if (!dataClass.equals(other.dataClass)) {
+            return false;
+        }
+        if (dataElement == null) {
+            if (other.dataElement != null) {
+                return false;
+            }
+        } else if (!dataElement.equals(other.dataElement)) {
+            return false;
+        }
         if (data == null) {
             if (other.data != null) {
                 return false;
@@ -178,7 +252,8 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
 
     @Override
     public final String toString() {
-        return "Result [type=" + getType() + ", code=" + getCode() + ", message=" + getMessage() + "]";
+        return "Result [type=" + getType() + ", code=" + getCode() + ", message=" + getMessage() + ", dataClass=" + dataClass
+                + ", dataElement=" + dataElement + "]";
     }
 
     /**
@@ -187,7 +262,7 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
      * @return Result with type {@link ResultType#OK}.
      */
     public static XmlResult<Void> ok() {
-        return new XmlResult<Void>(ResultType.OK, null, null, null);
+        return new XmlResult<>(ResultType.OK, null, null, null);
     }
 
     /**
@@ -202,7 +277,24 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
      *            Type of data.
      */
     public static <T> XmlResult<T> ok(@Nullable final T data) {
-        return new XmlResult<T>(ResultType.OK, null, null, data);
+        return new XmlResult<>(ResultType.OK, null, null, data);
+    }
+
+    /**
+     * Create a success result with some data.
+     * 
+     * @param data
+     *            Optional data.
+     * @param dataElement
+     *            Optional name of the data element.
+     * 
+     * @return Result with type {@link ResultType#OK}.
+     * 
+     * @param <T>
+     *            Type of data.
+     */
+    public static <T> XmlResult<T> ok(@Nullable final T data, final String dataElement) {
+        return new XmlResult<>(ResultType.OK, null, null, data, dataElement);
     }
 
     /**
@@ -221,7 +313,7 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
     public static <T> XmlResult<T> error(@NotNull final String code, @NotNull final String message) {
         Contract.requireArgNotNull("code", code);
         Contract.requireArgNotNull("message", message);
-        return new XmlResult<T>(ResultType.ERROR, code, message, null);
+        return new XmlResult<>(ResultType.ERROR, code, message, null);
     }
 
 }

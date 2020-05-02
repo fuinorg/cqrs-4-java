@@ -1,0 +1,5 @@
+{
+    "type": "ERROR",
+    "code": "DDD4J-AGGREGATE_NOT_FOUND",
+    "message": "Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found"
+}

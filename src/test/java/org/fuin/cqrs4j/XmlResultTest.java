@@ -24,14 +24,18 @@ import static org.fuin.utils4j.JaxbUtils.unmarshal;
 import java.io.IOException;
 import java.util.UUID;
 
+import javax.json.bind.annotation.JsonbProperty;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlValue;
 
 import org.apache.commons.io.IOUtils;
 import org.fuin.ddd4j.ddd.AggregateNotFoundException;
 import org.fuin.ddd4j.ddd.AggregateRootId;
 import org.fuin.ddd4j.ddd.EntityType;
 import org.fuin.ddd4j.ddd.StringBasedEntityType;
+import org.fuin.objects4j.common.MarshalUnmarshalInformation;
 import org.junit.Test;
 import org.w3c.dom.Node;
 import org.xmlunit.builder.DiffBuilder;
@@ -67,29 +71,13 @@ public final class XmlResultTest {
         final AggregateNotFoundException ex = new AggregateNotFoundException(TEST_TYPE, id);
 
         // TEST
-        final XmlResult<Void> testee = new XmlResult<>(ex);
+        final XmlResult<AggregateNotFoundException.Data> testee = new XmlResult<>(ex);
 
         // VERIFY
         assertThat(testee.getType()).isEqualTo(ResultType.ERROR);
         assertThat(testee.getCode()).isEqualTo("DDD4J-AGGREGATE_NOT_FOUND");
         assertThat(testee.getMessage()).isEqualTo(TEST_TYPE + " with id " + id.asString() + " not found");
-        assertThat(testee.getData()).isNull();
-        assertThat(testee.getException()).isInstanceOf(AggregateNotFoundException.class);
-
-    }
-
-    @Test
-    public final void testMarshalUnmarshal() {
-
-        // PREPARE
-        final XmlResult<Data> original = XmlResult.ok(new Data(1));
-
-        // TEST
-        final String xml = marshal(original, XmlResult.class, Data.class);
-        final XmlResult<Data> copy = unmarshal(xml, XmlResult.class, Data.class);
-
-        // VERIFY
-        assertThat(original).isEqualTo(copy);
+        assertThat(testee.getData()).isInstanceOf(AggregateNotFoundException.Data.class);
 
     }
 
@@ -122,19 +110,17 @@ public final class XmlResultTest {
         final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/xml-result-data.xml"), "utf-8");
 
         // TEST
-        final XmlResult<Node> copy = unmarshal(xml, XmlResult.class);
+        final XmlResult<Invoice> copy = unmarshal(xml, XmlResult.class, Invoice.class);
 
         // VERIFY
         assertThat(copy.getType()).isEqualTo(ResultType.OK);
         assertThat(copy.getCode()).isNull();
         assertThat(copy.getMessage()).isNull();
-        assertThat(copy.getData()).isInstanceOf(Node.class);
-        final Node node = (Node) copy.getData();
-        assertThat(node.getNodeName()).isEqualTo("invoice-id");
-        assertThat(node.getTextContent()).isEqualTo("I-0123456");
+        assertThat(copy.getData()).isInstanceOf(Invoice.class);
+        assertThat(((Invoice) copy.getData()).getId()).isEqualTo("I-0123456");
 
         // TEST
-        final String copyXml = marshal(copy, XmlResult.class);
+        final String copyXml = marshal(copy, XmlResult.class, Invoice.class);
 
         // VERIFY
         final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
@@ -150,22 +136,21 @@ public final class XmlResultTest {
         final String xml = IOUtils.toString(this.getClass().getResourceAsStream("/xml-result-exception.xml"), "utf-8");
 
         // TEST
-        final XmlResult<Void> copy = unmarshal(xml, XmlResult.class, AggregateNotFoundException.class);
+        final XmlResult<AggregateNotFoundException.Data> copy = unmarshal(xml, XmlResult.class, AggregateNotFoundException.Data.class);
 
         // VERIFY
         final String msg = "Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found";
         assertThat(copy.getCode()).isEqualTo("DDD4J-AGGREGATE_NOT_FOUND");
         assertThat(copy.getType()).isEqualTo(ResultType.ERROR);
         assertThat(copy.getMessage()).isEqualTo(msg);
-        assertThat(copy.getData()).isNull();
-        assertThat(copy.getException()).isInstanceOf(AggregateNotFoundException.class);
-        final AggregateNotFoundException anfe = (AggregateNotFoundException) copy.getException();
+        assertThat(copy.getData()).isInstanceOf(AggregateNotFoundException.Data.class);
+        final AggregateNotFoundException anfe = (AggregateNotFoundException) copy.getData().toException();
         assertThat(anfe.getMessage()).isEqualTo(msg);
         assertThat(anfe.getAggregateType()).isEqualTo("Invoice");
         assertThat(anfe.getAggregateId()).isEqualTo("4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119");
 
         // TEST
-        final String copyXml = marshal(copy, XmlResult.class, AggregateNotFoundException.class);
+        final String copyXml = marshal(copy, XmlResult.class, AggregateNotFoundException.Data.class);
 
         // VERIFY
         final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
@@ -227,17 +212,19 @@ public final class XmlResultTest {
 
     }
 
-    @XmlRootElement(name = "data")
-    public static final class Data {
+    @XmlRootElement(name = "invoice")
+    @XmlAccessorType(XmlAccessType.NONE)
+    public static class Invoice implements MarshalUnmarshalInformation<Invoice> {
 
-        @XmlValue
-        private int id;
+        @JsonbProperty("id")
+        @XmlElement(name = "id")
+        private String id;
 
-        protected Data() {
+        protected Invoice() {
             super();
         }
 
-        public Data(final int id) {
+        public Invoice(String id) {
             super();
             this.id = id;
         }
@@ -246,31 +233,49 @@ public final class XmlResultTest {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + id;
+            result = prime * result + ((id == null) ? 0 : id.hashCode());
             return result;
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (this == obj) {
+            if (this == obj)
                 return true;
-            }
-            if (obj == null) {
+            if (obj == null)
                 return false;
-            }
-            if (!(obj instanceof Data)) {
+            if (getClass() != obj.getClass())
                 return false;
-            }
-            Data other = (Data) obj;
-            if (id != other.id) {
+            Invoice other = (Invoice) obj;
+            if (id == null) {
+                if (other.id != null)
+                    return false;
+            } else if (!id.equals(other.id))
                 return false;
-            }
             return true;
         }
 
         @Override
         public String toString() {
-            return "" + id;
+            return id;
+        }
+
+        @Override
+        public Class<Invoice> getDataClass() {
+            return Invoice.class;
+        }
+
+        @Override
+        public String getDataElement() {
+            return Invoice.class.getName();
+        }
+
+        @Override
+        public Invoice getData() {
+            return this;
+        }
+
+        public String getId() {
+            return id;
         }
 
     }

@@ -1,0 +1,13 @@
+{
+	"type": "ERROR",
+	"code": "DDD4J-AGGREGATE_NOT_FOUND",
+	"message": "Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found",
+	"data-class": "org.fuin.ddd4j.ddd.AggregateNotFoundException$Data",
+	"data-element": "aggregate-not-found-exception",
+	"aggregate-not-found-exception": {
+		"msg": "Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found",
+		"sid": "DDD4J-AGGREGATE_NOT_FOUND",
+		"aggregate-type": "Invoice",
+		"aggregate-id": "4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119"
+	}
+}
