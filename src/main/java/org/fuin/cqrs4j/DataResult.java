@@ -34,14 +34,15 @@ import org.fuin.objects4j.ui.ShortLabel;
 import org.fuin.objects4j.ui.Tooltip;
 
 /**
- * Result of a request. The type signals if the execution was successful or not. In case the the result is not {@link ResultType#OK}, the
- * fields code and message should contain unique information to help the user identifying the cause of the problem.
+ * Result of a request that contains data in addition to the standard result fields. The type signals if the execution was successful or
+ * not. In case the the result is not {@link ResultType#OK}, the fields code and message should contain unique information to help the user
+ * identifying the cause of the problem.
  * 
  * @param <DATA>
  *            Type of data returned in case of success (type = {@link ResultType#OK}).
  */
 @XmlRootElement(name = "result")
-public final class XmlResult<DATA> extends AbstractResult<DATA> {
+public final class DataResult<DATA> extends AbstractResult<DATA> {
 
     private static final long serialVersionUID = 1000L;
 
@@ -68,7 +69,7 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
     /**
      * Protected default constructor for de-serialization.
      */
-    protected XmlResult() { // NOSONAR Ignore uninitialized fields
+    protected DataResult() { // NOSONAR Ignore uninitialized fields
         super();
     }
 
@@ -84,7 +85,7 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
      * @param data
      *            Optional result data.
      */
-    public XmlResult(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message,
+    public DataResult(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message,
             @Nullable final DATA data) {
         super(type, code, message);
         if (data instanceof MarshalUnmarshalInformation) {
@@ -113,7 +114,7 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
      * @param dataElement
      *            Optional name of the data element.
      */
-    public XmlResult(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message, @Nullable final DATA data,
+    public DataResult(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message, @Nullable final DATA data,
             final String dataElement) {
         super(type, code, message);
         this.data = data;
@@ -137,7 +138,7 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
      *            message is <code>null</code>.
      */
     // CHECKSTYLE:OFF:AvoidInlineConditionals
-    public XmlResult(@NotNull final Exception exception) {
+    public DataResult(@NotNull final Exception exception) {
         // CHECKSTYLE:ON
         super(exception);
         if (exception instanceof MarshalUnmarshalInformation) {
@@ -206,7 +207,7 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final XmlResult<?> other = (XmlResult<?>) obj;
+        final DataResult<?> other = (DataResult<?>) obj;
         if (getCode() == null) {
             if (other.getCode() != null) {
                 return false;
@@ -261,8 +262,8 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
      * 
      * @return Result with type {@link ResultType#OK}.
      */
-    public static XmlResult<Void> ok() {
-        return new XmlResult<>(ResultType.OK, null, null, null);
+    public static DataResult<Void> ok() {
+        return new DataResult<>(ResultType.OK, null, null, null);
     }
 
     /**
@@ -276,8 +277,8 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
      * @param <T>
      *            Type of data.
      */
-    public static <T> XmlResult<T> ok(@Nullable final T data) {
-        return new XmlResult<>(ResultType.OK, null, null, data);
+    public static <T> DataResult<T> ok(@Nullable final T data) {
+        return new DataResult<>(ResultType.OK, null, null, data);
     }
 
     /**
@@ -293,8 +294,8 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
      * @param <T>
      *            Type of data.
      */
-    public static <T> XmlResult<T> ok(@Nullable final T data, final String dataElement) {
-        return new XmlResult<>(ResultType.OK, null, null, data, dataElement);
+    public static <T> DataResult<T> ok(@Nullable final T data, final String dataElement) {
+        return new DataResult<>(ResultType.OK, null, null, data, dataElement);
     }
 
     /**
@@ -310,10 +311,10 @@ public final class XmlResult<DATA> extends AbstractResult<DATA> {
      * @param <T>
      *            Not used.
      */
-    public static <T> XmlResult<T> error(@NotNull final String code, @NotNull final String message) {
+    public static <T> DataResult<T> error(@NotNull final String code, @NotNull final String message) {
         Contract.requireArgNotNull("code", code);
         Contract.requireArgNotNull("message", message);
-        return new XmlResult<>(ResultType.ERROR, code, message, null);
+        return new DataResult<>(ResultType.ERROR, code, message, null);
     }
 
 }

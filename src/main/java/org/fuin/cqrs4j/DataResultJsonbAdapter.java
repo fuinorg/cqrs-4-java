@@ -20,8 +20,8 @@ package org.fuin.cqrs4j;
 import static org.fuin.cqrs4j.AbstractResult.CODE_PROPERTY;
 import static org.fuin.cqrs4j.AbstractResult.MESSAGE_PROPERTY;
 import static org.fuin.cqrs4j.AbstractResult.TYPE_PROPERTY;
-import static org.fuin.cqrs4j.XmlResult.DATA_CLASS_PROPERTY;
-import static org.fuin.cqrs4j.XmlResult.DATA_ELEMENT_PROPERTY;
+import static org.fuin.cqrs4j.DataResult.DATA_CLASS_PROPERTY;
+import static org.fuin.cqrs4j.DataResult.DATA_ELEMENT_PROPERTY;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -41,10 +41,10 @@ import javax.validation.constraints.NotNull;
 import org.fuin.objects4j.common.Contract;
 
 /**
- * Converts an {@link XmlResult} from/to JSON.
+ * Converts an {@link DataResult} from/to JSON.
  */
 @SuppressWarnings("rawtypes")
-public final class XmlResultJsonbAdapter implements JsonbAdapter<XmlResult, JsonObject> {
+public final class DataResultJsonbAdapter implements JsonbAdapter<DataResult, JsonObject> {
 
     private final Jsonb jsonb;
 
@@ -54,37 +54,37 @@ public final class XmlResultJsonbAdapter implements JsonbAdapter<XmlResult, Json
      * @param jsonb
      *            Jsonb instance used to marshal/unmarshal the data object.
      */
-    public XmlResultJsonbAdapter(@NotNull final Jsonb jsonb) {
+    public DataResultJsonbAdapter(@NotNull final Jsonb jsonb) {
         super();
         Contract.requireArgNotNull("jsonb", jsonb);
         this.jsonb = jsonb;
     }
 
     @Override
-    public JsonObject adaptToJson(final XmlResult xmlResult) throws Exception {
+    public JsonObject adaptToJson(final DataResult result) throws Exception {
         final JsonObjectBuilder builder = Json.createObjectBuilder();
-        builder.add(TYPE_PROPERTY, xmlResult.getType().name());
-        if (xmlResult.getCode() != null) {
-            builder.add(CODE_PROPERTY, xmlResult.getCode());
+        builder.add(TYPE_PROPERTY, result.getType().name());
+        if (result.getCode() != null) {
+            builder.add(CODE_PROPERTY, result.getCode());
         }
-        if (xmlResult.getMessage() != null) {
-            builder.add(MESSAGE_PROPERTY, xmlResult.getMessage());
+        if (result.getMessage() != null) {
+            builder.add(MESSAGE_PROPERTY, result.getMessage());
         }
-        if (xmlResult.getData() != null) {
-            builder.add(DATA_CLASS_PROPERTY, xmlResult.getData().getClass().getName());
-            final String json = jsonb.toJson(xmlResult.getData());
-            final String elName = xmlResult.getDataElement();
+        if (result.getData() != null) {
+            builder.add(DATA_CLASS_PROPERTY, result.getData().getClass().getName());
+            final String json = jsonb.toJson(result.getData());
+            final String elName = result.getDataElement();
             if (elName == null) {
-                throw new IllegalStateException("The 'dataElementName' was empty, but is required fro JSON-B: " + xmlResult);
+                throw new IllegalStateException("The 'dataElementName' was empty, but is required fro JSON-B: " + result);
             }
-            builder.add(DATA_ELEMENT_PROPERTY, xmlResult.getDataElement());
+            builder.add(DATA_ELEMENT_PROPERTY, result.getDataElement());
             builder.add(elName, unmarshal(json));
         }
         return builder.build();
     }
 
     @Override
-    public XmlResult adaptFromJson(final JsonObject jsonObj) throws Exception {
+    public DataResult adaptFromJson(final JsonObject jsonObj) throws Exception {
         final ResultType type = ResultType.valueOf(jsonObj.getString(TYPE_PROPERTY));
         final String code = getString(jsonObj, CODE_PROPERTY);
         final String message = getString(jsonObj, MESSAGE_PROPERTY);
@@ -98,9 +98,9 @@ public final class XmlResultJsonbAdapter implements JsonbAdapter<XmlResult, Json
             final JsonObject data = jsonObj.getJsonObject(dataElement);
             final String json = marshal(data);
             final Object obj = jsonb.fromJson(json, dataClass);
-            return new XmlResult<>(type, code, message, obj, dataElement);
+            return new DataResult<>(type, code, message, obj, dataElement);
         }
-        return new XmlResult<>(type, code, message, null);
+        return new DataResult<>(type, code, message, null);
     }
 
     private String marshal(final JsonObject jsonObj) {

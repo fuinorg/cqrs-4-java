@@ -29,25 +29,25 @@ import javax.json.bind.annotation.JsonbProperty;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.yasson.FieldAccessStrategy;
-import org.fuin.cqrs4j.XmlResultTest.Invoice;
+import org.fuin.cqrs4j.DataResultTest.Invoice;
 import org.fuin.ddd4j.ddd.AggregateNotFoundException;
 import org.junit.Test;
 
 /**
- * Test for the {@link XmlResultJsonbAdapter} class.
+ * Test for the {@link DataResultJsonbAdapter} class.
  */
-public class XmlResultJsonbAdapterTest {
+public class DataResultJsonbAdapterTest {
 
     @Test
     public final void testToFromJson() throws Exception {
 
         // PREPARE
         final Jsonb jsonb = jsonbb();
-        final XmlResult<MyData> original = XmlResult.ok(new MyData(1, "one"), "my-data");
+        final DataResult<MyData> original = DataResult.ok(new MyData(1, "one"), "my-data");
 
         // TEST
         final String json = jsonb.toJson(original);
-        final XmlResult<MyData> copy = jsonb.fromJson(json, XmlResult.class);
+        final DataResult<MyData> copy = jsonb.fromJson(json, DataResult.class);
 
         // VERIFY
         assertThat(copy).isEqualTo(original);
@@ -59,10 +59,10 @@ public class XmlResultJsonbAdapterTest {
 
         // PREPARE
         final Jsonb jsonb = jsonbb();
-        final String jsonOriginal = IOUtils.toString(this.getClass().getResourceAsStream("/xml-result-void.json"), "utf-8");
+        final String jsonOriginal = IOUtils.toString(this.getClass().getResourceAsStream("/data-result-void.json"), "utf-8");
 
         // TEST
-        final XmlResult<Void> original = jsonb.fromJson(jsonOriginal, XmlResult.class);
+        final DataResult<Void> original = jsonb.fromJson(jsonOriginal, DataResult.class);
 
         // VERIFY
         assertThat(original.getType()).isEqualTo(ResultType.OK);
@@ -74,7 +74,7 @@ public class XmlResultJsonbAdapterTest {
 
         // TEST
         final String jsonCopy = jsonb.toJson(original);
-        final XmlResult<Void> copy = jsonb.fromJson(jsonCopy, XmlResult.class);
+        final DataResult<Void> copy = jsonb.fromJson(jsonCopy, DataResult.class);
         assertThat(copy).isEqualTo(original);
 
     }
@@ -130,23 +130,23 @@ public class XmlResultJsonbAdapterTest {
 
         // PREPARE
         final Jsonb jsonb = jsonbb();
-        final String jsonOriginal = IOUtils.toString(this.getClass().getResourceAsStream("/xml-result-data.json"), "utf-8");
+        final String jsonOriginal = IOUtils.toString(this.getClass().getResourceAsStream("/data-result-data.json"), "utf-8");
 
         // TEST
-        final XmlResult<Invoice> original = jsonb.fromJson(jsonOriginal, XmlResult.class);
+        final DataResult<Invoice> original = jsonb.fromJson(jsonOriginal, DataResult.class);
 
         // VERIFY
         assertThat(original.getType()).isEqualTo(ResultType.OK);
         assertThat(original.getCode()).isNull();
         assertThat(original.getMessage()).isNull();
-        assertThat(original.getDataClass()).isEqualTo("org.fuin.cqrs4j.XmlResultTest$Invoice");
+        assertThat(original.getDataClass()).isEqualTo(DataResultTest.Invoice.class.getName());
         assertThat(original.getDataElement()).isEqualTo("invoice");
         assertThat(original.getData()).isInstanceOf(Invoice.class);
         assertThat(((Invoice) original.getData()).getId()).isEqualTo("I-0123456");
 
         // TEST
         final String jsonCopy = jsonb.toJson(original);
-        final XmlResult<Invoice> copy = jsonb.fromJson(jsonCopy, XmlResult.class);
+        final DataResult<Invoice> copy = jsonb.fromJson(jsonCopy, DataResult.class);
         assertThat(copy).isEqualTo(original);
 
     }
@@ -156,10 +156,10 @@ public class XmlResultJsonbAdapterTest {
 
         // PREPARE
         final Jsonb jsonb = jsonbb();
-        final String jsonOriginal = IOUtils.toString(this.getClass().getResourceAsStream("/xml-result-exception.json"), "utf-8");
+        final String jsonOriginal = IOUtils.toString(this.getClass().getResourceAsStream("/data-result-exception.json"), "utf-8");
 
         // TEST
-        final XmlResult<AggregateNotFoundException.Data> original = jsonb.fromJson(jsonOriginal, XmlResult.class);
+        final DataResult<AggregateNotFoundException.Data> original = jsonb.fromJson(jsonOriginal, DataResult.class);
 
         // VERIFY
         assertThat(original.getType()).isEqualTo(ResultType.ERROR);
@@ -171,7 +171,7 @@ public class XmlResultJsonbAdapterTest {
 
         // TEST
         final String jsonCopy = jsonb.toJson(original);
-        final XmlResult<AggregateNotFoundException.Data> copy = jsonb.fromJson(jsonCopy, XmlResult.class);
+        final DataResult<AggregateNotFoundException.Data> copy = jsonb.fromJson(jsonCopy, DataResult.class);
         assertThat(copy).isEqualTo(original);
 
     }
@@ -184,7 +184,7 @@ public class XmlResultJsonbAdapterTest {
 
     private static Jsonb jsonb(final Jsonb jsonb) {
         final JsonbConfig config = new JsonbConfig().withPropertyVisibilityStrategy(new FieldAccessStrategy())
-                .withAdapters(new XmlResultJsonbAdapter(jsonb), new InvoiceIdAdapter());
+                .withAdapters(new DataResultJsonbAdapter(jsonb), new InvoiceIdAdapter());
         return JsonbBuilder.create(config);
     }
 

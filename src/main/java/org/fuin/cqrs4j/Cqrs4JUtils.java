@@ -41,7 +41,7 @@ public final class Cqrs4JUtils {
 
     /** Classes used for JAX-B serialization. */
     public static final List<Class<?>> JAXB_CLASSES = Collections
-            .unmodifiableList(Arrays.asList(XmlResult.class, SimpleResult.class, ConstraintViolationException.class));
+            .unmodifiableList(Arrays.asList(DataResult.class, SimpleResult.class, ConstraintViolationException.class));
 
     private static final Logger LOG = LoggerFactory.getLogger(Cqrs4JUtils.class);
 
