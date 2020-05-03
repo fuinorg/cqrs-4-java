@@ -35,7 +35,7 @@ import org.fuin.ddd4j.ddd.AggregateNotFoundException;
 import org.fuin.ddd4j.ddd.AggregateRootId;
 import org.fuin.ddd4j.ddd.EntityType;
 import org.fuin.ddd4j.ddd.StringBasedEntityType;
-import org.fuin.objects4j.common.MarshalUnmarshalInformation;
+import org.fuin.objects4j.common.MarshalInformation;
 import org.junit.Test;
 import org.w3c.dom.Node;
 import org.xmlunit.builder.DiffBuilder;
@@ -214,7 +214,7 @@ public final class DataResultTest {
 
     @XmlRootElement(name = "invoice")
     @XmlAccessorType(XmlAccessType.NONE)
-    public static class Invoice implements MarshalUnmarshalInformation<Invoice> {
+    public static class Invoice implements MarshalInformation<Invoice> {
 
         @JsonbProperty("id")
         @XmlElement(name = "id")

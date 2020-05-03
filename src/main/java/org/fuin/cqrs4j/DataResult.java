@@ -26,7 +26,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
-import org.fuin.objects4j.common.MarshalUnmarshalInformation;
+import org.fuin.objects4j.common.MarshalInformation;
 import org.fuin.objects4j.common.Nullable;
 import org.fuin.objects4j.ui.Label;
 import org.fuin.objects4j.ui.Prompt;
@@ -88,8 +88,8 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
     public DataResult(@NotNull final ResultType type, @Nullable final String code, @Nullable final String message,
             @Nullable final DATA data) {
         super(type, code, message);
-        if (data instanceof MarshalUnmarshalInformation) {
-            final MarshalUnmarshalInformation mui = (MarshalUnmarshalInformation) data;
+        if (data instanceof MarshalInformation) {
+            final MarshalInformation mui = (MarshalInformation) data;
             this.data = mui.getData();
             this.dataClass = mui.getDataClass().getName();
             this.dataElement = mui.getDataElement();
@@ -128,7 +128,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
     }
 
     /**
-     * Constructor with exception. If the exception is type {@link MarshalUnmarshalInformation} then it will be used as <code>data</code>
+     * Constructor with exception. If the exception is type {@link MarshalInformation} then it will be used as <code>data</code>
      * field, if not data will be <code>null</code>. An exception of type {@link ExceptionShortIdentifable} will be used to fill the
      * <code>code</code> field with the identifier value. If it's not a {@link ExceptionShortIdentifable} the <code>code</code> field will
      * be set using the full qualified class name of the exception.
@@ -141,8 +141,8 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
     public DataResult(@NotNull final Exception exception) {
         // CHECKSTYLE:ON
         super(exception);
-        if (exception instanceof MarshalUnmarshalInformation) {
-            final MarshalUnmarshalInformation mui = (MarshalUnmarshalInformation) exception;
+        if (exception instanceof MarshalInformation) {
+            final MarshalInformation mui = (MarshalInformation) exception;
             this.data = mui.getData();
             this.dataClass = mui.getDataClass().getName();
             this.dataElement = mui.getDataElement();
