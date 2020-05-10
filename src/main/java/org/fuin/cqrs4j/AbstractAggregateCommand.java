@@ -208,6 +208,21 @@ public abstract class AbstractAggregateCommand<ROOT_ID extends AggregateRootId, 
         }
 
         /**
+         * Convenience method to set the entity identifier path if the path has only the aggregate root identifier.
+         * 
+         * @param id
+         *            Aggregate root identifier that will be used to create the entity id path.
+         * 
+         * @return This builder.
+         */
+        @SuppressWarnings("unchecked")
+        public final BUILDER entityIdPath(@NotNull AggregateRootId id) {
+            Contract.requireArgNotNull("id", id);
+            delegate.entityIdPath = new EntityIdPath(id);
+            return (BUILDER) this;
+        }
+
+        /**
          * Sets the expected aggregate version.
          * 
          * @param aggregateVersion
