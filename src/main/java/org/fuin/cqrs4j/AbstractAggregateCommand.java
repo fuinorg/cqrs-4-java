@@ -17,7 +17,6 @@
  */
 package org.fuin.cqrs4j;
 
-import org.fuin.objects4j.common.Nullable;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.json.bind.annotation.JsonbTypeAdapter;
 import javax.validation.constraints.NotNull;
@@ -33,6 +32,7 @@ import org.fuin.ddd4j.ddd.EntityIdPathConverter;
 import org.fuin.ddd4j.ddd.Event;
 import org.fuin.ddd4j.ddd.EventId;
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.common.Nullable;
 
 /**
  * Base class for all commands that are directed to an existing aggregate.
@@ -164,6 +164,82 @@ public abstract class AbstractAggregateCommand<ROOT_ID extends AggregateRootId, 
             return null;
         }
         return aggregateVersion.asBaseType();
+    }
+
+    /**
+     * Base class for event builders.
+     * 
+     * @param <ID>
+     *            Type of the entity identifier.
+     * @param <TYPE>
+     *            Type of the event.
+     * @param <BUILDER>
+     *            Type of the builder.
+     */
+    protected abstract static class Builder<ROOT_ID extends AggregateRootId, ENTITY_ID extends EntityId, TYPE extends AbstractAggregateCommand<ROOT_ID, ENTITY_ID>, BUILDER extends AbstractCommand.Builder<ROOT_ID, TYPE, BUILDER>>
+            extends AbstractCommand.Builder<ROOT_ID, TYPE, BUILDER> {
+
+        private AbstractAggregateCommand<ROOT_ID, ENTITY_ID> delegate;
+
+        /**
+         * Constructor with event.
+         * 
+         * @param delegate
+         *            Event to populate with data.
+         */
+        public Builder(final TYPE delegate) {
+            super(delegate);
+            this.delegate = delegate;
+        }
+
+        /**
+         * Sets the identifier path from aggregate root to the entity that emitted the event.
+         * 
+         * @param entityIdPath
+         *            Path of entity identifiers.
+         * 
+         * @return This builder.
+         */
+        @SuppressWarnings("unchecked")
+        public final BUILDER entityIdPath(@NotNull final EntityIdPath entityIdPath) {
+            Contract.requireArgNotNull("entityIdPath", entityIdPath);
+            delegate.entityIdPath = entityIdPath;
+            return (BUILDER) this;
+        }
+
+        /**
+         * Sets the expected aggregate version.
+         * 
+         * @param aggregateVersion
+         *            Expected aggregate version..
+         * 
+         * @return This builder.
+         */
+        @SuppressWarnings("unchecked")
+        public final BUILDER aggregateVersion(@Nullable final AggregateVersion aggregateVersion) {
+            delegate.aggregateVersion = aggregateVersion;
+            return (BUILDER) this;
+        }
+
+        /**
+         * Ensures that everything is setup for building the object or throws a runtime exception otherwise.
+         */
+        protected final void ensureBuildableAbstractAggregateCommand() {
+            ensureBuildableAbstractCommand();
+            ensureNotNull("entityIdPath", delegate.entityIdPath);
+        }
+
+        /**
+         * Sets the internal instance to a new one. This must be called within the build method.
+         * 
+         * @param delegate
+         *            Delegate to use.
+         */
+        protected final void resetAbstractAggregateCommand(final TYPE delegate) {
+            resetAbstractCommand(delegate);
+            this.delegate = delegate;
+        }
+
     }
 
 }

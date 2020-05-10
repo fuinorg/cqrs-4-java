@@ -156,6 +156,42 @@ public class AbstractAggregateCommandTest {
     }
 
     @Test
+    public final void testBuilder() {
+
+        // PREPARE
+        final EventId eventId = new EventId();
+        final ZonedDateTime timestamp = ZonedDateTime.now();
+        final AId aid = new AId(123L);
+        final EntityIdPath entityIdPath = new EntityIdPath(aid);
+        final AggregateVersion version = new AggregateVersion(1);
+        final EventId correlationId = new EventId();
+        final EventId causationId = new EventId();
+        final MyCommand.Builder testee = new MyCommand.Builder();
+
+        // TEST
+        final MyCommand cmd = testee
+                .eventId(eventId)
+                .timestamp(timestamp)
+                .entityIdPath(entityIdPath)
+                .aggregateVersion(version)
+                .correlationId(correlationId)
+                .causationId(causationId).build();
+
+        // VERIFY
+        assertThat(cmd.getEventId()).isEqualTo(eventId);
+        assertThat(cmd.getTimestamp()).isEqualTo(timestamp);
+        assertThat(cmd.getAggregateRootId()).isEqualTo(aid);
+        assertThat(cmd.getEntityId()).isEqualTo(aid);
+        assertThat(cmd.getAggregateVersion()).isEqualTo(version);
+        assertThat(cmd.getEventId()).isNotNull();
+        assertThat(cmd.getTimestamp()).isNotNull();
+        assertThat(cmd.getCausationId()).isEqualTo(causationId);
+        assertThat(cmd.getCorrelationId()).isEqualTo(correlationId);
+        assertThat(cmd.getEventType()).isEqualTo(MY_COMMAND_TYPE);
+
+    }
+
+    @Test
     public final void testSerializeDeserialize() {
 
         // PREPARE
@@ -282,6 +318,25 @@ public class AbstractAggregateCommandTest {
         @Override
         public EventType getEventType() {
             return MY_COMMAND_TYPE;
+        }
+
+        public static class Builder extends AbstractAggregateCommand.Builder<AId, AId, MyCommand, Builder> {
+
+            private MyCommand delegate;
+
+            public Builder() {
+                super(new MyCommand());
+                delegate = delegate();
+            }
+
+            public MyCommand build() {
+                ensureBuildableAbstractAggregateCommand();
+                final MyCommand result = delegate;
+                delegate = new MyCommand();
+                resetAbstractAggregateCommand(delegate);
+                return result;
+            }
+
         }
 
     }

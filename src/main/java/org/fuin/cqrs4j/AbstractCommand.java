@@ -17,12 +17,13 @@
  */
 package org.fuin.cqrs4j;
 
-import org.fuin.objects4j.common.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.fuin.ddd4j.ddd.AbstractEvent;
+import org.fuin.ddd4j.ddd.EntityId;
 import org.fuin.ddd4j.ddd.Event;
 import org.fuin.ddd4j.ddd.EventId;
+import org.fuin.objects4j.common.Nullable;
 
 /**
  * Base class for all commands.
@@ -58,6 +59,52 @@ public abstract class AbstractCommand extends AbstractEvent implements Command {
      */
     public AbstractCommand(@Nullable final EventId correlationId, @Nullable final EventId causationId) {
         super(correlationId, causationId);
+    }
+
+    /**
+     * Base class for event builders.
+     * 
+     * @param <ID>
+     *            Type of the entity identifier.
+     * @param <TYPE>
+     *            Type of the event.
+     * @param <BUILDER>
+     *            Type of the builder.
+     */
+    protected abstract static class Builder<ID extends EntityId, TYPE extends AbstractCommand, BUILDER extends Builder<ID, TYPE, BUILDER>>
+            extends AbstractEvent.Builder<TYPE, BUILDER> {
+
+        private AbstractCommand delegate;
+
+        /**
+         * Constructor with event.
+         * 
+         * @param delegate
+         *            Event to populate with data.
+         */
+        public Builder(final TYPE delegate) {
+            super(delegate);
+            this.delegate = delegate;
+        }
+
+        /**
+         * Ensures that everything is setup for building the object or throws a runtime exception otherwise.
+         */
+        protected final void ensureBuildableAbstractCommand() {
+            ensureBuildableAbstractEvent();
+        }
+
+        /**
+         * Sets the internal instance to a new one. This must be called within the build method.
+         * 
+         * @param delegate
+         *            Delegate to use.
+         */
+        protected final void resetAbstractCommand(final TYPE delegate) {
+            resetAbstractEvent(delegate);
+            this.delegate = delegate;
+        }
+
     }
 
 }
