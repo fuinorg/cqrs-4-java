@@ -43,20 +43,4 @@ public interface AggregateCommand<ROOT_ID extends AggregateRootId, ENTITY_ID ext
     @NotNull
     public ROOT_ID getAggregateRootId();
 
-    /**
-     * Returns the aggregate version.
-     * 
-     * @return Expected version.
-     */
-    @Nullable
-    public AggregateVersion getAggregateVersion();
-
-    /**
-     * Returns the aggregate version as integer. This is a null safe shortcut for <code>getAggregateVersion().asBaseType()</code>-
-     * 
-     * @return Expected version or {@literal null}.
-     */
-    @Nullable
-    public Integer getAggregateVersionInteger();
-
 }
