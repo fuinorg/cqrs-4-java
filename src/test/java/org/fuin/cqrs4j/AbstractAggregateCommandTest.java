@@ -48,7 +48,7 @@ public class AbstractAggregateCommandTest {
         assertThat(testee.getEntityId()).isEqualTo(aid);
         assertThat(testee.getAggregateVersion()).isEqualTo(version);
         assertThat(testee.getEventId()).isNotNull();
-        assertThat(testee.getTimestamp()).isNotNull();
+        assertThat(testee.getEventTimestamp()).isNotNull();
         assertThat(testee.getCausationId()).isNull();
         assertThat(testee.getCorrelationId()).isNull();
         assertThat(testee.getEventType()).isEqualTo(MY_COMMAND_TYPE);
@@ -72,7 +72,7 @@ public class AbstractAggregateCommandTest {
         assertThat(testee.getEntityId()).isEqualTo(bid);
         assertThat(testee.getAggregateVersion()).isEqualTo(version);
         assertThat(testee.getEventId()).isNotNull();
-        assertThat(testee.getTimestamp()).isNotNull();
+        assertThat(testee.getEventTimestamp()).isNotNull();
         assertThat(testee.getCausationId()).isNull();
         assertThat(testee.getCorrelationId()).isNull();
         assertThat(testee.getEventType()).isEqualTo(MY_COMMAND_TYPE);
@@ -97,7 +97,7 @@ public class AbstractAggregateCommandTest {
         assertThat(testee.getEntityId()).isEqualTo(cid);
         assertThat(testee.getAggregateVersion()).isEqualTo(version);
         assertThat(testee.getEventId()).isNotNull();
-        assertThat(testee.getTimestamp()).isNotNull();
+        assertThat(testee.getEventTimestamp()).isNotNull();
         assertThat(testee.getCausationId()).isNull();
         assertThat(testee.getCorrelationId()).isNull();
         assertThat(testee.getEventType()).isEqualTo(MY_COMMAND_TYPE);
@@ -123,7 +123,7 @@ public class AbstractAggregateCommandTest {
         assertThat(testee.getEntityId()).isEqualTo(aid);
         assertThat(testee.getAggregateVersion()).isEqualTo(version);
         assertThat(testee.getEventId()).isNotNull();
-        assertThat(testee.getTimestamp()).isNotNull();
+        assertThat(testee.getEventTimestamp()).isNotNull();
         assertThat(testee.getCausationId()).isEqualTo(event.getEventId());
         assertThat(testee.getCorrelationId()).isEqualTo(correlationId);
         assertThat(testee.getEventType()).isEqualTo(MY_COMMAND_TYPE);
@@ -148,7 +148,7 @@ public class AbstractAggregateCommandTest {
         assertThat(testee.getEntityId()).isEqualTo(aid);
         assertThat(testee.getAggregateVersion()).isEqualTo(version);
         assertThat(testee.getEventId()).isNotNull();
-        assertThat(testee.getTimestamp()).isNotNull();
+        assertThat(testee.getEventTimestamp()).isNotNull();
         assertThat(testee.getCausationId()).isEqualTo(causationId);
         assertThat(testee.getCorrelationId()).isEqualTo(correlationId);
         assertThat(testee.getEventType()).isEqualTo(MY_COMMAND_TYPE);
@@ -179,12 +179,12 @@ public class AbstractAggregateCommandTest {
 
         // VERIFY
         assertThat(cmd.getEventId()).isEqualTo(eventId);
-        assertThat(cmd.getTimestamp()).isEqualTo(timestamp);
+        assertThat(cmd.getEventTimestamp()).isEqualTo(timestamp);
         assertThat(cmd.getAggregateRootId()).isEqualTo(aid);
         assertThat(cmd.getEntityId()).isEqualTo(aid);
         assertThat(cmd.getAggregateVersion()).isEqualTo(version);
         assertThat(cmd.getEventId()).isNotNull();
-        assertThat(cmd.getTimestamp()).isNotNull();
+        assertThat(cmd.getEventTimestamp()).isNotNull();
         assertThat(cmd.getCausationId()).isEqualTo(causationId);
         assertThat(cmd.getCorrelationId()).isEqualTo(correlationId);
         assertThat(cmd.getEventType()).isEqualTo(MY_COMMAND_TYPE);
@@ -213,7 +213,7 @@ public class AbstractAggregateCommandTest {
         assertThat(copy.getCorrelationId()).isEqualTo(original.getCorrelationId());
         assertThat(copy.getEventId()).isEqualTo(original.getEventId());
         assertThat(copy.getEventType()).isEqualTo(original.getEventType());
-        assertThat(copy.getTimestamp()).isEqualTo(original.getTimestamp());
+        assertThat(copy.getEventTimestamp()).isEqualTo(original.getEventTimestamp());
 
     }
 
@@ -240,7 +240,7 @@ public class AbstractAggregateCommandTest {
         assertThat(copy.getCorrelationId()).isEqualTo(original.getCorrelationId());
         assertThat(copy.getEventId()).isEqualTo(original.getEventId());
         assertThat(copy.getEventType()).isEqualTo(original.getEventType());
-        assertThat(copy.getTimestamp()).isEqualTo(original.getTimestamp());
+        assertThat(copy.getEventTimestamp()).isEqualTo(original.getEventTimestamp());
 
     }
 
@@ -265,7 +265,7 @@ public class AbstractAggregateCommandTest {
         assertThat(copy.getCorrelationId()).isEqualTo(new EventId(UUID.fromString("2a5893a9-00da-4003-b280-98324eccdef1")));
         assertThat(copy.getEventId()).isEqualTo(new EventId(UUID.fromString("f910c6d7-debc-46e1-ae02-9ca6f4658cf5")));
         assertThat(copy.getEventType()).isEqualTo(copy.getEventType());
-        assertThat(copy.getTimestamp()).isEqualTo(ZonedDateTime.of(2016, 9, 18, 10, 38, 8, 0, ZoneId.of("Europe/Berlin")));
+        assertThat(copy.getEventTimestamp()).isEqualTo(ZonedDateTime.of(2016, 9, 18, 10, 38, 8, 0, ZoneId.of("Europe/Berlin")));
 
     }
 
@@ -290,7 +290,7 @@ public class AbstractAggregateCommandTest {
         assertThat(copy.getCorrelationId()).isEqualTo(new EventId(UUID.fromString("2a5893a9-00da-4003-b280-98324eccdef1")));
         assertThat(copy.getEventId()).isEqualTo(new EventId(UUID.fromString("f910c6d7-debc-46e1-ae02-9ca6f4658cf5")));
         assertThat(copy.getEventType()).isEqualTo(copy.getEventType());
-        assertThat(copy.getTimestamp()).isEqualTo(ZonedDateTime.of(2016, 9, 18, 10, 38, 8, 0, ZoneId.of("Europe/Berlin")));
+        assertThat(copy.getEventTimestamp()).isEqualTo(ZonedDateTime.of(2016, 9, 18, 10, 38, 8, 0, ZoneId.of("Europe/Berlin")));
 
     }
 
