@@ -1,9 +1,6 @@
-cqrs-4-java
-===========
+# cqrs-4-java
 
-Command Query Responsibility Segregation for Java
--------------------------------------------------
-
+# Command Query Responsibility Segregation for Java
 Base classes for Command Query Responsibility Segregation (CQRS) with Java
 
 [![Build Status](https://jenkins.fuin.org/job/cqrs-4-java/badge/icon)](https://jenkins.fuin.org/job/cqrs-4-java/)
@@ -12,14 +9,16 @@ Base classes for Command Query Responsibility Segregation (CQRS) with Java
 [![LGPLv3 License](http://img.shields.io/badge/license-LGPLv3-blue.svg)](https://www.gnu.org/licenses/lgpl.html)
 [![Java Development Kit 11](https://img.shields.io/badge/JDK-11-green.svg)](https://openjdk.java.net/projects/jdk/11/)
 
-**Java 11 for releases >= 0.3.0** / Java 8 <= 0.2.1
+## Versions
+- (Coming soon) 0.5.x (or later) = **Java 11** with new **jakarta** namespace
+- 0.3.x/0.4.x = **Java 11** before namespace change from 'javax' to 'jakarta'
+- 0.2.1 = **Java 8**
 
 
-Example
--------
+## Example
 See [ddd-cqrs-4-java-example](https://github.com/fuinorg/ddd-cqrs-4-java-example) for example microservices using the classes of this library.
 
-### Snapshots
+## Snapshots
 
 Snapshots can be found on the [OSS Sonatype Snapshots Repository](http://oss.sonatype.org/content/repositories/snapshots/org/fuin "Snapshot Repository"). 
 
