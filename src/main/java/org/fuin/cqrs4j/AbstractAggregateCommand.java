@@ -169,7 +169,9 @@ public abstract class AbstractAggregateCommand<ROOT_ID extends AggregateRootId, 
     /**
      * Base class for event builders.
      * 
-     * @param <ID>
+     * @param <ROOT_ID>
+     *            Type of the aggregate identifier.
+     * @param <ENTITY_ID>
      *            Type of the entity identifier.
      * @param <TYPE>
      *            Type of the event.
