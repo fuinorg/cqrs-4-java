@@ -60,7 +60,7 @@ public final class SimpleEventDispatcher implements EventDispatcher {
     public SimpleEventDispatcher(@NotNull final List<EventHandler> eventHandlers) {
         super();
         Contract.requireArgNotNull("eventHandlers", eventHandlers);
-        if (eventHandlers.size() == 0) {
+        if (eventHandlers.isEmpty()) {
             throw new IllegalArgumentException("The argument 'eventHandlers' cannot be an empty list");
         }
         this.eventHandlers = new HashMap<>();

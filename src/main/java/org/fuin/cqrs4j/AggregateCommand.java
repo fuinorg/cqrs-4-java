@@ -17,11 +17,9 @@
  */
 package org.fuin.cqrs4j;
 
-import org.fuin.objects4j.common.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.fuin.ddd4j.ddd.AggregateRootId;
-import org.fuin.ddd4j.ddd.AggregateVersion;
 import org.fuin.ddd4j.ddd.DomainEvent;
 import org.fuin.ddd4j.ddd.EntityId;
 

@@ -19,13 +19,13 @@ package org.fuin.cqrs4j;
 
 import java.io.Serializable;
 
-import org.fuin.objects4j.common.Nullable;
 import javax.json.bind.annotation.JsonbProperty;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.annotation.XmlElement;
 
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
+import org.fuin.objects4j.common.Nullable;
 import org.fuin.objects4j.ui.Label;
 import org.fuin.objects4j.ui.Prompt;
 import org.fuin.objects4j.ui.ShortLabel;

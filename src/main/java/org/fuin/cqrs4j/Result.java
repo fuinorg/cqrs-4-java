@@ -17,8 +17,9 @@
  */
 package org.fuin.cqrs4j;
 
-import org.fuin.objects4j.common.Nullable;
 import javax.validation.constraints.NotNull;
+
+import org.fuin.objects4j.common.Nullable;
 
 /**
  * Result of a request. The type signals if the execution was successful or not. In case the the result is not {@link ResultType#OK}, the

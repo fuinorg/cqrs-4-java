@@ -66,7 +66,7 @@ public abstract class AbstractMultiCommandExecutor<CONTEXT, RESULT> implements C
     public AbstractMultiCommandExecutor(@NotEmpty final List<CommandExecutor> cmdExecutors) {
         super();
         Contract.requireArgNotNull("cmdExecutors", cmdExecutors);
-        if (cmdExecutors.size() == 0) {
+        if (cmdExecutors.isEmpty()) {
             throw new ConstraintViolationException("The argument 'cmdExecutors' cannot be an empty list");
         }
         this.commandExecutors = new HashMap<>();
