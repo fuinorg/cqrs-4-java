@@ -19,7 +19,7 @@ package org.fuin.cqrs4j;
 
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.fuin.ddd4j.ddd.AggregateAlreadyExistsException;
 import org.fuin.ddd4j.ddd.AggregateDeletedException;

@@ -17,7 +17,7 @@
  */
 package org.fuin.cqrs4j;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.fuin.ddd4j.ddd.AggregateRootId;
 import org.fuin.ddd4j.ddd.DomainEvent;

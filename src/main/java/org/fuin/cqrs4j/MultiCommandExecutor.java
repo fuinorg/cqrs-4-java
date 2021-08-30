@@ -19,7 +19,7 @@ package org.fuin.cqrs4j;
 
 import java.util.List;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * Handles multiple commands by delegating the call to other executors.

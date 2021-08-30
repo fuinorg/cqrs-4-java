@@ -10,9 +10,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import javax.validation.Validation;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.validation.Validation;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 import org.fuin.ddd4j.ddd.AbstractEvent;
 import org.fuin.ddd4j.ddd.AggregateVersion;

@@ -19,7 +19,7 @@ package org.fuin.cqrs4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.fuin.ddd4j.ddd.AggregateVersion;
 import org.fuin.ddd4j.ddd.EntityIdPath;

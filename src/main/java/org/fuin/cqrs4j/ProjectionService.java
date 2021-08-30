@@ -17,7 +17,7 @@
  */
 package org.fuin.cqrs4j;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.fuin.esc.api.StreamId;
 

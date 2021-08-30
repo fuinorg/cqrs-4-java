@@ -20,9 +20,9 @@ package org.fuin.cqrs4j;
 
 import java.time.ZonedDateTime;
 
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import com.migesok.jaxb.adapter.javatime.ZonedDateTimeXmlAdapter;
+import io.github.threetenjaxb.core.ZonedDateTimeXmlAdapter;
 
 /**
  * Command Query Responsibility Segregation base classes.

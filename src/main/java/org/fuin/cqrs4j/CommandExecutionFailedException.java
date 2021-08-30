@@ -17,7 +17,7 @@
  */
 package org.fuin.cqrs4j;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * The execution of a command failed. This exception is used for "tunneling" other checked exceptions during command execution.
