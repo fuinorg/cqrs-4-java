@@ -29,7 +29,7 @@ import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventId;
 import org.fuin.esc.api.SimpleCommonEvent;
 import org.fuin.esc.api.TypeName;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 //CHECKSTYLE:OFF
 public final class SimpleEventDispatcherTest {

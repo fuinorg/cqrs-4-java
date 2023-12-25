@@ -18,7 +18,7 @@
 package org.fuin.cqrs4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.fuin.ddd4j.ddd.EventType;
 import org.fuin.objects4j.common.ConstraintViolationException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for {@link MultiCommandExecutor}.

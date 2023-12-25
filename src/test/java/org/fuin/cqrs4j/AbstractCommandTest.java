@@ -1,8 +1,8 @@
 package org.fuin.cqrs4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.fuin.utils4j.JaxbUtils.marshal;
-import static org.fuin.utils4j.JaxbUtils.unmarshal;
+import static org.fuin.utils4j.jaxb.JaxbUtils.marshal;
+import static org.fuin.utils4j.jaxb.JaxbUtils.unmarshal;
 import static org.fuin.utils4j.Utils4J.deserialize;
 import static org.fuin.utils4j.Utils4J.serialize;
 
@@ -16,7 +16,7 @@ import org.fuin.ddd4j.ddd.AbstractEvent;
 import org.fuin.ddd4j.ddd.Event;
 import org.fuin.ddd4j.ddd.EventId;
 import org.fuin.ddd4j.ddd.EventType;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 //CHECKSTYLE:OFF Test code
 public class AbstractCommandTest {

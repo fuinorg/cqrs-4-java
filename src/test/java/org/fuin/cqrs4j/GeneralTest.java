@@ -22,7 +22,7 @@ import static org.fuin.units4j.AssertCoverage.assertEveryClassHasATest;
 import java.io.File;
 
 import org.fuin.units4j.AssertCoverage.ClassFilter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * General tests for the project.
