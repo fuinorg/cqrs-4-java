@@ -18,8 +18,8 @@
 package org.fuin.cqrs4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.fuin.utils4j.JaxbUtils.marshal;
-import static org.fuin.utils4j.JaxbUtils.unmarshal;
+import static org.fuin.utils4j.jaxb.JaxbUtils.marshal;
+import static org.fuin.utils4j.jaxb.JaxbUtils.unmarshal;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -36,8 +36,7 @@ import org.fuin.ddd4j.ddd.AggregateRootId;
 import org.fuin.ddd4j.ddd.EntityType;
 import org.fuin.ddd4j.ddd.StringBasedEntityType;
 import org.fuin.objects4j.common.MarshalInformation;
-import org.junit.Test;
-import org.w3c.dom.Node;
+import org.junit.jupiter.api.Test;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.Diff;
 

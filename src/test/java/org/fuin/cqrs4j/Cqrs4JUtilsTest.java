@@ -26,7 +26,7 @@ import org.fuin.ddd4j.ddd.EntityIdPath;
 import org.fuin.ddd4j.ddd.EventType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.vo.EmailAddressStr;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 // CHECKSTYLE:OFF
 public final class Cqrs4JUtilsTest {

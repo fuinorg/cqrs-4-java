@@ -31,7 +31,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.yasson.FieldAccessStrategy;
 import org.fuin.cqrs4j.DataResultTest.Invoice;
 import org.fuin.ddd4j.ddd.AggregateNotFoundException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test for the {@link DataResultJsonbAdapter} class.

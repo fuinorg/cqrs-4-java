@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.fuin</groupId>
         <artifactId>pom</artifactId>
-        <version>1.7.0</version>
+        <version>1.8.0</version>
     </parent>
 
     <artifactId>cqrs-4-java</artifactId>
@@ -28,7 +28,7 @@
     </issueManagement>
 
     <properties>
-        <esc.version>0.5.0</esc.version>
+        <esc.version>0.6.0</esc.version>
     </properties>
 
     <dependencies>
@@ -38,32 +38,32 @@
         <dependency>
             <groupId>org.fuin</groupId>
             <artifactId>ddd-4-java</artifactId>
-            <version>0.5.0-SNAPSHOT</version>
+            <version>0.5.0</version>
         </dependency>
 
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
-            <version>3.0.0</version>
+            <version>3.0.2</version>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
+            <version>3.14.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.32</version>
+            <version>2.0.9</version>
         </dependency>
 
         <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
-            <version>3.0.0</version>
+            <version>3.1.0</version>
             <optional>true</optional>
         </dependency>
 
@@ -77,44 +77,44 @@
         </dependency>
 
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.20.2</version>
+            <version>3.24.2</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.fuin</groupId>
             <artifactId>units4j</artifactId>
-            <version>0.10.0</version>
+            <version>0.11.0</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
-            <version>7.0.1.Final</version>
+            <version>8.0.1.Final</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>jakarta.el</groupId>
             <artifactId>jakarta.el-api</artifactId>
-            <version>4.0.0</version>
+            <version>5.0.1</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>jakarta.el</artifactId>
-            <version>4.0.1</version>
+            <version>4.0.2</version>
             <scope>test</scope>
         </dependency>
 
@@ -128,35 +128,35 @@
         <dependency>
             <groupId>org.xmlunit</groupId>
             <artifactId>xmlunit-core</artifactId>
-            <version>2.8.2</version>
+            <version>2.9.1</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>nl.jqno.equalsverifier</groupId>
             <artifactId>equalsverifier</artifactId>
-            <version>3.7.1</version>
+            <version>3.15.5</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
+            <version>2.15.1</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
-            <version>3.0.2</version>
+            <version>4.0.4</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse</groupId>
             <artifactId>yasson</artifactId>
-            <version>2.0.2</version>
+            <version>3.0.3</version>
             <scope>test</scope>
         </dependency>
 
