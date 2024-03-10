@@ -21,6 +21,7 @@ import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.annotation.JsonbProperty;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.eclipse.yasson.FieldAccessStrategy;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.ddd4j.core.AggregateNotFoundException;
@@ -31,6 +32,7 @@ import org.fuin.ddd4j.jsonb.AggregateNotFoundExceptionData;
 import org.fuin.objects4j.common.MarshalInformation;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serial;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
@@ -39,6 +41,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class DataResultTest {
 
     private static final EntityType TEST_TYPE = new StringBasedEntityType("Test");
+
+    @Test
+    public final void testEqualsHashCode() {
+        EqualsVerifier.simple().forClass(DataResult.class).verify();
+    }
 
     @Test
     public final void testConstructorAll() {
@@ -129,7 +136,7 @@ public final class DataResultTest {
             assertThat(copy.getCode()).isNull();
             assertThat(copy.getMessage()).isNull();
             assertThat(copy.getData()).isInstanceOf(Invoice.class);
-            assertThat(((Invoice) copy.getData()).getId()).isEqualTo("I-0123456");
+            assertThat(copy.getData().getId()).isEqualTo("I-0123456");
 
             // TEST
             final String copyJson = jsonb.toJson(copy, DataResult.class);
@@ -205,6 +212,7 @@ public final class DataResultTest {
 
     private static class TestId implements AggregateRootId {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         private UUID id = UUID.randomUUID();

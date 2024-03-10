@@ -30,7 +30,9 @@ import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.jaxb.AggregateVersionXmlAdapter;
 import org.fuin.ddd4j.jaxb.EntityIdPathXmlAdapter;
 import org.fuin.objects4j.common.Contract;
-import org.fuin.objects4j.common.Nullable;
+import jakarta.annotation.Nullable;
+
+import java.io.Serial;
 
 /**
  * Base class for all commands that are directed to an existing aggregate.
@@ -41,6 +43,7 @@ import org.fuin.objects4j.common.Nullable;
 public abstract class AbstractAggregateCommand<ROOT_ID extends AggregateRootId, ENTITY_ID extends EntityId> extends AbstractCommand
         implements AggregateCommand<ROOT_ID, ENTITY_ID> {
 
+    @Serial
     private static final long serialVersionUID = 1000L;
 
     @NotNull
@@ -127,7 +130,7 @@ public abstract class AbstractAggregateCommand<ROOT_ID extends AggregateRootId, 
     }
 
     @Override
-    @Nullable
+    @NotNull
     public final ROOT_ID getAggregateRootId() {
         return entityIdPath.first();
     }
@@ -199,7 +202,7 @@ public abstract class AbstractAggregateCommand<ROOT_ID extends AggregateRootId, 
         /**
          * Sets the expected aggregate version.
          *
-         * @param aggregateVersion Expected aggregate version..
+         * @param aggregateVersion Expected aggregate version.
          * @return This builder.
          */
         @SuppressWarnings("unchecked")
@@ -209,7 +212,7 @@ public abstract class AbstractAggregateCommand<ROOT_ID extends AggregateRootId, 
         }
 
         /**
-         * Ensures that everything is setup for building the object or throws a runtime exception otherwise.
+         * Ensures that everything is set up for building the object or throws a runtime exception otherwise.
          */
         protected final void ensureBuildableAbstractAggregateCommand() {
             ensureBuildableAbstractCommand();

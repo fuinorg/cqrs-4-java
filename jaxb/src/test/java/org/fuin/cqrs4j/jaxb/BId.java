@@ -22,10 +22,12 @@ import org.fuin.ddd4j.core.EntityId;
 import org.fuin.ddd4j.core.EntityType;
 import org.fuin.ddd4j.core.StringBasedEntityType;
 
-//CHECKSTYLE:OFF
+import java.io.Serial;
+
 @ArchIgnore
 public class BId implements EntityId {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public static final EntityType TYPE = new StringBasedEntityType("B");

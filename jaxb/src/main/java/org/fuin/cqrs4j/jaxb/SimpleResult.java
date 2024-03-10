@@ -22,16 +22,19 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
-import org.fuin.objects4j.common.Nullable;
+import jakarta.annotation.Nullable;
+
+import java.io.Serial;
 
 /**
- * Result of a request. The type signals if the execution was successful or not. In case the the result is not {@link ResultType#OK}, the
+ * Result of a request. The type signals if the execution was successful or not. In case the result is not {@link ResultType#OK}, the
  * fields code and message should contain unique information to help the user identifying the cause of the problem. A simple result does not
  * carry any additional data.
  */
 @XmlRootElement(name = "result")
 public final class SimpleResult extends AbstractResult<Void> {
 
+    @Serial
     private static final long serialVersionUID = 1000L;
 
     /**
@@ -79,7 +82,7 @@ public final class SimpleResult extends AbstractResult<Void> {
         int result = 1;
         result = prime * result + ((getCode() == null) ? 0 : getCode().hashCode());
         result = prime * result + ((getMessage() == null) ? 0 : getMessage().hashCode());
-        result = prime * result + ((getType() == null) ? 0 : getType().hashCode());
+        result = prime * result + getType().hashCode();
         return result;
     }
 
@@ -109,10 +112,7 @@ public final class SimpleResult extends AbstractResult<Void> {
         } else if (!getMessage().equals(other.getMessage())) {
             return false;
         }
-        if (getType() != other.getType()) {
-            return false;
-        }
-        return true;
+        return getType() == other.getType();
     }
 
     

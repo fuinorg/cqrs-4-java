@@ -36,6 +36,7 @@ public class ArchitectureTest {
                     "org.fuin.objects4j.common..",
                     "org.fuin.objects4j.core..",
                     "jakarta.validation..",
+                    "jakarta.annotation..",
                     "jakarta.xml.bind..",
                     "org.slf4j..",
                     "javax.annotation.concurrent.."

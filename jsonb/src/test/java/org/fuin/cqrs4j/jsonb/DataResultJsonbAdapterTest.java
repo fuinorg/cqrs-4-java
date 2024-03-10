@@ -163,7 +163,7 @@ public class DataResultJsonbAdapterTest {
         assertThat(original.getDataClass()).isEqualTo(DataResultTest.Invoice.class.getName());
         assertThat(original.getDataElement()).isEqualTo("invoice");
         assertThat(original.getData()).isInstanceOf(DataResultTest.Invoice.class);
-        assertThat(((DataResultTest.Invoice) original.getData()).getId()).isEqualTo("I-0123456");
+        assertThat(original.getData().getId()).isEqualTo("I-0123456");
 
         // TEST
         final String jsonCopy = jsonb.toJson(original);

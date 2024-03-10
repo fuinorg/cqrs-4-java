@@ -18,6 +18,7 @@
 package org.fuin.cqrs4j.jsonb;
 
 import jakarta.json.bind.Jsonb;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.ddd4j.core.AggregateNotFoundException;
 import org.fuin.ddd4j.core.AggregateRootId;
@@ -35,6 +36,11 @@ import static org.fuin.cqrs4j.jsonb.TestUtils.jsonb;
 public final class SimpleResultTest {
 
     private static final EntityType TEST_TYPE = new StringBasedEntityType("Test");
+
+    @Test
+    public final void testEqualsHashCode() {
+        EqualsVerifier.simple().forClass(SimpleResult.class).verify();
+    }
 
     @Test
     public final void testConstructorAll() {

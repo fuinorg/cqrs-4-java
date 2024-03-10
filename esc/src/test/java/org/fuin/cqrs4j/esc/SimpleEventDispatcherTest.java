@@ -27,12 +27,12 @@ import org.fuin.esc.api.SimpleCommonEvent;
 import org.fuin.esc.api.TypeName;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-//CHECKSTYLE:OFF
 public final class SimpleEventDispatcherTest {
 
     private static final EventType EVENT_TYPE_A = new EventType("EventA");
@@ -153,6 +153,7 @@ public final class SimpleEventDispatcherTest {
 
     private static class EventA extends AbstractEvent {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         @Override
@@ -164,6 +165,7 @@ public final class SimpleEventDispatcherTest {
 
     private static class EventB extends AbstractEvent {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         @Override

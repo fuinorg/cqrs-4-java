@@ -21,6 +21,7 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.ddd4j.core.AggregateNotFoundException;
 import org.fuin.ddd4j.core.AggregateRootId;
@@ -42,6 +43,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class DataResultTest {
 
     private static final EntityType TEST_TYPE = new StringBasedEntityType("Test");
+
+    @Test
+    public final void testEqualsHashCode() {
+        EqualsVerifier.simple().forClass(DataResult.class).verify();
+    }
 
     @Test
     public final void testConstructorAll() {
@@ -127,7 +133,7 @@ public final class DataResultTest {
         assertThat(copy.getCode()).isNull();
         assertThat(copy.getMessage()).isNull();
         assertThat(copy.getData()).isInstanceOf(Invoice.class);
-        assertThat(((Invoice) copy.getData()).getId()).isEqualTo("I-0123456");
+        assertThat(copy.getData().getId()).isEqualTo("I-0123456");
 
         // TEST
         final String copyXml = JaxbUtils.marshal(copy, DataResult.class, Invoice.class);

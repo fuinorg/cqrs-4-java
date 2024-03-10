@@ -17,13 +17,13 @@ import org.fuin.utils4j.Utils4J;
 import org.fuin.utils4j.jaxb.JaxbUtils;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serial;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-//CHECKSTYLE:OFF Test code
 public class AbstractAggregateCommandTest {
 
     private static final EventType MY_EVENT_TYPE = new EventType("MyEvent");
@@ -295,6 +295,7 @@ public class AbstractAggregateCommandTest {
     @XmlRootElement(name = "my-command")
     public static class MyCommand extends AbstractAggregateCommand<AId, AId> {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         public MyCommand() {
@@ -342,6 +343,7 @@ public class AbstractAggregateCommandTest {
     @XmlRootElement(name = "my-command-2")
     public static class MyCommand2 extends AbstractAggregateCommand<AId, BId> {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         public MyCommand2() {
@@ -370,6 +372,7 @@ public class AbstractAggregateCommandTest {
     @XmlRootElement(name = "my-command-3")
     public static class MyCommand3 extends AbstractAggregateCommand<AId, CId> {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         public MyCommand3() {
@@ -397,6 +400,7 @@ public class AbstractAggregateCommandTest {
 
     public static class MyEvent extends AbstractEvent {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         public MyEvent(EventId correlationId, EventId causationId) {

@@ -25,13 +25,14 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.ddd4j.core.ExceptionData;
 import org.fuin.objects4j.common.Contract;
-import org.fuin.objects4j.common.ExceptionShortIdentifable;
 import org.fuin.objects4j.common.MarshalInformation;
-import org.fuin.objects4j.common.Nullable;
+import jakarta.annotation.Nullable;
 import org.fuin.objects4j.ui.Label;
 import org.fuin.objects4j.ui.Prompt;
 import org.fuin.objects4j.ui.ShortLabel;
 import org.fuin.objects4j.ui.Tooltip;
+
+import java.io.Serial;
 
 /**
  * Result of a request that contains data in addition to the standard result fields. The type signals if the execution was successful or
@@ -44,6 +45,7 @@ import org.fuin.objects4j.ui.Tooltip;
 @XmlRootElement(name = "result")
 public final class DataResult<DATA> extends AbstractResult<DATA> {
 
+    @Serial
     private static final long serialVersionUID = 1000L;
 
     static final String DATA_CLASS_PROPERTY = "data-class";
@@ -62,6 +64,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
     @Prompt("Optional Data")
     @Valid
     @XmlAnyElement(lax = true)
+    @SuppressWarnings("java:S1948") // We assume the unknown data is serializable
     private Object data;
 
     /**
@@ -172,7 +175,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
         int result = 1;
         result = prime * result + ((getCode() == null) ? 0 : getCode().hashCode());
         result = prime * result + ((getMessage() == null) ? 0 : getMessage().hashCode());
-        result = prime * result + ((getType() == null) ? 0 : getType().hashCode());
+        result = prime * result + getType().hashCode();
         result = prime * result + ((dataClass == null) ? 0 : dataClass.hashCode());
         result = prime * result + ((dataElement == null) ? 0 : dataElement.hashCode());
         result = prime * result + ((data == null) ? 0 : data.hashCode());
