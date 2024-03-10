@@ -25,10 +25,13 @@ import org.fuin.esc.api.HasSerializedDataTypeConstant;
 import org.fuin.esc.api.SerializedDataType;
 import org.fuin.esc.api.TypeName;
 
+import java.io.Serial;
+
 @ArchIgnore
 @HasSerializedDataTypeConstant
 public class ACreatedEvent extends AbstractDomainEvent<AId> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /** Unique name of the event. */

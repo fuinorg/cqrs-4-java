@@ -17,6 +17,7 @@
  */
 package org.fuin.cqrs4j.jaxb;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.ddd4j.core.AggregateNotFoundException;
 import org.fuin.ddd4j.core.AggregateRootId;
@@ -28,6 +29,7 @@ import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.Diff;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,6 +37,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class SimpleResultTest {
 
     private static final EntityType TEST_TYPE = new StringBasedEntityType("Test");
+
+    @Test
+    public final void testEqualsHashCode() {
+        EqualsVerifier.simple().forClass(SimpleResult.class).verify();
+    }
 
     @Test
     public final void testConstructorAll() {
@@ -142,6 +149,7 @@ public final class SimpleResultTest {
 
     private static class TestId implements AggregateRootId {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         private UUID id = UUID.randomUUID();

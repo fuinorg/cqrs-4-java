@@ -48,7 +48,7 @@ public interface CommandExecutor<CONTEXT, RESULT, CMD extends Command> {
      * Executes the given command. Only the main aggregate related exceptions are modeled via throws. All other checked exceptions must be
      * wrapped into a {@link CommandExecutionFailedException}.
      *
-     * @param ctx Context of the execute.
+     * @param ctx Context of command to execute.
      * @param cmd Command to execute.
      * @return Result.
      * @throws AggregateVersionConflictException There is a conflict between an expected and an actual version for the aggregate targeted by the command.

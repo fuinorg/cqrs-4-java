@@ -19,11 +19,14 @@ package org.fuin.cqrs4j.core;
 
 import jakarta.validation.constraints.NotNull;
 
+import java.io.Serial;
+
 /**
  * The execution of a command failed. This exception is used for "tunneling" other checked exceptions during command execution.
  */
 public final class CommandExecutionFailedException extends Exception {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

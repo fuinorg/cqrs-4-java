@@ -23,13 +23,16 @@ import org.fuin.ddd4j.core.EntityId;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.jsonb.AbstractEvent;
-import org.fuin.objects4j.common.Nullable;
+import jakarta.annotation.Nullable;
+
+import java.io.Serial;
 
 /**
  * Base class for all commands.
  */
 public abstract class AbstractCommand extends AbstractEvent implements Command {
 
+    @Serial
     private static final long serialVersionUID = 1000L;
 
     /**
@@ -74,8 +77,6 @@ public abstract class AbstractCommand extends AbstractEvent implements Command {
     protected abstract static class Builder<ID extends EntityId, TYPE extends AbstractCommand, BUILDER extends Builder<ID, TYPE, BUILDER>>
             extends AbstractEvent.Builder<TYPE, BUILDER> {
 
-        private AbstractCommand delegate;
-
         /**
          * Constructor with event.
          *
@@ -84,11 +85,10 @@ public abstract class AbstractCommand extends AbstractEvent implements Command {
          */
         public Builder(final TYPE delegate) {
             super(delegate);
-            this.delegate = delegate;
         }
 
         /**
-         * Ensures that everything is setup for building the object or throws a runtime exception otherwise.
+         * Ensures that everything is set up for building the object or throws a runtime exception otherwise.
          */
         protected final void ensureBuildableAbstractCommand() {
             ensureBuildableAbstractEvent();
@@ -102,7 +102,6 @@ public abstract class AbstractCommand extends AbstractEvent implements Command {
          */
         protected final void resetAbstractCommand(final TYPE delegate) {
             resetAbstractEvent(delegate);
-            this.delegate = delegate;
         }
 
     }

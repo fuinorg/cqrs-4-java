@@ -7,6 +7,7 @@ import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.jsonb.AbstractEvent;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serial;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -135,6 +136,7 @@ public class AbstractCommandTest {
 
     public static class MyCommand extends AbstractCommand {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         public MyCommand() {
@@ -158,6 +160,7 @@ public class AbstractCommandTest {
 
     public static class MyEvent extends AbstractEvent {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         public MyEvent(EventId correlationId, EventId causationId) {

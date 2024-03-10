@@ -18,10 +18,10 @@
 package org.fuin.cqrs4j.core;
 
 import jakarta.validation.constraints.NotNull;
-import org.fuin.objects4j.common.Nullable;
+import jakarta.annotation.Nullable;
 
 /**
- * Result of a request. The type signals if the execution was successful or not. In case the the result is not {@link ResultType#OK}, the
+ * Result of a request. The type signals if the execution was successful or not. In case the result is not {@link ResultType#OK}, the
  * fields code and message should contain unique information to help the user identifying the cause of the problem. A result may carry some
  * optional data.
  *

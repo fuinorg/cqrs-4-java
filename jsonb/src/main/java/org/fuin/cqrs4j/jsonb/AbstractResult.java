@@ -23,16 +23,17 @@ import org.fuin.cqrs4j.core.Result;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
-import org.fuin.objects4j.common.Nullable;
+import jakarta.annotation.Nullable;
 import org.fuin.objects4j.ui.Label;
 import org.fuin.objects4j.ui.Prompt;
 import org.fuin.objects4j.ui.ShortLabel;
 import org.fuin.objects4j.ui.Tooltip;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Result of a request. The type signals if the execution was successful or not. In case the the result is not {@link ResultType#OK}, the
+ * Result of a request. The type signals if the execution was successful or not. In case the result is not {@link ResultType#OK}, the
  * fields code and message should contain unique information to help the user identifying the cause of the problem. A result may carry some
  * optional data.
  *
@@ -41,6 +42,7 @@ import java.io.Serializable;
  */
 public abstract class AbstractResult<DATA> implements Result<DATA>, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1000L;
 
     static final String TYPE_PROPERTY = "type";

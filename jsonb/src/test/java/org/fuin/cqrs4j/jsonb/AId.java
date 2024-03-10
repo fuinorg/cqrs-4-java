@@ -22,10 +22,12 @@ import org.fuin.ddd4j.core.AggregateRootId;
 import org.fuin.ddd4j.core.EntityType;
 import org.fuin.ddd4j.core.StringBasedEntityType;
 
-//CHECKSTYLE:OFF
+import java.io.Serial;
+
 @ArchIgnore
 public class AId implements AggregateRootId {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public static final EntityType TYPE = new StringBasedEntityType("A");

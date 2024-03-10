@@ -24,6 +24,7 @@ import org.fuin.ddd4j.core.EventType;
 import org.fuin.objects4j.common.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serial;
 import java.net.InetAddress;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -104,7 +105,7 @@ public class MultiCommandExecutorTest {
     public final void testCreateEmptyArray() {
 
         try {
-            new MultiCommandExecutor<MyContext, Long>(new CommandExecutor[] {});
+            new MultiCommandExecutor<MyContext, Long>();
             fail();
         } catch (final ConstraintViolationException ex) {
             assertThat(ex.getMessage()).isEqualTo("The argument 'cmdExecutors' cannot be an empty list");
@@ -173,6 +174,7 @@ public class MultiCommandExecutorTest {
 
     public static class MyCommand implements Command {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         private static final EventType EVENT_TYPE = new EventType("MyCommand");
