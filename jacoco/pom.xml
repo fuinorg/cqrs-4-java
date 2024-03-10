@@ -26,6 +26,16 @@
             <artifactId>cqrs-4-java-esc</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-jaxb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-jsonb</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
