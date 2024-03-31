@@ -1,10 +1,10 @@
 package org.fuin.cqrs4j.jsonb;
 
-import com.tngtech.archunit.junit.ArchIgnore;
 import org.fuin.ddd4j.core.EntityId;
 import org.fuin.ddd4j.core.EntityIdFactory;
+import org.fuin.utils4j.TestOmitted;
 
-@ArchIgnore
+@TestOmitted("This is only a test class")
 final class MyIdFactory implements EntityIdFactory {
     @Override
     public EntityId createEntityId(final String type, final String id) {

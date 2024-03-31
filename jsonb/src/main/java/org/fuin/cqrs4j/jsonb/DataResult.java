@@ -17,6 +17,7 @@
  */
 package org.fuin.cqrs4j.jsonb;
 
+import jakarta.annotation.Nullable;
 import jakarta.json.bind.annotation.JsonbProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -24,7 +25,6 @@ import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.ddd4j.core.ExceptionData;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.MarshalInformation;
-import jakarta.annotation.Nullable;
 import org.fuin.objects4j.ui.Label;
 import org.fuin.objects4j.ui.Prompt;
 import org.fuin.objects4j.ui.ShortLabel;

@@ -17,14 +17,14 @@
  */
 package org.fuin.cqrs4j.jaxb;
 
-import com.tngtech.archunit.junit.ArchIgnore;
 import org.fuin.ddd4j.core.EntityId;
 import org.fuin.ddd4j.core.EntityType;
 import org.fuin.ddd4j.core.StringBasedEntityType;
+import org.fuin.utils4j.TestOmitted;
 
 import java.io.Serial;
 
-@ArchIgnore
+@TestOmitted("This is only a test class")
 public class CId implements EntityId {
 
     @Serial

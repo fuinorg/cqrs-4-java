@@ -17,17 +17,17 @@
  */
 package org.fuin.cqrs4j.jsonb;
 
-import com.tngtech.archunit.junit.ArchIgnore;
 import org.fuin.ddd4j.core.EntityIdPath;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.jsonb.AbstractDomainEvent;
 import org.fuin.esc.api.HasSerializedDataTypeConstant;
 import org.fuin.esc.api.SerializedDataType;
 import org.fuin.esc.api.TypeName;
+import org.fuin.utils4j.TestOmitted;
 
 import java.io.Serial;
 
-@ArchIgnore
+@TestOmitted("This is only a test class")
 @HasSerializedDataTypeConstant
 public class ACreatedEvent extends AbstractDomainEvent<AId> {
 

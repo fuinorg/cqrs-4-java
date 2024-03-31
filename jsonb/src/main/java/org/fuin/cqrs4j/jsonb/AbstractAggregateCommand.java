@@ -17,6 +17,7 @@
  */
 package org.fuin.cqrs4j.jsonb;
 
+import jakarta.annotation.Nullable;
 import jakarta.json.bind.annotation.JsonbProperty;
 import jakarta.json.bind.annotation.JsonbTypeAdapter;
 import jakarta.validation.constraints.NotNull;
@@ -30,7 +31,6 @@ import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.jsonb.AggregateVersionJsonbAdapter;
 import org.fuin.ddd4j.jsonb.EntityIdPathJsonbAdapter;
 import org.fuin.objects4j.common.Contract;
-import jakarta.annotation.Nullable;
 
 import java.io.Serial;
 

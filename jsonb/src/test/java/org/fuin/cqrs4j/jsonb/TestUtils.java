@@ -1,6 +1,5 @@
 package org.fuin.cqrs4j.jsonb;
 
-import com.tngtech.archunit.junit.ArchIgnore;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.json.bind.JsonbConfig;
@@ -8,13 +7,14 @@ import jakarta.json.bind.config.BinaryDataStrategy;
 import org.eclipse.yasson.FieldAccessStrategy;
 import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.jsonb.EntityIdPathJsonbAdapter;
+import org.fuin.utils4j.TestOmitted;
 
 import java.nio.charset.StandardCharsets;
 
 /**
  * Utils for the package.
  */
-@ArchIgnore
+@TestOmitted("This is only a test class")
 final class TestUtils {
 
     private TestUtils() {

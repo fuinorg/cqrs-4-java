@@ -17,13 +17,13 @@
  */
 package org.fuin.cqrs4j.jsonb;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.core.Command;
 import org.fuin.ddd4j.core.EntityId;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.jsonb.AbstractEvent;
-import jakarta.annotation.Nullable;
 
 import java.io.Serial;
 

@@ -17,12 +17,12 @@
  */
 package org.fuin.cqrs4j.jaxb;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
-import jakarta.annotation.Nullable;
 
 import java.io.Serial;
 

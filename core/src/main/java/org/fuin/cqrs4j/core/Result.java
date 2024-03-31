@@ -17,8 +17,8 @@
  */
 package org.fuin.cqrs4j.core;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Result of a request. The type signals if the execution was successful or not. In case the result is not {@link ResultType#OK}, the

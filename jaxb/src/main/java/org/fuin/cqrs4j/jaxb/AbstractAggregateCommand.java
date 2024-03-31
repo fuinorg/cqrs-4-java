@@ -17,6 +17,7 @@
  */
 package org.fuin.cqrs4j.jaxb;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -30,7 +31,6 @@ import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.jaxb.AggregateVersionXmlAdapter;
 import org.fuin.ddd4j.jaxb.EntityIdPathXmlAdapter;
 import org.fuin.objects4j.common.Contract;
-import jakarta.annotation.Nullable;
 
 import java.io.Serial;
 
