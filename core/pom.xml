@@ -14,7 +14,7 @@
 
     <artifactId>cqrs-4-java-core</artifactId>
     <packaging>jar</packaging>
-    <description>Base classes for Command Query Responsibility Segregation (CQRS) with Java (CORE)</description>
+    <description>${description} (CORE)</description>
 
     <dependencies>
 

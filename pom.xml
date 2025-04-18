@@ -29,9 +29,12 @@
     </issueManagement>
 
     <properties>
-        <esc.version>0.8.0-SNAPSHOT</esc.version>
+        <description>Base classes for Command Query Responsibility Segregation (CQRS) with Java</description>
+        <quarkus.version>3.21.0</quarkus.version>
+        <spring.boot.version>3.4.4</spring.boot.version>
+        <esc.version>0.9.0-SNAPSHOT</esc.version>
         <ddd4j.version>0.6.0-SNAPSHOT</ddd4j.version>
-        <objects4j.version>0.10.0-SNAPSHOT</objects4j.version>
+        <objects4j.version>0.10.0</objects4j.version>
         <archunit.version>1.4.0</archunit.version>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../jacoco/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
@@ -66,11 +69,29 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-springboot</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-quarkus</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <!-- Other -->
 
             <dependency>
                 <groupId>org.fuin.ddd4j</groupId>
                 <artifactId>ddd-4-java-core</artifactId>
+                <version>${ddd4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.ddd4j</groupId>
+                <artifactId>ddd-4-java-codegen-api</artifactId>
                 <version>${ddd4j.version}</version>
             </dependency>
 
@@ -113,6 +134,18 @@
             <dependency>
                 <groupId>org.fuin.objects4j</groupId>
                 <artifactId>objects4j-jaxb</artifactId>
+                <version>${objects4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.objects4j</groupId>
+                <artifactId>objects4j-jackson</artifactId>
+                <version>${objects4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.objects4j</groupId>
+                <artifactId>objects4j-jpa</artifactId>
                 <version>${objects4j.version}</version>
             </dependency>
 
@@ -189,6 +222,24 @@
             </dependency>
 
             <dependency>
+                <groupId>org.fuin.esc</groupId>
+                <artifactId>esc-esgrpc</artifactId>
+                <version>${esc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.esc</groupId>
+                <artifactId>esc-client</artifactId>
+                <version>${esc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.esc</groupId>
+                <artifactId>esc-jsonb</artifactId>
+                <version>${esc.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
                 <version>5.10.5</version>
@@ -203,13 +254,13 @@
             <dependency>
                 <groupId>org.fuin</groupId>
                 <artifactId>utils4j</artifactId>
-                <version>0.14.0-SNAPSHOT</version>
+                <version>0.14.0</version>
             </dependency>
 
             <dependency>
                 <groupId>org.fuin</groupId>
                 <artifactId>units4j</artifactId>
-                <version>0.12.0-SNAPSHOT</version>
+                <version>0.12.0</version>
             </dependency>
 
             <dependency>
@@ -314,6 +365,12 @@
                 <version>5.14.2</version>
             </dependency>
 
+            <dependency>
+                <groupId>io.kurrent</groupId>
+                <artifactId>kurrentdb-client</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+
         </dependencies>
 
     </dependencyManagement>
@@ -376,6 +433,9 @@
         <module>jaxb</module>
         <module>jsonb</module>
         <module>jacoco</module>
+        <module>springboot</module>
+        <module>quarkus</module>
+        <module>test</module>
     </modules>
 
 

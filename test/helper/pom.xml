@@ -7,35 +7,41 @@
 
     <parent>
         <groupId>org.fuin.cqrs4j</groupId>
-        <artifactId>cqrs-4-java</artifactId>
+        <artifactId>cqrs-4-java-test</artifactId>
         <version>0.6.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>cqrs-4-java-jacoco</artifactId>
-    <description>${description} (JACOCO)</description>
+    <artifactId>cqrs-4-java-test-helper</artifactId>
+    <packaging>jar</packaging>
+    <description>${description} (TEST-HELPER)</description>
+
+    <properties>
+        <testcontainers.version>1.20.6</testcontainers.version>
+    </properties>
 
     <dependencies>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-core</artifactId>
-        </dependency>
+        <!-- Compile -->
 
         <dependency>
             <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-esc</artifactId>
+            <artifactId>cqrs-4-java-test-model</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-jaxb</artifactId>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${testcontainers.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-jsonb</artifactId>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mariadb</artifactId>
+            <version>${testcontainers.version}</version>
         </dependency>
+
+        <!-- Test -->
 
     </dependencies>
 
@@ -45,8 +51,12 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.1.1</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
@@ -57,21 +67,9 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>report-aggregate</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report-aggregate</goal>
-                        </goals>
+                        <phase>none</phase>
                     </execution>
                 </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
             </plugin>
 
         </plugins>

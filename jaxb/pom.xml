@@ -14,7 +14,7 @@
 
     <artifactId>cqrs-4-java-jaxb</artifactId>
     <packaging>jar</packaging>
-    <description>Base classes for Command Query Responsibility Segregation (CQRS) with Java (JAXB)</description>
+    <description>${description} (JAXB)</description>
 
     <dependencies>
 

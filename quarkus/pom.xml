@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -12,17 +11,49 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>cqrs-4-java-jsonb</artifactId>
+    <artifactId>cqrs-4-java-quarkus</artifactId>
     <packaging>jar</packaging>
-    <description>${description} (JSON-B)</description>
+    <description>${description} (QUARKUS)</description>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-bom</artifactId>
+                <version>${quarkus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
 
-        <!-- Compile -->
+        <!-- compile -->
 
         <dependency>
             <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-core</artifactId>
+            <artifactId>cqrs-4-java-esc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.esc</groupId>
+            <artifactId>esc-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-scheduler</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-orm</artifactId>
         </dependency>
 
         <dependency>
@@ -31,13 +62,13 @@
         </dependency>
 
         <dependency>
-            <groupId>org.fuin.ddd4j</groupId>
-            <artifactId>ddd-4-java-jsonb</artifactId>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-core</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.fuin</groupId>
-            <artifactId>utils4j</artifactId>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-scheduler-api</artifactId>
         </dependency>
 
         <dependency>
@@ -46,8 +77,38 @@
         </dependency>
 
         <dependency>
-            <groupId>org.fuin.objects4j</groupId>
-            <artifactId>objects4j-ui</artifactId>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin</groupId>
+            <artifactId>utils4j</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus.arc</groupId>
+            <artifactId>arc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-narayana-jta</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.cdi-api</artifactId>
         </dependency>
 
         <dependency>
@@ -56,101 +117,39 @@
         </dependency>
 
         <dependency>
-            <groupId>jakarta.annotation</groupId>
-            <artifactId>jakarta.annotation-api</artifactId>
+            <groupId>org.eclipse.microprofile.config</groupId>
+            <artifactId>microprofile-config-api</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>jakarta.json.bind</groupId>
-            <artifactId>jakarta.json.bind-api</artifactId>
-        </dependency>
+        <!-- test -->
 
         <dependency>
-            <groupId>jakarta.json</groupId>
-            <artifactId>jakarta.json-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.smallrye</groupId>
-            <artifactId>jandex</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-        <!-- Test -->
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.fuin</groupId>
-            <artifactId>units4j</artifactId>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5-mockito</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.fuin.esc</groupId>
-            <artifactId>esc-api</artifactId>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.fuin.esc</groupId>
-            <artifactId>esc-jsonb</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.hibernate.validator</groupId>
-            <artifactId>hibernate-validator</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.glassfish.expressly</groupId>
-            <artifactId>expressly</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.eclipse</groupId>
-            <artifactId>yasson</artifactId>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-test-common</artifactId>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>net.javacrumbs.json-unit</groupId>
-            <artifactId>json-unit-fluent</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>nl.jqno.equalsverifier</groupId>
-            <artifactId>equalsverifier</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -163,6 +162,24 @@
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin</groupId>
+            <artifactId>units4j</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -196,7 +213,7 @@
                     </includes>
                     <archive>
                         <manifestEntries>
-                            <Automatic-Module-Name>org.fuin.cqrs4j.jsonb</Automatic-Module-Name>
+                            <Automatic-Module-Name>org.fuin.cqrs4j.quarkus.core</Automatic-Module-Name>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -231,13 +248,13 @@
                 <configuration>
                     <ignoredUnusedDeclaredDependencies>
                         <ignoredUnusedDeclaredDependency>jakarta.el:jakarta.el-api</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.glassfish.expressly:expressly</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.hibernate.validator:hibernate-validator</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.fuin.esc:esc-jsonb</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>org.glassfish:jakarta.json</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>com.tngtech.archunit:archunit-junit5</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter</ignoredUnusedDeclaredDependency>
-                        <ignoredUnusedDeclaredDependency>com.google.code.gson:gson</ignoredUnusedDeclaredDependency>
+                        <ignoredUnusedDeclaredDependency>io.quarkus:quarkus-scheduler</ignoredUnusedDeclaredDependency>
+                        <ignoredUnusedDeclaredDependency>io.quarkus:quarkus-hibernate-orm</ignoredUnusedDeclaredDependency>
+                        <ignoredUnusedDeclaredDependency>io.quarkus:quarkus-junit5-mockito</ignoredUnusedDeclaredDependency>
+                        <ignoredUnusedDeclaredDependency>org.eclipse:yasson</ignoredUnusedDeclaredDependency>
+                        <ignoredUnusedDeclaredDependency>org.hibernate.validator:hibernate-validator</ignoredUnusedDeclaredDependency>
                     </ignoredUnusedDeclaredDependencies>
                     <ignoredUsedUndeclaredDependencies>
                         <ignoredUsedUndeclaredDependency>com.tngtech.archunit:archunit-junit5-api</ignoredUsedUndeclaredDependency>

@@ -1,0 +1,264 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.fuin.cqrs4j</groupId>
+        <artifactId>cqrs-4-java-test</artifactId>
+        <version>0.6.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>cqrs-4-java-test-quarkus</artifactId>
+    <packaging>jar</packaging>
+    <description>${description} (TEST-QUARKUS)</description>
+
+    <properties>
+        <quarkus.version>3.21.0</quarkus.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-bom</artifactId>
+                <version>${quarkus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+
+        <!-- compile -->
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-quarkus</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-jsonb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-test-model</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-test-helper</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.objects4j</groupId>
+            <artifactId>objects4j-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.objects4j</groupId>
+            <artifactId>objects4j-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.objects4j</groupId>
+            <artifactId>objects4j-jaxb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.objects4j</groupId>
+            <artifactId>objects4j-jpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.objects4j</groupId>
+            <artifactId>objects4j-jsonb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.esc</groupId>
+            <artifactId>esc-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.esc</groupId>
+            <artifactId>esc-jsonb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.esc</groupId>
+            <artifactId>esc-esgrpc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-resteasy</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-resteasy-jsonb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-resteasy-jaxb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-orm</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jdbc-mariadb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-scheduler</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.slf4j</groupId>
+            <artifactId>slf4j-jboss-logmanager</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+
+        <!-- test -->
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mariadb</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.1.1</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${quarkus.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemProperties>
+                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                    </systemProperties>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.2.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                            <systemProperties>
+                                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                            </systemProperties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+        </plugins>
+
+    </build>
+
+</project>

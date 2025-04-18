@@ -14,7 +14,7 @@
 
     <artifactId>cqrs-4-java-esc</artifactId>
     <packaging>jar</packaging>
-    <description>Base classes for Command Query Responsibility Segregation (CQRS) with Java (ESC)</description>
+    <description>${description} (ESC)</description>
 
     <dependencies>
 
@@ -159,7 +159,6 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <configuration>
                     <ignoredUnusedDeclaredDependencies>
-                        <ignoredUnusedDeclaredDependency>jakarta.el:jakarta.el-api</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>org.glassfish.expressly:expressly</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>org.hibernate.validator:hibernate-validator</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>com.tngtech.archunit:archunit-junit5</ignoredUnusedDeclaredDependency>
