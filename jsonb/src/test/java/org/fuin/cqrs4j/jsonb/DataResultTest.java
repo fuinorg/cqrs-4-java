@@ -30,6 +30,9 @@ import org.fuin.ddd4j.core.EntityType;
 import org.fuin.ddd4j.core.StringBasedEntityType;
 import org.fuin.ddd4j.jsonb.AggregateNotFoundExceptionData;
 import org.fuin.objects4j.common.MarshalInformation;
+import org.fuin.objects4j.jsonb.JsonbProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serial;
@@ -41,6 +44,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class DataResultTest {
 
     private static final EntityType TEST_TYPE = new StringBasedEntityType("Test");
+
+    private JsonbProvider jsonbProvider;
+
+    private Jsonb jsonb;
+
+    @BeforeEach
+    public void setUp() {
+        jsonbProvider = jsonbProvider();
+        jsonb = jsonb(jsonbProvider);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        jsonb = null;
+        jsonbProvider = null;
+    }
 
     @Test
     public final void testEqualsHashCode() {
@@ -86,128 +105,112 @@ public final class DataResultTest {
     @Test
     public final void testUnmarshalMarshalVoidResult() throws Exception {
 
-        try (final Jsonb jsonb = jsonbb()) {
+        // PREPARE
+        final String originalJson = """
+                {
+                    "type": "OK"
+                }
+                """;
 
-            // PREPARE
-            final String originalJson = """
-                    {
-                        "type": "OK"
-                    }
-                    """;
+        // TEST
+        final DataResult<Void> copy = jsonb.fromJson(originalJson, DataResult.class);
 
-            // TEST
-            final DataResult<Void> copy = jsonb.fromJson(originalJson, DataResult.class);
+        // VERIFY
+        assertThat(copy.getType()).isEqualTo(ResultType.OK);
 
-            // VERIFY
-            assertThat(copy.getType()).isEqualTo(ResultType.OK);
+        // TEST
+        final String copyJson = jsonb.toJson(copy, DataResult.class);
 
-            // TEST
-            final String copyJson = jsonb.toJson(copy, DataResult.class);
-
-            // VERIFY
-            assertThatJson(copyJson).isEqualTo(originalJson);
-
-        }
+        // VERIFY
+        assertThatJson(copyJson).isEqualTo(originalJson);
 
     }
 
     @Test
     public final void testUnmarshalMarshalDataResult() throws Exception {
 
-        try (final Jsonb jsonb = jsonbb()) {
-
-            // PREPARE
-            final String originalJson = """
-                    {
-                    	"type": "OK",
-                    	"data-class": "org.fuin.cqrs4j.jsonb.DataResultTest$Invoice",
-                    	"data-element": "invoice",
-                    	"invoice": {
-                    		"id" : "I-0123456"
-                    	}
+        // PREPARE
+        final String originalJson = """
+                {
+                    "type": "OK",
+                    "data-class": "org.fuin.cqrs4j.jsonb.DataResultTest$Invoice",
+                    "data-element": "invoice",
+                    "invoice": {
+                        "id" : "I-0123456"
                     }
-                    """;
+                }
+                """;
 
-            // TEST
-            final DataResult<Invoice> copy = jsonb.fromJson(originalJson, DataResult.class);
+        // TEST
+        final DataResult<Invoice> copy = jsonb.fromJson(originalJson, DataResult.class);
 
-            // VERIFY
-            assertThat(copy.getType()).isEqualTo(ResultType.OK);
-            assertThat(copy.getCode()).isNull();
-            assertThat(copy.getMessage()).isNull();
-            assertThat(copy.getData()).isInstanceOf(Invoice.class);
-            assertThat(copy.getData().getId()).isEqualTo("I-0123456");
+        // VERIFY
+        assertThat(copy.getType()).isEqualTo(ResultType.OK);
+        assertThat(copy.getCode()).isNull();
+        assertThat(copy.getMessage()).isNull();
+        assertThat(copy.getData()).isInstanceOf(Invoice.class);
+        assertThat(copy.getData().getId()).isEqualTo("I-0123456");
 
-            // TEST
-            final String copyJson = jsonb.toJson(copy, DataResult.class);
+        // TEST
+        final String copyJson = jsonb.toJson(copy, DataResult.class);
 
-            // VERIFY
-            assertThatJson(copyJson).isEqualTo(originalJson);
-
-        }
+        // VERIFY
+        assertThatJson(copyJson).isEqualTo(originalJson);
 
     }
 
     @Test
     public final void testUnmarshalExceptionResult() throws Exception {
 
-        try (final Jsonb jsonb = jsonbb()) {
-
-            // PREPARE
-            final String originalJson = """
-                    {
-                        "type": "ERROR",
-                        "code": "DDD4J-AGGREGATE_NOT_FOUND",
-                        "message": "Vendor with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found",
-                        "data-class": "org.fuin.ddd4j.jsonb.AggregateNotFoundExceptionData",
-                        "data-element": "aggregate-not-found-exception",
-                        "aggregate-not-found-exception" : {
-                            "msg" : "Vendor with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found",
-                            "sid" : "DDD4J-AGGREGATE_NOT_FOUND",
-                            "aggregate-type" : "Vendor",
-                            "aggregate-id" : "4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119"
-                        }
+        // PREPARE
+        final String originalJson = """
+                {
+                    "type": "ERROR",
+                    "code": "DDD4J-AGGREGATE_NOT_FOUND",
+                    "message": "Vendor with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found",
+                    "data-class": "org.fuin.ddd4j.jsonb.AggregateNotFoundExceptionData",
+                    "data-element": "aggregate-not-found-exception",
+                    "aggregate-not-found-exception" : {
+                        "msg" : "Vendor with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found",
+                        "sid" : "DDD4J-AGGREGATE_NOT_FOUND",
+                        "aggregate-type" : "Vendor",
+                        "aggregate-id" : "4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119"
                     }
-                    """;
+                }
+                """;
 
-            // TEST
-            final DataResult<AggregateNotFoundExceptionData> copy = jsonb.fromJson(originalJson, DataResult.class);
+        // TEST
+        final DataResult<AggregateNotFoundExceptionData> copy = jsonb.fromJson(originalJson, DataResult.class);
 
-            // VERIFY
-            final String msg = "Vendor with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found";
-            assertThat(copy.getCode()).isEqualTo("DDD4J-AGGREGATE_NOT_FOUND");
-            assertThat(copy.getType()).isEqualTo(ResultType.ERROR);
-            assertThat(copy.getMessage()).isEqualTo(msg);
-            assertThat(copy.getData()).isInstanceOf(AggregateNotFoundExceptionData.class);
-            final AggregateNotFoundException anfe = copy.getData().toException();
-            assertThat(anfe.getMessage()).isEqualTo(msg);
-            assertThat(anfe.getType()).isEqualTo("Vendor");
-            assertThat(anfe.getId()).isEqualTo("4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119");
+        // VERIFY
+        final String msg = "Vendor with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found";
+        assertThat(copy.getCode()).isEqualTo("DDD4J-AGGREGATE_NOT_FOUND");
+        assertThat(copy.getType()).isEqualTo(ResultType.ERROR);
+        assertThat(copy.getMessage()).isEqualTo(msg);
+        assertThat(copy.getData()).isInstanceOf(AggregateNotFoundExceptionData.class);
+        final AggregateNotFoundException anfe = copy.getData().toException();
+        assertThat(anfe.getMessage()).isEqualTo(msg);
+        assertThat(anfe.getType()).isEqualTo("Vendor");
+        assertThat(anfe.getId()).isEqualTo("4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119");
 
-            // TEST
-            final String copyJson = jsonb.toJson(copy, DataResult.class);
+        // TEST
+        final String copyJson = jsonb.toJson(copy, DataResult.class);
 
-            // VERIFY
-            assertThatJson(copyJson).isEqualTo(originalJson);
-
-        }
+        // VERIFY
+        assertThatJson(copyJson).isEqualTo(originalJson);
 
     }
 
-    private static Jsonb jsonb() {
+    private static JsonbProvider jsonbProvider() {
         final JsonbConfig config = new JsonbConfig().withPropertyVisibilityStrategy(new FieldAccessStrategy())
                 .withAdapters(new DataResultJsonbAdapterTest.InvoiceIdAdapter());
-        return JsonbBuilder.create(config);
+        return new JsonbProvider(config);
     }
 
-    private static Jsonb jsonb(final Jsonb jsonb) {
+    private static Jsonb jsonb(final JsonbProvider jsonbProvider) {
         final JsonbConfig config = new JsonbConfig().withPropertyVisibilityStrategy(new FieldAccessStrategy())
-                .withAdapters(new DataResultJsonbAdapter(jsonb), new DataResultJsonbAdapterTest.InvoiceIdAdapter());
+                .withAdapters(new DataResultJsonbAdapter(jsonbProvider), new DataResultJsonbAdapterTest.InvoiceIdAdapter());
         return JsonbBuilder.create(config);
-    }
-
-    private static Jsonb jsonbb() {
-        return jsonb(jsonb());
     }
 
     private static class TestId implements AggregateRootId {

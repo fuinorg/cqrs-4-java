@@ -1,19 +1,11 @@
 package org.fuin.cqrs4j.test.helper;
 
 import com.sun.security.auth.module.UnixSystem;
-import org.fuin.cqrs4j.test.model.PersonCreatedEvent;
-import org.fuin.cqrs4j.test.model.PersonId;
-import org.fuin.cqrs4j.test.model.PersonName;
-import org.fuin.ddd4j.core.AggregateVersion;
-import org.fuin.esc.api.CommonEvent;
-import org.fuin.esc.api.SimpleCommonEvent;
-import org.fuin.esc.api.TypeName;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
@@ -59,29 +51,6 @@ public final class TestHelper {
                 .withDatabaseName("testdb")
                 .withUsername("mary")
                 .withPassword("abc");
-    }
-
-    /**
-     * Creates a {@link PersonCreatedEvent} packed into a {@link CommonEvent}.
-     *
-     * @param id   Unique person identifier.
-     * @param name Name of the person.
-     * @return Event to store.
-     */
-    public static CommonEvent createPersonCreatedEvent(PersonId id, PersonName name) {
-        final org.fuin.esc.api.EventId eventId = new org.fuin.esc.api.EventId();
-        final PersonCreatedEvent event = PersonCreatedEvent.builder()
-                .aggregateVersion(AggregateVersion.valueOf(0))
-                .entityIdPath(id)
-                .eventId(new org.fuin.ddd4j.core.EventId(eventId.asBaseType()))
-                .id(id)
-                .name(name)
-                .timestamp(ZonedDateTime.now())
-                .build();
-        return new SimpleCommonEvent(
-                eventId,
-                new TypeName(PersonCreatedEvent.TYPE.asBaseType()),
-                event);
     }
 
 }

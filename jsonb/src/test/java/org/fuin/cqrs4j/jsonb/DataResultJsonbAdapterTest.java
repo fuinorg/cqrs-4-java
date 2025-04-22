@@ -1,17 +1,17 @@
 /**
- * Copyright (C) 2015 Michael Schnell. All rights reserved. 
+ * Copyright (C) 2015 Michael Schnell. All rights reserved.
  * http://www.fuin.org/
- *
+ * <p>
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
  * Software Foundation; either version 3 of the License, or (at your option) any
  * later version.
- *
+ * <p>
  * This library is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
  * details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library. If not, see http://www.gnu.org/licenses/.
  */
@@ -25,6 +25,9 @@ import jakarta.json.bind.annotation.JsonbProperty;
 import org.eclipse.yasson.FieldAccessStrategy;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.ddd4j.jsonb.AggregateNotFoundExceptionData;
+import org.fuin.objects4j.jsonb.JsonbProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -36,11 +39,26 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class DataResultJsonbAdapterTest {
 
+    private JsonbProvider jsonbProvider;
+
+    private Jsonb jsonb;
+
+    @BeforeEach
+    public void setUp() {
+        jsonbProvider = jsonbProvider();
+        jsonb = jsonb(jsonbProvider);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        jsonb = null;
+        jsonbProvider = null;
+    }
+
     @Test
     public final void testToFromJson() throws Exception {
 
         // PREPARE
-        final Jsonb jsonb = jsonbb();
         final DataResult<MyData> original = DataResult.ok(new MyData(1, "one"), "my-data");
 
         // TEST
@@ -56,7 +74,6 @@ public class DataResultJsonbAdapterTest {
     public final void testFromToJsonVoidResult() throws IOException {
 
         // PREPARE
-        final Jsonb jsonb = jsonbb();
         final String jsonOriginal = """
                 {
                     "type": "OK"
@@ -85,7 +102,6 @@ public class DataResultJsonbAdapterTest {
     public final void testFromToJsonSimpleResultOK() throws IOException {
 
         // PREPARE
-        final Jsonb jsonb = jsonbb();
         final String jsonOriginal = """
                 {
                     "type": "OK"
@@ -112,7 +128,6 @@ public class DataResultJsonbAdapterTest {
     public final void testFromToJsonSimpleResultException() throws IOException {
 
         // PREPARE
-        final Jsonb jsonb = jsonbb();
         final String jsonOriginal = """
                 {
                     "type": "ERROR",
@@ -141,7 +156,6 @@ public class DataResultJsonbAdapterTest {
     public final void testFromToJsonResultData() throws IOException {
 
         // PREPARE
-        final Jsonb jsonb = jsonbb();
         final String jsonOriginal = """
                 {
                 	"type": "OK",
@@ -176,7 +190,6 @@ public class DataResultJsonbAdapterTest {
     public final void testFromToJsonResultException() throws IOException {
 
         // PREPARE
-        final Jsonb jsonb = jsonbb();
         final String jsonOriginal = """
                 {
                 	"type": "ERROR",
@@ -211,20 +224,18 @@ public class DataResultJsonbAdapterTest {
 
     }
 
-    private static Jsonb jsonb() {
-        final JsonbConfig config = new JsonbConfig().withPropertyVisibilityStrategy(new FieldAccessStrategy())
+    private static JsonbProvider jsonbProvider() {
+        final JsonbConfig config = new JsonbConfig()
+                .withPropertyVisibilityStrategy(new FieldAccessStrategy())
                 .withAdapters(new InvoiceIdAdapter());
-        return JsonbBuilder.create(config);
+        return new JsonbProvider(config);
     }
 
-    private static Jsonb jsonb(final Jsonb jsonb) {
-        final JsonbConfig config = new JsonbConfig().withPropertyVisibilityStrategy(new FieldAccessStrategy())
-                .withAdapters(new DataResultJsonbAdapter(jsonb), new InvoiceIdAdapter());
+    private static Jsonb jsonb(final JsonbProvider jsonbProvider) {
+        final JsonbConfig config = new JsonbConfig()
+                .withPropertyVisibilityStrategy(new FieldAccessStrategy())
+                .withAdapters(new DataResultJsonbAdapter(jsonbProvider), new InvoiceIdAdapter());
         return JsonbBuilder.create(config);
-    }
-
-    private static Jsonb jsonbb() {
-        return jsonb(jsonb());
     }
 
     public static final class InvoiceId {

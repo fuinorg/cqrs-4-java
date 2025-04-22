@@ -22,11 +22,11 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonWriter;
-import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.jsonb.JsonbProvider;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -38,18 +38,18 @@ import java.io.StringWriter;
 @SuppressWarnings("rawtypes")
 public final class DataResultJsonbAdapter implements JsonbAdapter<DataResult, JsonObject> {
 
-    private final Jsonb jsonb;
+    private final JsonbProvider jsonbProvider;
 
     /**
      * Constructor with jsonb instance.
      * 
-     * @param jsonb
-     *            Jsonb instance used to marshal/unmarshal the data object.
+     * @param jsonbProvider
+     *            Jsonb provider used to retrieve an instance of jsonb to marshal/unmarshal the data object.
      */
-    public DataResultJsonbAdapter(@NotNull final Jsonb jsonb) {
+    public DataResultJsonbAdapter(@NotNull final JsonbProvider jsonbProvider) {
         super();
-        Contract.requireArgNotNull("jsonb", jsonb);
-        this.jsonb = jsonb;
+        Contract.requireArgNotNull("jsonbProvider", jsonbProvider);
+        this.jsonbProvider = jsonbProvider;
     }
 
     @Override
@@ -64,7 +64,7 @@ public final class DataResultJsonbAdapter implements JsonbAdapter<DataResult, Js
         }
         if (result.getData() != null) {
             builder.add(DataResult.DATA_CLASS_PROPERTY, result.getData().getClass().getName());
-            final String json = jsonb.toJson(result.getData());
+            final String json = jsonbProvider.jsonb().toJson(result.getData());
             final String elName = result.getDataElement();
             if (elName == null) {
                 throw new IllegalStateException("The 'dataElementName' was empty, but is required fro JSON-B: " + result);
@@ -89,7 +89,7 @@ public final class DataResultJsonbAdapter implements JsonbAdapter<DataResult, Js
             final String dataElement = getString(jsonObj, DataResult.DATA_ELEMENT_PROPERTY);
             final JsonObject data = jsonObj.getJsonObject(dataElement);
             final String json = marshal(data);
-            final Object obj = jsonb.fromJson(json, dataClass);
+            final Object obj = jsonbProvider.jsonb().fromJson(json, dataClass);
             return new DataResult<>(type, code, message, obj, dataElement);
         }
         return new DataResult<>(type, code, message, null);

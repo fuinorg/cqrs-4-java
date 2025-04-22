@@ -47,7 +47,7 @@
 
         <dependency>
             <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-jsonb</artifactId>
+            <artifactId>cqrs-4-java-jackson</artifactId>
         </dependency>
 
         <dependency>
@@ -57,7 +57,7 @@
 
         <dependency>
             <groupId>org.fuin.esc</groupId>
-            <artifactId>esc-jsonb</artifactId>
+            <artifactId>esc-jackson</artifactId>
         </dependency>
 
         <dependency>
@@ -77,7 +77,7 @@
 
         <dependency>
             <groupId>org.fuin.objects4j</groupId>
-            <artifactId>objects4j-jsonb</artifactId>
+            <artifactId>objects4j-jackson</artifactId>
         </dependency>
 
         <dependency>
@@ -107,11 +107,6 @@
 
         <dependency>
             <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-test-model</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
             <artifactId>cqrs-4-java-test-helper</artifactId>
         </dependency>
 
@@ -128,6 +123,11 @@
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.ddd4j</groupId>
+            <artifactId>ddd-4-java-codegen-api</artifactId>
         </dependency>
 
         <!-- test -->
@@ -180,6 +180,41 @@
         <plugins>
 
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/src-gen/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <generatedSourcesDirectory>${project.basedir}/src-gen/main/java</generatedSourcesDirectory>
+                    <annotationProcessorPaths>
+                        <annotationProcessorPath>
+                            <groupId>org.fuin.ddd4j</groupId>
+                            <artifactId>ddd-4-java-codegen-processor</artifactId>
+                            <version>${ddd4j.version}</version>
+                        </annotationProcessorPath>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>3.1.1</version>
@@ -202,11 +237,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>3.2.2</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
 
             <plugin>

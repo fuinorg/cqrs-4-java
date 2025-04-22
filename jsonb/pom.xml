@@ -51,6 +51,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.fuin.objects4j</groupId>
+            <artifactId>objects4j-jsonb</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
@@ -97,7 +102,6 @@
         <dependency>
             <groupId>org.fuin.esc</groupId>
             <artifactId>esc-api</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -163,6 +167,18 @@
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -238,6 +254,7 @@
                         <ignoredUnusedDeclaredDependency>com.tngtech.archunit:archunit-junit5</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>com.google.code.gson:gson</ignoredUnusedDeclaredDependency>
+                        <ignoredUnusedDeclaredDependency>io.smallrye:jandex</ignoredUnusedDeclaredDependency>
                     </ignoredUnusedDeclaredDependencies>
                     <ignoredUsedUndeclaredDependencies>
                         <ignoredUsedUndeclaredDependency>com.tngtech.archunit:archunit-junit5-api</ignoredUsedUndeclaredDependency>

@@ -7,9 +7,9 @@ import jakarta.json.bind.Jsonb;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.fuin.cqrs4j.test.model.PersonEntity;
-import org.fuin.cqrs4j.test.model.PersonId;
-import org.fuin.cqrs4j.test.model.PersonName;
+import org.fuin.cqrs4j.quarkus.test.model.PersonEntity;
+import org.fuin.cqrs4j.quarkus.test.model.PersonId;
+import org.fuin.cqrs4j.quarkus.test.model.PersonName;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ExpectedVersion;
@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.fuin.cqrs4j.test.helper.TestHelper.createPersonCreatedEvent;
+import static org.fuin.cqrs4j.quarkus.test.QuarkusTestHelper.createPersonCreatedEvent;
 
 /**
  * Tests the JSON-B, JAX-B and JPA adapters.

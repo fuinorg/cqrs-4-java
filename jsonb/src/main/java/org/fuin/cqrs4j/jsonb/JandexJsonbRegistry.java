@@ -5,24 +5,19 @@ import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
 import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.jsonb.EntityIdJsonbAdapter;
-import org.fuin.utils4j.jandex.JandexIndexFileReader;
+import org.fuin.esc.api.DeserializerRegistry;
+import org.fuin.esc.api.SerializerRegistry;
+import org.fuin.objects4j.jsonb.JsonbProvider;
 import org.fuin.utils4j.jandex.JandexUtils;
-import org.jboss.jandex.ClassInfo;
-import org.jboss.jandex.CompositeIndex;
-import org.jboss.jandex.DotName;
-import org.jboss.jandex.IndexView;
-import org.jboss.jandex.Indexer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Registry that is built up by scanning for classes that implement {@link jakarta.json.bind.adapter.JsonbAdapter}.
@@ -41,29 +36,45 @@ public final class JandexJsonbRegistry implements JsonbRegistry {
     /**
      * Constructor without classes directory. Assumes that classes are in "target/classes".
      *
-     * @param entityIdFactory Factory to use in case an adapter requires it for being constructed.
+     * @param entityIdFactory      Factory to use in case an adapter requires it for being constructed.
+     * @param serializerRegistry   Serializer registry used to construct serializers/deserializers.
+     * @param deserializerRegistry Deserializer registry used to construct serializers/deserializers.
+     * @param jsonbProvider        Provides an JSON-B instance.
      */
-    public JandexJsonbRegistry(final EntityIdFactory entityIdFactory) {
-        this(entityIdFactory, new File("target/classes"));
+    public JandexJsonbRegistry(final EntityIdFactory entityIdFactory,
+                               final SerializerRegistry serializerRegistry,
+                               final DeserializerRegistry deserializerRegistry,
+                               final JsonbProvider jsonbProvider) {
+        this(entityIdFactory, serializerRegistry, deserializerRegistry, jsonbProvider, new File("target/classes"));
     }
 
     /**
      * Constructor with classes directories. Most likely only used in tests.
      *
-     * @param entityIdFactory Factory to use in case an adapter requires it for being constructed.
-     * @param classesDirs     Directories with class files.
+     * @param entityIdFactory      Factory to use in case an adapter requires it for being constructed.
+     * @param serializerRegistry   Serializer registry used to construct serializers/deserializers.
+     * @param deserializerRegistry Deserializer registry used to construct serializers/deserializers.
+     * @param jsonbProvider        Provides an JSON-B instance.
+     * @param classesDirs          Directories with class files.
      */
-    public JandexJsonbRegistry(final EntityIdFactory entityIdFactory, final File... classesDirs) {
-        adapters = findImplementingClasses(JsonbAdapter.class, classesDirs).stream()
-                .map(clasz -> (JsonbAdapter<?, ?>) createInstance(entityIdFactory, clasz))
+    public JandexJsonbRegistry(final EntityIdFactory entityIdFactory,
+                               final SerializerRegistry serializerRegistry,
+                               final DeserializerRegistry deserializerRegistry,
+                               final JsonbProvider jsonbProvider,
+                               final File... classesDirs) {
+        adapters = JandexUtils.findImplementors(JsonbAdapter.class, classesDirs).stream()
+                .peek(adapter -> LOG.info("Found {}: {}", JsonbAdapter.class.getSimpleName(), adapter))
+                .map(clasz -> (JsonbAdapter<?, ?>) createInstance(entityIdFactory, serializerRegistry, deserializerRegistry, jsonbProvider, clasz))
                 .filter(Objects::nonNull)
                 .toList();
-        serializers = findImplementingClasses(JsonbSerializer.class, classesDirs).stream()
-                .map(clasz -> (JsonbSerializer<?>) createInstance(entityIdFactory, clasz))
+        serializers = JandexUtils.findImplementors(JsonbSerializer.class, classesDirs).stream()
+                .peek(serializer -> LOG.info("Found {}: {}", JsonbSerializer.class.getSimpleName(), serializer))
+                .map(clasz -> (JsonbSerializer<?>) createInstance(entityIdFactory, serializerRegistry, deserializerRegistry, jsonbProvider, clasz))
                 .filter(Objects::nonNull)
                 .toList();
-        deserializers = findImplementingClasses(JsonbDeserializer.class, classesDirs).stream()
-                .map(clasz -> (JsonbDeserializer<?>) createInstance(entityIdFactory, clasz))
+        deserializers = JandexUtils.findImplementors(JsonbDeserializer.class, classesDirs).stream()
+                .peek(deserializer -> LOG.info("Found {}: {}", JsonbDeserializer.class.getSimpleName(), deserializer))
+                .map(clasz -> (JsonbDeserializer<?>) createInstance(entityIdFactory, serializerRegistry, deserializerRegistry, jsonbProvider, clasz))
                 .filter(Objects::nonNull)
                 .toList();
     }
@@ -84,7 +95,12 @@ public final class JandexJsonbRegistry implements JsonbRegistry {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> T createInstance(final EntityIdFactory entityIdFactory, final Class<?> clasz) {
+    static <T> T createInstance(final EntityIdFactory entityIdFactory,
+                                final SerializerRegistry serializerRegistry,
+                                final DeserializerRegistry deserializerRegistry,
+                                final JsonbProvider jsonbProvider,
+                                final Class<?> clasz) {
+
         final Constructor<?>[] constructors = clasz.getConstructors();
         if (constructors.length == 0) {
             LOG.warn("No public constructor found: {}", clasz.getName());
@@ -92,42 +108,55 @@ public final class JandexJsonbRegistry implements JsonbRegistry {
             for (final Constructor<?> constructor : constructors) {
                 if (constructor.getParameterCount() == 0) {
                     return createInstance(clasz, () -> (T) constructor.newInstance());
-                } else if (constructor.getParameterCount() == 1
-                        && EntityIdFactory.class.isAssignableFrom(constructor.getParameterTypes()[0])) {
-                    return createInstance(clasz, () -> (T) constructor.newInstance(entityIdFactory));
+                } else {
+                    final Optional<Object[]> args = parameters(entityIdFactory, serializerRegistry,
+                            deserializerRegistry, jsonbProvider, constructor);
+                    if (args.isPresent()) {
+                        return createInstance(clasz, () -> (T) constructor.newInstance(args.get()));
+                    }
                 }
             }
+            throw new IllegalArgumentException("Didn't find an appropriate constructor for: '" + clasz.getName());
         }
         return null;
     }
 
-    private static List<Class<?>> findImplementingClasses(final Class<?> intf, final File... classesDirs) {
-        final List<IndexView> indexes = new ArrayList<>();
-        indexes.add(new JandexIndexFileReader.Builder().addDefaultResource().build().loadR());
-        indexes.add(indexClassesDirs(classesDirs));
-        return findImplementingClasses(intf, CompositeIndex.create(indexes));
-    }
-
-    private static IndexView indexClassesDirs(final File... classesDirs) {
-        final Indexer indexer = new Indexer();
-        final List<File> knownClassFiles = new ArrayList<>();
-        for (final File classesDir : classesDirs) {
-            JandexUtils.indexDir(indexer, knownClassFiles, classesDir);
-        }
-        return indexer.complete();
-    }
-
-    private static List<Class<?>> findImplementingClasses(final Class<?> intf, final IndexView index) {
-        List<Class<?>> implementors = new ArrayList<>();
-        final Collection<ClassInfo> implementingClasses = index.getAllKnownImplementors(DotName.createSimple(intf));
-        for (final ClassInfo classInfo : implementingClasses) {
-            if (!Modifier.isAbstract(classInfo.flags()) && !Modifier.isInterface(classInfo.flags())) {
-                final Class<?> implementor = JandexUtils.loadClass(classInfo.name());
-                implementors.add(implementor);
-                LOG.info("Added {} to {}: {}", intf.getSimpleName(), JandexJsonbRegistry.class.getSimpleName(), implementor.getName());
+    static Optional<Object[]> parameters(final EntityIdFactory entityIdFactory,
+                                         final SerializerRegistry serializerRegistry,
+                                         final DeserializerRegistry deserializerRegistry,
+                                         final JsonbProvider jsonbProvider,
+                                         final Constructor<?> constructor) {
+        final Object[] args = new Object[constructor.getParameterCount()];
+        for (int i = 0; i < constructor.getParameterCount(); i++) {
+            final Optional<Object> param = parameter(entityIdFactory, serializerRegistry, deserializerRegistry,
+                    jsonbProvider, constructor.getParameterTypes()[i]);
+            if (param.isPresent()) {
+                args[i] = param.get();
+            } else {
+                return Optional.empty();
             }
         }
-        return implementors;
+        return Optional.of(args);
+    }
+
+    static Optional<Object> parameter(final EntityIdFactory entityIdFactory,
+                                      final SerializerRegistry serializerRegistry,
+                                      final DeserializerRegistry deserializerRegistry,
+                                      final JsonbProvider jsonbProvider,
+                                      Class<?> parameterType) {
+        if (EntityIdFactory.class.isAssignableFrom(parameterType)) {
+            return Optional.of(entityIdFactory);
+        }
+        if (SerializerRegistry.class.isAssignableFrom(parameterType)) {
+            return Optional.of(serializerRegistry);
+        }
+        if (DeserializerRegistry.class.isAssignableFrom(parameterType)) {
+            return Optional.of(deserializerRegistry);
+        }
+        if (JsonbProvider.class.isAssignableFrom(parameterType)) {
+            return Optional.of(jsonbProvider);
+        }
+        return Optional.empty();
     }
 
     private static <T> T createInstance(final Class<?> clasz, final NewInstanceSupplier<T> supplier) {
@@ -140,9 +169,7 @@ public final class JandexJsonbRegistry implements JsonbRegistry {
     }
 
     private interface NewInstanceSupplier<T> {
-
         T supply() throws InstantiationException, IllegalAccessException, InvocationTargetException;
-
     }
 
 }

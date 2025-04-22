@@ -32,9 +32,12 @@
         <description>Base classes for Command Query Responsibility Segregation (CQRS) with Java</description>
         <quarkus.version>3.21.0</quarkus.version>
         <spring.boot.version>3.4.4</spring.boot.version>
+        <jackson.version>2.18.2</jackson.version>
         <esc.version>0.9.0-SNAPSHOT</esc.version>
-        <ddd4j.version>0.6.0-SNAPSHOT</ddd4j.version>
-        <objects4j.version>0.10.0</objects4j.version>
+        <ddd4j.version>0.7.0-SNAPSHOT</ddd4j.version>
+        <objects4j.version>0.11.0-SNAPSHOT</objects4j.version>
+        <utils4j.version>0.15.0-SNAPSHOT</utils4j.version>
+        <units4j.version>0.12.0</units4j.version>
         <archunit.version>1.4.0</archunit.version>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../jacoco/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
@@ -60,6 +63,12 @@
             <dependency>
                 <groupId>org.fuin.cqrs4j</groupId>
                 <artifactId>cqrs-4-java-jsonb</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-jackson</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -104,6 +113,12 @@
             <dependency>
                 <groupId>org.fuin.ddd4j</groupId>
                 <artifactId>ddd-4-java-jsonb</artifactId>
+                <version>${ddd4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.ddd4j</groupId>
+                <artifactId>ddd-4-java-jackson</artifactId>
                 <version>${ddd4j.version}</version>
             </dependency>
 
@@ -240,6 +255,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.fuin.esc</groupId>
+                <artifactId>esc-jackson</artifactId>
+                <version>${esc.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
                 <version>5.10.5</version>
@@ -254,13 +275,13 @@
             <dependency>
                 <groupId>org.fuin</groupId>
                 <artifactId>utils4j</artifactId>
-                <version>0.14.0</version>
+                <version>${utils4j.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.fuin</groupId>
                 <artifactId>units4j</artifactId>
-                <version>0.12.0</version>
+                <version>${units4j.version}</version>
             </dependency>
 
             <dependency>
@@ -366,9 +387,39 @@
             </dependency>
 
             <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>5.14.2</version>
+            </dependency>
+
+            <dependency>
                 <groupId>io.kurrent</groupId>
                 <artifactId>kurrentdb-client</artifactId>
                 <version>1.0.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${jackson.version}</version>
             </dependency>
 
         </dependencies>
@@ -432,6 +483,7 @@
         <module>esc</module>
         <module>jaxb</module>
         <module>jsonb</module>
+        <module>jackson</module>
         <module>jacoco</module>
         <module>springboot</module>
         <module>quarkus</module>
