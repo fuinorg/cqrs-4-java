@@ -1,14 +1,9 @@
 package org.fuin.cqrs4j.quarkus.test;
 
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.sun.security.auth.module.UnixSystem;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 import org.fuin.cqrs4j.quarkus.base.EventstoreConfig;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import static org.fuin.cqrs4j.test.helper.TestHelper.createEventstoreContainer;

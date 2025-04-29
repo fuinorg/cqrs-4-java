@@ -5,8 +5,6 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.fuin.cqrs4j.springboot.test.model.PersonEntity;
 import org.fuin.cqrs4j.springboot.test.model.PersonId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
         produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE}
 )
 public class PersonResource {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PersonResource.class);
 
     @PersistenceContext
     EntityManager em;

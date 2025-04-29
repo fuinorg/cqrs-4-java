@@ -46,6 +46,7 @@ public final class TestHelper {
      * @param version Docker image version of the MariaDB image to use.
      * @return Container.
      */
+    @SuppressWarnings("java:S2095") // Resource will be closed after using unit test
     public static MariaDBContainer<?> createMariaDBContainer(String version) {
         return new MariaDBContainer<>("mariadb:" + version)
                 .withDatabaseName("testdb")

@@ -17,6 +17,8 @@
  */
 package org.fuin.cqrs4j.jaxb;
 
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.ddd4j.core.AggregateNotFoundException;
@@ -24,6 +26,8 @@ import org.fuin.ddd4j.core.AggregateRootId;
 import org.fuin.ddd4j.core.EntityType;
 import org.fuin.ddd4j.core.StringBasedEntityType;
 import org.fuin.utils4j.jaxb.JaxbUtils;
+import org.fuin.utils4j.jaxb.MarshallerBuilder;
+import org.fuin.utils4j.jaxb.UnmarshallerBuilder;
 import org.junit.jupiter.api.Test;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.Diff;
@@ -78,10 +82,12 @@ public final class SimpleResultTest {
 
         // PREPARE
         final SimpleResult original = SimpleResult.ok();
+        final Marshaller marshaller = new MarshallerBuilder().addClassesToBeBound(SimpleResult.class).build();
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(SimpleResult.class).build();
 
         // TEST
-        final String xml = JaxbUtils.marshal(original, SimpleResult.class);
-        final SimpleResult copy = JaxbUtils.unmarshal(xml, SimpleResult.class);
+        final String xml = JaxbUtils.marshal(marshaller, original);
+        final SimpleResult copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         assertThat(original).isEqualTo(copy);
@@ -99,14 +105,17 @@ public final class SimpleResultTest {
                 </result>
                 """;
 
+        final Marshaller marshaller = new MarshallerBuilder().addClassesToBeBound(SimpleResult.class).build();
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(SimpleResult.class).build();
+
         // TEST
-        final SimpleResult copy = JaxbUtils.unmarshal(xml, SimpleResult.class);
+        final SimpleResult copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         assertThat(copy.getType()).isEqualTo(ResultType.OK);
 
         // TEST
-        final String copyXml = JaxbUtils.marshal(copy, SimpleResult.class);
+        final String copyXml = JaxbUtils.marshal(marshaller, copy);
 
         // VERIFY
         final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
@@ -128,8 +137,11 @@ public final class SimpleResultTest {
                 </result>
                 """;
 
+        final Marshaller marshaller = new MarshallerBuilder().addClassesToBeBound(SimpleResult.class).build();
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(SimpleResult.class).build();
+
         // TEST
-        final SimpleResult copy = JaxbUtils.unmarshal(xml, SimpleResult.class);
+        final SimpleResult copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         final String msg = "Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found";
@@ -138,7 +150,7 @@ public final class SimpleResultTest {
         assertThat(copy.getMessage()).isEqualTo(msg);
 
         // TEST
-        final String copyXml = JaxbUtils.marshal(copy, SimpleResult.class, AggregateNotFoundException.class);
+        final String copyXml = JaxbUtils.marshal(marshaller, copy);
 
         // VERIFY
         final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();

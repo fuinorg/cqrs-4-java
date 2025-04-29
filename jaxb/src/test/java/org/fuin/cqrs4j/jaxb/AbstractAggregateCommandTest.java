@@ -1,6 +1,8 @@
 package org.fuin.cqrs4j.jaxb;
 
 import jakarta.validation.Validation;
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.fuin.ddd4j.core.AggregateVersion;
@@ -15,6 +17,8 @@ import org.fuin.ddd4j.jaxb.EntityIdPathXmlAdapter;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.utils4j.Utils4J;
 import org.fuin.utils4j.jaxb.JaxbUtils;
+import org.fuin.utils4j.jaxb.MarshallerBuilder;
+import org.fuin.utils4j.jaxb.UnmarshallerBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serial;
@@ -227,8 +231,10 @@ public class AbstractAggregateCommandTest {
         final MyCommand original = new MyCommand(entityIdPath, version, correlationId, causationId);
 
         // TEST
-        final String xml = JaxbUtils.marshal(original, createXmlAdapter(), MyCommand.class);
-        final MyCommand copy = JaxbUtils.unmarshal(xml, createXmlAdapter(), MyCommand.class);
+        final Marshaller marshaller = new MarshallerBuilder().addClassesToBeBound(MyCommand.class).addAdapters(createXmlAdapter()).build();
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(MyCommand.class).addAdapters(createXmlAdapter()).build();
+        final String xml = JaxbUtils.marshal(marshaller, original);
+        final MyCommand copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         assertThat(copy).isEqualTo(original);
@@ -252,8 +258,10 @@ public class AbstractAggregateCommandTest {
                 + "<correlation-id>2a5893a9-00da-4003-b280-98324eccdef1</correlation-id>"
                 + "<causation-id>f13d3481-51b7-423f-8fe7-5c342f7d7c46</causation-id></my-command>";
 
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(MyCommand.class).addAdapters(createXmlAdapter()).build();
+
         // TEST
-        final MyCommand copy = JaxbUtils.unmarshal(xml, createXmlAdapter(), MyCommand.class);
+        final MyCommand copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         Contract.requireValid(Validation.buildDefaultValidatorFactory().getValidator(), copy);
@@ -277,8 +285,10 @@ public class AbstractAggregateCommandTest {
                 + "<correlation-id>2a5893a9-00da-4003-b280-98324eccdef1</correlation-id>"
                 + "<causation-id>f13d3481-51b7-423f-8fe7-5c342f7d7c46</causation-id></my-command>";
 
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(MyCommand.class).addAdapters(createXmlAdapter()).build();
+
         // TEST
-        final MyCommand copy = JaxbUtils.unmarshal(xml, createXmlAdapter(), MyCommand.class);
+        final MyCommand copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         Contract.requireValid(Validation.buildDefaultValidatorFactory().getValidator(), copy);

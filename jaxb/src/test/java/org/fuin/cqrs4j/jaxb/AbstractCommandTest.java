@@ -1,5 +1,7 @@
 package org.fuin.cqrs4j.jaxb;
 
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventId;
@@ -7,6 +9,8 @@ import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.jaxb.AbstractEvent;
 import org.fuin.utils4j.Utils4J;
 import org.fuin.utils4j.jaxb.JaxbUtils;
+import org.fuin.utils4j.jaxb.MarshallerBuilder;
+import org.fuin.utils4j.jaxb.UnmarshallerBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.io.Serial;
@@ -87,8 +91,10 @@ public class AbstractCommandTest {
         final MyCommand original = new MyCommand(correlationId, causationId);
 
         // TEST
-        final String xml = JaxbUtils.marshal(original, MyCommand.class);
-        final MyCommand copy = JaxbUtils.unmarshal(xml, MyCommand.class);
+        final Marshaller marshaller = new MarshallerBuilder().addClassesToBeBound(MyCommand.class).build();
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(MyCommand.class).build();
+        final String xml = JaxbUtils.marshal(marshaller, original);
+        final MyCommand copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         assertThat(copy).isEqualTo(original);
@@ -109,8 +115,10 @@ public class AbstractCommandTest {
                 + "<correlation-id>2a5893a9-00da-4003-b280-98324eccdef1</correlation-id>"
                 + "<causation-id>f13d3481-51b7-423f-8fe7-5c342f7d7c46</causation-id></my-command>";
 
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(MyCommand.class).build();
+
         // TEST
-        final MyCommand copy = JaxbUtils.unmarshal(xml, MyCommand.class);
+        final MyCommand copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         assertThat(copy.getCausationId()).isEqualTo(new EventId(UUID.fromString("f13d3481-51b7-423f-8fe7-5c342f7d7c46")));

@@ -183,6 +183,7 @@ class JandexJsonbRegistryTest {
 
     public static class Foo0 {
         public Foo0() {
+            // Test
         }
     }
 

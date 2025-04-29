@@ -17,6 +17,8 @@
  */
 package org.fuin.cqrs4j.jaxb;
 
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
@@ -30,6 +32,8 @@ import org.fuin.ddd4j.core.StringBasedEntityType;
 import org.fuin.ddd4j.jaxb.AggregateNotFoundExceptionData;
 import org.fuin.objects4j.common.MarshalInformation;
 import org.fuin.utils4j.jaxb.JaxbUtils;
+import org.fuin.utils4j.jaxb.MarshallerBuilder;
+import org.fuin.utils4j.jaxb.UnmarshallerBuilder;
 import org.junit.jupiter.api.Test;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.Diff;
@@ -95,14 +99,17 @@ public final class DataResultTest {
                 </result>
                 """;
 
+        final Marshaller marshaller = new MarshallerBuilder().addClassesToBeBound(DataResult.class).build();
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(DataResult.class).build();
+
         // TEST
-        final DataResult<Void> copy = JaxbUtils.unmarshal(xml, DataResult.class);
+        final DataResult<Void> copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         assertThat(copy.getType()).isEqualTo(ResultType.OK);
 
         // TEST
-        final String copyXml = JaxbUtils.marshal(copy, DataResult.class);
+        final String copyXml = JaxbUtils.marshal(marshaller, copy);
 
         // VERIFY
         final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
@@ -125,8 +132,11 @@ public final class DataResultTest {
                 </result>
                 """;
 
+        final Marshaller marshaller = new MarshallerBuilder().addClassesToBeBound(DataResult.class, Invoice.class).build();
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(DataResult.class, Invoice.class).build();
+
         // TEST
-        final DataResult<Invoice> copy = JaxbUtils.unmarshal(xml, DataResult.class, Invoice.class);
+        final DataResult<Invoice> copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         assertThat(copy.getType()).isEqualTo(ResultType.OK);
@@ -136,7 +146,7 @@ public final class DataResultTest {
         assertThat(copy.getData().getId()).isEqualTo("I-0123456");
 
         // TEST
-        final String copyXml = JaxbUtils.marshal(copy, DataResult.class, Invoice.class);
+        final String copyXml = JaxbUtils.marshal(marshaller, copy);
 
         // VERIFY
         final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();
@@ -164,8 +174,11 @@ public final class DataResultTest {
                 </result>
                 """;
 
+        final Marshaller marshaller = new MarshallerBuilder().addClassesToBeBound(DataResult.class, AggregateNotFoundExceptionData.class).build();
+        final Unmarshaller unmarshaller = new UnmarshallerBuilder().addClassesToBeBound(DataResult.class, AggregateNotFoundExceptionData.class).build();
+
         // TEST
-        final DataResult<AggregateNotFoundExceptionData> copy = JaxbUtils.unmarshal(xml, DataResult.class, AggregateNotFoundExceptionData.class);
+        final DataResult<AggregateNotFoundExceptionData> copy = JaxbUtils.unmarshal(unmarshaller, xml);
 
         // VERIFY
         final String msg = "Invoice with id 4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119 not found";
@@ -179,7 +192,7 @@ public final class DataResultTest {
         assertThat(anfe.getId()).isEqualTo("4dcf4c2c-10e1-4db9-ba9e-d1e644e9d119");
 
         // TEST
-        final String copyXml = JaxbUtils.marshal(copy, DataResult.class, AggregateNotFoundExceptionData.class);
+        final String copyXml = JaxbUtils.marshal(marshaller, copy);
 
         // VERIFY
         final Diff documentDiff = DiffBuilder.compare(xml).withTest(copyXml).ignoreWhitespace().build();

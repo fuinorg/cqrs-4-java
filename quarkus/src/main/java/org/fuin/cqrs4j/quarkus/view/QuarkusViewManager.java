@@ -78,17 +78,15 @@ public class QuarkusViewManager {
     }
 
     private void updateView(final ViewExt view) {
-        tryLocked(view.getLock(), () -> {
-            new Thread(() -> {
-                try {
-                    LOG.debug("updateView({})", view.getName());
-                    readStreamEvents(view);
-                } catch (final RuntimeException ex) {
-                    LOG.error("Error reading events from stream", ex);
-                }
+        tryLocked(view.getLock(), () -> new Thread(() -> {
+            try {
+                LOG.debug("updateView({})", view.getName());
+                readStreamEvents(view);
+            } catch (final RuntimeException ex) {
+                LOG.error("Error reading events from stream", ex);
             }
-            ).start();
-        });
+        }
+        ).start());
     }
 
     private void readStreamEvents(final ViewExt view) {

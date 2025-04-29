@@ -29,12 +29,9 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
-import java.util.zip.Adler32;
 
 import static org.fuin.utils4j.Utils4J.tryLocked;
 
@@ -102,11 +99,13 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private void createViews(ScheduledTaskRegistrar taskRegistrar) {
         LOG.info("Create {} views...", rawViews == null ? 0 : rawViews.size());
-        views = rawViews.stream().map(ViewExt::new).toList();
-        for (final ViewExt view : views) {
-            LOG.info("Create view: {}", view.getName());
-            view.setCronTask(new CronTask(() -> updateView(view), view.getCron()));
-            taskRegistrar.addCronTask(view.getCronTask());
+        if (rawViews != null && !rawViews.isEmpty()) {
+            views = rawViews.stream().map(ViewExt::new).toList();
+            for (final ViewExt view : views) {
+                LOG.info("Create view: {}", view.getName());
+                view.setCronTask(new CronTask(() -> updateView(view), view.getCron()));
+                taskRegistrar.addCronTask(view.getCronTask());
+            }
         }
     }
 
@@ -124,17 +123,15 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
 
     private void updateView(final ViewExt view) {
-        tryLocked(view.getLock(), () -> {
-            new Thread(() -> {
-                try {
-                    LOG.debug("updateView({})", view.getName());
-                    readStreamEvents(view);
-                } catch (final RuntimeException ex) {
-                    LOG.error("Error reading events from stream", ex);
-                }
+        tryLocked(view.getLock(), () -> new Thread(() -> {
+            try {
+                LOG.debug("updateView({})", view.getName());
+                readStreamEvents(view);
+            } catch (final RuntimeException ex) {
+                LOG.error("Error reading events from stream", ex);
             }
-            ).start();
-        });
+        }
+        ).start());
     }
 
     private void readStreamEvents(final ViewExt view) {

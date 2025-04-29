@@ -151,6 +151,7 @@ public class QuarkusFactory {
 
     @Produces
     @Dependent
+    @SuppressWarnings("java:S2095") // Resource will be closed with "disposes" method
     public ProjectionAdminEventStore getProjectionAdminEventStore(final KurrentDBWrapper kurrentDBWrapper) {
         return new GrpcProjectionAdminEventStore(kurrentDBWrapper.getProjectionManagementClient()).open();
 

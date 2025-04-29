@@ -281,13 +281,14 @@ public class DataResultJacksonDeserializerTest {
             context.addSerializers(serializers);
 
             final SimpleDeserializers deserializers = new SimpleDeserializers();
-            deserializers.addDeserializer(InvoiceId.class, new ValueObjectStringJacksonDeserializer<>(InvoiceId.class, str -> new InvoiceId(str)));
+            deserializers.addDeserializer(InvoiceId.class, new ValueObjectStringJacksonDeserializer<>(InvoiceId.class, InvoiceId::new));
             context.addDeserializers(deserializers);
         }
 
         @Override
         public Version version() {
-            return new Version(1, 0, 0, null);
+            return new Version(1, 0, 0, null,
+                    "foo", "bar");
         }
 
     }
