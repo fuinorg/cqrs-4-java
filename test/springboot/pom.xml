@@ -130,6 +130,7 @@
             <artifactId>ddd-4-java-codegen-api</artifactId>
         </dependency>
 
+
         <!-- test -->
 
         <dependency>
@@ -171,6 +172,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mariadb</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
