@@ -3,10 +3,10 @@ package org.fuin.cqrs4j.quarkus.test;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.json.bind.Jsonb;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.fuin.cqrs4j.jsonb.JsonbRegistry;
 import org.fuin.cqrs4j.quarkus.test.model.PersonEntity;
 import org.fuin.cqrs4j.quarkus.test.model.PersonId;
 import org.fuin.cqrs4j.quarkus.test.model.PersonName;
@@ -15,6 +15,7 @@ import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ExpectedVersion;
 import org.fuin.esc.api.SimpleStreamId;
 import org.fuin.esc.api.StreamId;
+import org.fuin.objects4j.jsonb.JsonbProvider;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -32,7 +33,8 @@ import java.util.function.Supplier;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.fuin.cqrs4j.quarkus.test.QuarkusTestHelper.createPersonCreatedEvent;
+import static org.fuin.cqrs4j.quarkus.test.QuarkusTestHelper.commonEvent;
+import static org.fuin.cqrs4j.quarkus.test.QuarkusTestHelper.personCreatedEvent;
 
 /**
  * Tests the JSON-B, JAX-B and JPA adapters.
@@ -41,10 +43,10 @@ import static org.fuin.cqrs4j.quarkus.test.QuarkusTestHelper.createPersonCreated
  * <a href="https://github.com/rest-assured/rest-assured/issues/1651">rest-assured issue #1651</a>
  * java.lang.NoClassDefFoundError: javax/json/bind/Jsonb
  */
+@Disabled("Find out why connection to Eventstore hangs (See TODO below)...")
 @QuarkusTest
 @QuarkusTestResource(MariaDbResource.class)
 @QuarkusTestResource(EventstoreResource.class)
-@Disabled("TODO Test does currently not work correctly")
 class QuarkusAppTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(QuarkusAppTest.class);
@@ -55,7 +57,7 @@ class QuarkusAppTest {
     EventStore eventStore;
 
     @Inject
-    Jsonb jsonb;
+    JsonbProvider jsonbProvider;
 
     @ConfigProperty(name = "quarkus.http.port")
     Integer port;
@@ -72,9 +74,9 @@ class QuarkusAppTest {
 
         // Add a created event to the aggregate stream - Should update the view
         final StreamId streamId = new SimpleStreamId(PersonId.TYPE.asString() + "-" + id.asString());
-        final CommonEvent commonEvent = createPersonCreatedEvent(id, name);
+        final CommonEvent commonEvent = commonEvent(personCreatedEvent(id, name));
 
-        LOG.info("Append event to stream: {}", jsonb.toJson(commonEvent));
+        LOG.info("Append event to stream: {}", jsonbProvider.jsonb().toJson(commonEvent));
         // TODO Investigate why Quarkus hangs here!
         eventStore.appendToStream(streamId, ExpectedVersion.NO_OR_EMPTY_STREAM.getNo(), commonEvent);
 
@@ -102,7 +104,7 @@ class QuarkusAppTest {
 
     private PersonEntity fromJson(final String json) {
         LOG.info("Received json: {}", json);
-        return jsonb.fromJson(json, PersonEntity.class);
+        return jsonbProvider.jsonb().fromJson(json, PersonEntity.class);
     }
 
     private static HttpResponse<String> send(final HttpRequest request) {

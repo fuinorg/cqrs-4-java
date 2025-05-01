@@ -20,24 +20,32 @@ public final class QuarkusTestHelper {
     }
 
     /**
-     * Creates a {@link PersonCreatedEvent} packed into a {@link CommonEvent}.
+     * Creates a {@link PersonCreatedEvent}.
      *
      * @param id   Unique person identifier.
      * @param name Name of the person.
      * @return Event to store.
      */
-    public static CommonEvent createPersonCreatedEvent(PersonId id, PersonName name) {
-        final org.fuin.esc.api.EventId eventId = new org.fuin.esc.api.EventId();
-        final PersonCreatedEvent event = PersonCreatedEvent.builder()
+    public static PersonCreatedEvent personCreatedEvent(PersonId id, PersonName name) {
+        return PersonCreatedEvent.builder()
                 .aggregateVersion(AggregateVersion.valueOf(0))
                 .entityIdPath(id)
-                .eventId(new org.fuin.ddd4j.core.EventId(eventId.asBaseType()))
+                .eventId(new org.fuin.ddd4j.core.EventId())
                 .id(id)
                 .name(name)
                 .timestamp(ZonedDateTime.now())
                 .build();
+    }
+
+    /**
+     * Creates a {@link CommonEvent} with a {@link PersonCreatedEvent} inside.
+     *
+     * @param event Event.
+     * @return Event to store.
+     */
+    public static CommonEvent commonEvent(PersonCreatedEvent event) {
         return new SimpleCommonEvent(
-                eventId,
+                new org.fuin.esc.api.EventId(event.getEventId().asString()),
                 new TypeName(PersonCreatedEvent.TYPE.asBaseType()),
                 event);
     }

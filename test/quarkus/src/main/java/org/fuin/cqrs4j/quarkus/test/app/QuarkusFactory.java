@@ -4,13 +4,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Produces;
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
+import jakarta.inject.Singleton;
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
-import jakarta.persistence.EntityManager;
 import org.fuin.cqrs4j.jsonb.JandexJsonbRegistry;
 import org.fuin.cqrs4j.jsonb.JsonbRegistry;
 import org.fuin.cqrs4j.quarkus.base.EventstoreConfig;
@@ -51,21 +49,13 @@ public class QuarkusFactory {
     }
 
     @Produces
+    @Singleton
     public EntityIdFactory entityIdFactory() {
         return new JandexEntityIdFactory();
     }
 
     @Produces
-    public JsonbRegistry jsonbRegistry(final EntityIdFactory entityIdFactory,
-                                       final SerDeserializerRegistry serDeserializerRegistry,
-                                       final JsonbProvider jsonbProvider) {
-        return new JandexJsonbRegistry(entityIdFactory,
-                serDeserializerRegistry,
-                serDeserializerRegistry,
-                jsonbProvider);
-    }
-
-    @Produces
+    @Singleton
     public JsonbConfig jsonbConfig() {
         return new JsonbConfig()
                 .withPropertyVisibilityStrategy(new FieldAccessStrategy())
@@ -73,38 +63,30 @@ public class QuarkusFactory {
     }
 
     @Produces
+    @Singleton
     public JsonbProvider jsonbProvider(JsonbConfig jsonbConfig) {
         return new JsonbProvider(jsonbConfig);
     }
 
     @Produces
+    @Singleton
     public JsonbSerDeserializer jsonbSerDeserializer(JsonbProvider jsonbProvider,
                                                      SerializedDataTypeRegistry typeRegistry) {
         return new JsonbSerDeserializer(jsonbProvider, typeRegistry, StandardCharsets.UTF_8);
     }
 
-    /**
-     * Creates a JSON-B instance.
-     *
-     * @return Fully configured instance.
-     */
     @Produces
-    public Jsonb createJsonb(JsonbRegistry jsonbRegistry) {
-        final JsonbConfig config = new JsonbConfig()
-                .withAdapters(jsonbRegistry.getAdapters().toArray(new JsonbAdapter[0]))
-                .withSerializers(jsonbRegistry.getSerializers().toArray(new JsonbSerializer[0]))
-                .withDeserializers(jsonbRegistry.getDeserializers().toArray(new JsonbDeserializer[0]))
-                .withPropertyVisibilityStrategy(new FieldAccessStrategy());
-        return JsonbBuilder.create(config);
-    }
-
-    @Produces
+    @Singleton
     public SerializedDataTypeRegistry serializedDataTypeRegistry() {
         return new JandexSerializedDataTypeRegistry();
     }
 
     @Produces
-    public SerDeserializerRegistry serDeserializerRegistry(SerializedDataTypeRegistry typeRegistry,
+    @Singleton
+    public SerDeserializerRegistry serDeserializerRegistry(JsonbConfig jsonbConfig,
+                                                           JsonbProvider jsonbProvider,
+                                                           EntityIdFactory entityIdFactory,
+                                                           SerializedDataTypeRegistry typeRegistry,
                                                            JsonbSerDeserializer jsonbSerDeserializer) {
 
         final SimpleSerializerDeserializerRegistry.Builder builder = new SimpleSerializerDeserializerRegistry.Builder(EscJsonbUtils.MIME_TYPE);
@@ -112,14 +94,22 @@ public class QuarkusFactory {
             builder.add(tc.type(), jsonbSerDeserializer);
             LOG.info("Registered type '{}' with serializer: {}", tc.type().asBaseType(), jsonbSerDeserializer.getClass().getSimpleName());
         }
+
         final SerDeserializerRegistry registry = builder.build();
+
         EscJsonbUtils.addEscSerDeserializer(builder, jsonbSerDeserializer);
+
+        final JsonbRegistry jsonbRegistry = new JandexJsonbRegistry(entityIdFactory, registry, registry, jsonbProvider);
+        jsonbConfig.withAdapters(jsonbRegistry.getAdapters().toArray(new JsonbAdapter[0]));
+        jsonbConfig.withSerializers(jsonbRegistry.getSerializers().toArray(new JsonbSerializer[0]));
+        jsonbConfig.withDeserializers(jsonbRegistry.getDeserializers().toArray(new JsonbDeserializer[0]));
+
         return registry;
 
     }
 
     @Produces
-    @ApplicationScoped
+    @Singleton
     public KurrentDBWrapper kurrentDBWrapper(final EventstoreConfig config) {
         return new KurrentDBWrapper(config);
     }
@@ -129,13 +119,14 @@ public class QuarkusFactory {
      * <br>
      * CAUTION: The returned event store instance is NOT thread safe.
      *
-     * @param client   Shared client connection.
-     * @param registry Serialization registry.
+     * @param kurrentDBWrapper Shared client connection.
+     * @param registry         Serialization registry.
      * @return Application scope event store.
      */
     @Produces
     @Dependent
-    public IESGrpcEventStore createEventStore(final KurrentDBWrapper kurrentDBWrapper, final SerDeserializerRegistry registry) {
+    public IESGrpcEventStore createEventStore(final KurrentDBWrapper kurrentDBWrapper,
+                                              final SerDeserializerRegistry registry) {
 
         final IESGrpcEventStore eventstore = new ESGrpcEventStore.Builder()
                 .eventStore(kurrentDBWrapper.getClient())
