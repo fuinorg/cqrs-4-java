@@ -1,8 +1,0 @@
-{
-	"type": "OK",
-	"data-class": "org.fuin.cqrs4j.DataResultTest$Invoice",
-	"data-element": "invoice",
-	"invoice": {
-		"id" : "I-0123456"
-	}
-}

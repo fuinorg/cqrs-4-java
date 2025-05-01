@@ -1,0 +1,35 @@
+package org.fuin.cqrs4j.core;
+
+import org.fuin.ddd4j.core.EventType;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.zip.Adler32;
+
+/**
+ * CQRS related helper functions.
+ */
+public final class CqrsUtils {
+
+    private CqrsUtils() {
+        throw new UnsupportedOperationException("Utility classes cannot be instantiated");
+    }
+
+    /**
+     * Creates an Adler32 checksum based on event type names.
+     *
+     * @param eventTypes Types to calculate a checksum for.
+     * @return Checksum based on all names.
+     */
+    public static long calculateAdler32Checksum(final Collection<EventType> eventTypes) {
+        if (eventTypes == null || eventTypes.isEmpty()) {
+            throw new IllegalArgumentException("eventTypes cannot be null or empty");
+        }
+        final Adler32 checksum = new Adler32();
+        for (final EventType eventType : eventTypes) {
+            checksum.update(eventType.asBaseType().getBytes(StandardCharsets.US_ASCII));
+        }
+        return checksum.getValue();
+    }
+
+}

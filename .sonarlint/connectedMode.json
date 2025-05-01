@@ -1,0 +1,5 @@
+{
+    "sonarCloudOrganization": "fuinorg",
+    "projectKey": "org.fuin.cqrs4j:cqrs-4-java",
+    "region": "EU"
+}
