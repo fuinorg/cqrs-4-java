@@ -7,7 +7,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
-import org.fuin.cqrs4j.core.View;
+import org.fuin.cqrs4j.core.JpaView;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
@@ -26,21 +26,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Test for the {@link QuarkusViewManager} class.
+ * Test for the {@link QuarkusJpaViewManager} class.
  */
 @Disabled("TODO Implement!")
 @QuarkusTest
-@TestProfile(QuarkusViewManagerTest.class)
-class QuarkusViewManagerTest implements QuarkusTestProfile {
+@TestProfile(QuarkusJpaViewManagerTest.class)
+class QuarkusJpaViewManagerTest implements QuarkusTestProfile {
 
     @Inject
-    QuarkusViewManager testee;
+    QuarkusJpaViewManager testee;
 
     @InjectMock
     Scheduler scheduler;
 
     @InjectMock
-    List<View> rawViews;
+    List<JpaView> rawViews;
 
     @InjectMock
     EventStore eventstore;
@@ -60,8 +60,8 @@ class QuarkusViewManagerTest implements QuarkusTestProfile {
     void createViews() {
 
         // GIVEN
-        final View view = mock(View.class);
-        final List<View> views = List.of(view);
+        final JpaView view = mock(JpaView.class);
+        final List<JpaView> views = List.of(view);
         when(rawViews.stream()).thenReturn(views.stream());
 
         final Scheduler.JobDefinition jobDefinition = mock(Scheduler.JobDefinition.class);

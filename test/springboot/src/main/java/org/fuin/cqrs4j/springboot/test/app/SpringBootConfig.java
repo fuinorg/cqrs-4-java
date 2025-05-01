@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import io.kurrent.dbclient.KurrentDBClient;
 import io.kurrent.dbclient.KurrentDBClientSettings;
 import io.kurrent.dbclient.KurrentDBProjectionManagementClient;
-import jakarta.persistence.EntityManager;
 import org.fuin.cqrs4j.jackson.Cqrs4JacksonModule;
 import org.fuin.cqrs4j.springboot.base.EventstoreConfig;
 import org.fuin.cqrs4j.springboot.test.view.PersonsView;
@@ -48,8 +47,8 @@ public class SpringBootConfig {
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootConfig.class);
 
     @Bean
-    public PersonsView personsView(EntityManager em) {
-        return new PersonsView(em);
+    public PersonsView personsView() {
+        return new PersonsView();
     }
 
     @Bean

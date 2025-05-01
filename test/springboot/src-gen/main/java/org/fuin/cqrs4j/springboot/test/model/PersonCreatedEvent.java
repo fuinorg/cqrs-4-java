@@ -15,6 +15,8 @@ import java.io.Serial;
 
 import javax.annotation.concurrent.Immutable;
 
+import org.fuin.cqrs4j.springboot.test.model.PersonId;
+import org.fuin.cqrs4j.springboot.test.model.PersonName;
 
 /**
  * A person was created.

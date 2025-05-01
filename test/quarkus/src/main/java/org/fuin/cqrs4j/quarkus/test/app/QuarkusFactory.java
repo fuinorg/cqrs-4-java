@@ -46,8 +46,8 @@ public class QuarkusFactory {
 
     // TODO Re-enable after problem with event store connection is solved
     //@Produces
-    public PersonsView personsView(EntityManager em) {
-        return new PersonsView(em);
+    public PersonsView personsView() {
+        return new PersonsView();
     }
 
     @Produces

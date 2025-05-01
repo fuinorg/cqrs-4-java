@@ -17,7 +17,8 @@
  */
 package org.fuin.cqrs4j.esc;
 
-import org.fuin.cqrs4j.core.EventHandler;
+import jakarta.persistence.EntityManager;
+import org.fuin.cqrs4j.core.JpaEventHandler;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.jsonb.AbstractEvent;
@@ -26,6 +27,7 @@ import org.fuin.esc.api.EventId;
 import org.fuin.esc.api.SimpleCommonEvent;
 import org.fuin.esc.api.TypeName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -33,7 +35,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public final class SimpleEventDispatcherTest {
+public final class SimpleJpaEventDispatcherTest {
 
     private static final EventType EVENT_TYPE_A = new EventType("EventA");
 
@@ -43,9 +45,9 @@ public final class SimpleEventDispatcherTest {
     public final void testDispatchEvents() {
 
         // PREPARE
-        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(EVENT_TYPE_A);
-        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
-        final EventDispatcher testee = new SimpleEventDispatcher(handlerA, handlerB);
+        final CollectingJpaEventHandler<EventA> handlerA = new CollectingJpaEventHandler<>(EVENT_TYPE_A);
+        final CollectingJpaEventHandler<EventB> handlerB = new CollectingJpaEventHandler<>(EVENT_TYPE_B);
+        final JpaEventDispatcher testee = new SimpleJpaEventDispatcher(handlerA, handlerB);
 
         final List<Event> events = new ArrayList<>();
         final EventA a1 = new EventA();
@@ -59,8 +61,10 @@ public final class SimpleEventDispatcherTest {
         final EventB b2 = new EventB();
         events.add(b2);
 
+        final EntityManager em = Mockito.mock(EntityManager.class);
+
         // TEST
-        testee.dispatchEvents(events);
+        testee.dispatchEvents(em, events);
 
         // VERIFY
         assertThat(handlerA.getEvents()).containsExactly(a1, a2, a3);
@@ -72,9 +76,9 @@ public final class SimpleEventDispatcherTest {
     public final void testDispatchCommonEvents() {
 
         // PREPARE
-        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(EVENT_TYPE_A);
-        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
-        final EventDispatcher testee = new SimpleEventDispatcher(handlerA, handlerB);
+        final CollectingJpaEventHandler<EventA> handlerA = new CollectingJpaEventHandler<>(EVENT_TYPE_A);
+        final CollectingJpaEventHandler<EventB> handlerB = new CollectingJpaEventHandler<>(EVENT_TYPE_B);
+        final JpaEventDispatcher testee = new SimpleJpaEventDispatcher(handlerA, handlerB);
 
         final List<CommonEvent> events = new ArrayList<>();
         final EventA a1 = new EventA();
@@ -88,8 +92,10 @@ public final class SimpleEventDispatcherTest {
         final EventB b2 = new EventB();
         events.add(asCommonEvent(b2));
 
+        final EntityManager em = Mockito.mock(EntityManager.class);
+
         // TEST
-        testee.dispatchCommonEvents(events);
+        testee.dispatchCommonEvents(em, events);
 
         // VERIFY
         assertThat(handlerA.getEvents()).containsExactly(a1, a2, a3);
@@ -101,9 +107,9 @@ public final class SimpleEventDispatcherTest {
     public final void testGetAllTypes() {
 
         // PREPARE
-        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(EVENT_TYPE_A);
-        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
-        final EventDispatcher testee = new SimpleEventDispatcher(handlerA, handlerB);
+        final CollectingJpaEventHandler<EventA> handlerA = new CollectingJpaEventHandler<>(EVENT_TYPE_A);
+        final CollectingJpaEventHandler<EventB> handlerB = new CollectingJpaEventHandler<>(EVENT_TYPE_B);
+        final JpaEventDispatcher testee = new SimpleJpaEventDispatcher(handlerA, handlerB);
 
         final List<EventType> typeList = new ArrayList<>();
         typeList.add(handlerA.getEventType());
@@ -118,10 +124,10 @@ public final class SimpleEventDispatcherTest {
     public final void testMultipleEventHandlersForOneEvent() {
 
         // PREPARE
-        final CollectingEventHandler<EventA> handlerA1 = new CollectingEventHandler<>(EVENT_TYPE_A);
-        final CollectingEventHandler<EventA> handlerA2 = new CollectingEventHandler<>(EVENT_TYPE_A);
-        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
-        final EventDispatcher testee = new SimpleEventDispatcher(handlerA1, handlerA2, handlerB);
+        final CollectingJpaEventHandler<EventA> handlerA1 = new CollectingJpaEventHandler<>(EVENT_TYPE_A);
+        final CollectingJpaEventHandler<EventA> handlerA2 = new CollectingJpaEventHandler<>(EVENT_TYPE_A);
+        final CollectingJpaEventHandler<EventB> handlerB = new CollectingJpaEventHandler<>(EVENT_TYPE_B);
+        final JpaEventDispatcher testee = new SimpleJpaEventDispatcher(handlerA1, handlerA2, handlerB);
 
         final List<Event> events = new ArrayList<>();
         final EventA a1 = new EventA();
@@ -135,8 +141,10 @@ public final class SimpleEventDispatcherTest {
         final EventB b2 = new EventB();
         events.add(b2);
 
+        final EntityManager em = Mockito.mock(EntityManager.class);
+
         // TEST
-        testee.dispatchEvents(events);
+        testee.dispatchEvents(em, events);
 
         // VERIFY
         assertThat(handlerA1.getEvents()).containsExactly(a1, a2, a3);
@@ -176,13 +184,13 @@ public final class SimpleEventDispatcherTest {
     }
 
     @SuppressWarnings({"unused"})
-    private static class CollectingEventHandler<TYPE extends Event> implements EventHandler<TYPE> {
+    private static class CollectingJpaEventHandler<TYPE extends Event> implements JpaEventHandler<TYPE> {
 
         private EventType type;
 
         private List<Event> events;
 
-        public CollectingEventHandler(EventType type) {
+        public CollectingJpaEventHandler(EventType type) {
             super();
             this.type = type;
             this.events = new ArrayList<Event>();
@@ -194,7 +202,7 @@ public final class SimpleEventDispatcherTest {
         }
 
         @Override
-        public void handle(TYPE event) {
+        public void handle(EntityManager em, TYPE event) {
             events.add(event);
         }
 

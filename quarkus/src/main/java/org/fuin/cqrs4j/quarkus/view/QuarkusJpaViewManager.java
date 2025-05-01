@@ -7,7 +7,10 @@ import io.quarkus.runtime.Startup;
 import io.quarkus.scheduler.Scheduler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import org.fuin.cqrs4j.core.CqrsUtils;
+import org.fuin.cqrs4j.core.JpaView;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.ddd4j.core.Event;
@@ -33,16 +36,16 @@ import static org.fuin.utils4j.Utils4J.tryLocked;
  * and a "ChunkHandler" class for each view, there is only one simplified "View" class now.
  */
 @ApplicationScoped
-public class QuarkusViewManager {
+public class QuarkusJpaViewManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(QuarkusViewManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuarkusJpaViewManager.class);
 
     @Inject
     Scheduler scheduler;
 
     @Inject
     @All
-    List<View> rawViews;
+    List<JpaView> rawViews;
 
     @Inject
     EventStore eventstore;
@@ -52,6 +55,9 @@ public class QuarkusViewManager {
 
     @Inject
     ProjectionService projectionService;
+
+    @Inject
+    EntityManagerFactory entityManagerFactory;
 
     private List<ViewExt> views;
 
@@ -79,9 +85,9 @@ public class QuarkusViewManager {
 
     private void updateView(final ViewExt view) {
         tryLocked(view.getLock(), () -> new Thread(() -> {
-            try {
+            try (final EntityManager em = entityManagerFactory.createEntityManager()) {
                 LOG.debug("updateView({})", view.getName());
-                readStreamEvents(view);
+                readStreamEvents(em, view);
             } catch (final RuntimeException ex) {
                 LOG.error("Error reading events from stream", ex);
             }
@@ -89,7 +95,7 @@ public class QuarkusViewManager {
         ).start());
     }
 
-    private void readStreamEvents(final ViewExt view) {
+    private void readStreamEvents(final EntityManager em, final ViewExt view) {
 
         // Create an event store projection if it does not exist.
         if (!admin.projectionExists(view.getProjectionStreamId())) {
@@ -101,7 +107,7 @@ public class QuarkusViewManager {
         // Read and dispatch events
         final Long nextEventNumber = projectionService.readProjectionPosition(view.getProjectionStreamId());
         eventstore.readAllEventsForward(view.getProjectionStreamId(), nextEventNumber, view.getChunkSize(),
-                currentSlice -> handleChunk(view, currentSlice));
+                currentSlice -> handleChunk(em, view, currentSlice));
 
     }
 
@@ -109,12 +115,12 @@ public class QuarkusViewManager {
         return eventTypes.stream().map(eventType -> new TypeName((eventType.asString()))).toList();
     }
 
-    private void handleChunk(final ViewExt view, final StreamEventsSlice currentSlice) {
+    private void handleChunk(final EntityManager em, final ViewExt view, final StreamEventsSlice currentSlice) {
         QuarkusTransaction.requiringNew()
                 .timeout(10)
                 .call(() -> {
                     LOG.debug("Handle chunk: {}", currentSlice);
-                    view.handleEvents(asEvents(currentSlice.getEvents()));
+                    view.handleEvents(em, asEvents(currentSlice.getEvents()));
                     projectionService.updateProjectionPosition(view.getProjectionStreamId(), currentSlice.getNextEventNumber());
                     return 0;
                 });
@@ -127,15 +133,15 @@ public class QuarkusViewManager {
     /**
      * Extends the view with some necessary values used only by this class.
      */
-    private static class ViewExt implements View {
+    private static class ViewExt implements JpaView {
 
-        private final View delegate;
+        private final JpaView delegate;
 
         private final ProjectionStreamId projectionStreamId;
 
         private final Semaphore lock;
 
-        public ViewExt(final View delegate) {
+        public ViewExt(final JpaView delegate) {
             this.delegate = delegate;
 
             final Set<EventType> eventTypes = delegate.getEventTypes();
@@ -167,8 +173,8 @@ public class QuarkusViewManager {
         }
 
         @Override
-        public void handleEvents(List<Event> events) {
-            delegate.handleEvents(events);
+        public void handleEvents(final EntityManager em, List<Event> events) {
+            delegate.handleEvents(em, events);
         }
 
         public ProjectionStreamId getProjectionStreamId() {

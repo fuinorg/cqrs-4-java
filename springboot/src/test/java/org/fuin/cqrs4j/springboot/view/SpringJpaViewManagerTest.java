@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * Test for the {@link SpringViewManager} class.
+ * Test for the {@link SpringJpaViewManager} class.
  */
 @Disabled("TODO Implement!")
-class SpringViewManagerTest {
+class SpringJpaViewManagerTest {
 
     @Test
     void createViews() {
