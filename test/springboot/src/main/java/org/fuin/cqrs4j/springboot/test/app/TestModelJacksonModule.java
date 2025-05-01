@@ -44,7 +44,7 @@ public final class TestModelJacksonModule extends Module {
     }
 
     public Version version() {
-        return new Version(0, 6, 0, "SNAPSHOT",
+        return new Version(0, 6, 0, "",
                 "org.fuin.cqrs4j", "cqrs-4-java-test"
         );
     }

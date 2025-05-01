@@ -39,7 +39,7 @@ public class Cqrs4JacksonModule extends Module {
     @Override
     public Version version() {
         // Don't forget to change from release to SNAPSHOT and back!
-        return new Version(0, 6, 0, "SNAPSHOT",
+        return new Version(0, 6, 0, "",
                 "org.fuin.cqrs4j", "cqrs-4-java-jackson");
     }
 

@@ -13,7 +13,7 @@
 
     <groupId>org.fuin.cqrs4j</groupId>
     <artifactId>cqrs-4-java</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.6.0</version>
     <packaging>pom</packaging>
     <description>Base classes for Command Query Responsibility Segregation (CQRS) with Java</description>
 
@@ -33,10 +33,10 @@
         <quarkus.version>3.21.0</quarkus.version>
         <spring.boot.version>3.4.4</spring.boot.version>
         <jackson.version>2.18.2</jackson.version>
-        <esc.version>0.9.0-SNAPSHOT</esc.version>
-        <ddd4j.version>0.7.0-SNAPSHOT</ddd4j.version>
-        <objects4j.version>0.11.0-SNAPSHOT</objects4j.version>
-        <utils4j.version>0.15.0-SNAPSHOT</utils4j.version>
+        <esc.version>0.9.0</esc.version>
+        <ddd4j.version>0.7.0</ddd4j.version>
+        <objects4j.version>0.11.0</objects4j.version>
+        <utils4j.version>0.15.0</utils4j.version>
         <units4j.version>0.12.0</units4j.version>
         <archunit.version>1.4.0</archunit.version>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../jacoco/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
