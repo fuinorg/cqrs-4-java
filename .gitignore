@@ -5,6 +5,5 @@
 !.mvn
 !.sonarlint
 target
-META-INF
 *.log
 /pom.xml.versionsBackup

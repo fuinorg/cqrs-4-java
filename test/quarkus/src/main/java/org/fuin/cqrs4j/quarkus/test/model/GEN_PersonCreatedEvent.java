@@ -14,6 +14,7 @@ import org.fuin.ddd4j.codegen.api.EventVO;
         entityIdClass = "PersonId",
         message = "MyEvent happened"
 )
+@SuppressWarnings("java:S1214") // Just a helper to generate code
 public interface GEN_PersonCreatedEvent {
 
     PersonId id = null;

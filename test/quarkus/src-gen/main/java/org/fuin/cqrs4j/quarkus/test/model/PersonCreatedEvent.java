@@ -1,7 +1,9 @@
 package org.fuin.cqrs4j.quarkus.test.model;
 
-import jakarta.json.bind.annotation.JsonbProperty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.json.bind.annotation.JsonbProperty;
+import jakarta.json.bind.annotation.JsonbTypeAdapter;
+import javax.annotation.Nullable;
 import org.fuin.ddd4j.core.EntityIdPath;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.jsonb.AbstractDomainEvent;
@@ -9,8 +11,10 @@ import org.fuin.esc.api.HasSerializedDataTypeConstant;
 import org.fuin.esc.api.SerializedDataType;
 import org.fuin.objects4j.common.Contract;
 
-import javax.annotation.concurrent.Immutable;
 import java.io.Serial;
+
+import javax.annotation.concurrent.Immutable;
+
 
 /**
  * A person was created.

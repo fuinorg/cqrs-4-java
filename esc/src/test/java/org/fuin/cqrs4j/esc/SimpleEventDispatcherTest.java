@@ -198,11 +198,6 @@ public final class SimpleEventDispatcherTest {
             events.add(event);
         }
 
-        @SuppressWarnings("unused")
-        public EventType getType() {
-            return type;
-        }
-
         public List<Event> getEvents() {
             return events;
         }

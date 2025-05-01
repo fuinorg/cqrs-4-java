@@ -13,7 +13,7 @@ import java.util.List;
  * Module that registers the adapters for the package.
  */
 @TestOmitted("Tested with other tests")
-public class Cqrs4JacksonAdapterModule extends Module {
+public class Cqrs4JacksonModule extends Module {
 
     @Override
     public String getModuleName() {

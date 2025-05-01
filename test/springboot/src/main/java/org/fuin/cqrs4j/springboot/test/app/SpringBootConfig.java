@@ -9,7 +9,7 @@ import io.kurrent.dbclient.KurrentDBClient;
 import io.kurrent.dbclient.KurrentDBClientSettings;
 import io.kurrent.dbclient.KurrentDBProjectionManagementClient;
 import jakarta.persistence.EntityManager;
-import org.fuin.cqrs4j.jackson.Cqrs4JacksonAdapterModule;
+import org.fuin.cqrs4j.jackson.Cqrs4JacksonModule;
 import org.fuin.cqrs4j.springboot.base.EventstoreConfig;
 import org.fuin.cqrs4j.springboot.test.view.PersonsView;
 import org.fuin.ddd4j.core.EntityIdFactory;
@@ -25,11 +25,11 @@ import org.fuin.esc.esgrpc.ESGrpcEventStore;
 import org.fuin.esc.esgrpc.GrpcProjectionAdminEventStore;
 import org.fuin.esc.esgrpc.IESGrpcEventStore;
 import org.fuin.esc.jackson.BaseTypeFactory;
-import org.fuin.esc.jackson.EscJacksonAdapterModule;
+import org.fuin.esc.jackson.EscJacksonModule;
 import org.fuin.esc.jackson.EscJacksonUtils;
 import org.fuin.esc.jackson.JacksonSerDeserializer;
 import org.fuin.objects4j.jackson.ImmutableObjectMapper;
-import org.fuin.objects4j.jackson.Objects4JJacksonAdapterModule;
+import org.fuin.objects4j.jackson.Objects4JJacksonModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -64,8 +64,8 @@ public class SpringBootConfig {
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL)
                 .enable(SerializationFeature.INDENT_OUTPUT)
                 .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-                .registerModule(new Cqrs4JacksonAdapterModule())
-                .registerModule(new Objects4JJacksonAdapterModule())
+                .registerModule(new Cqrs4JacksonModule())
+                .registerModule(new Objects4JJacksonModule())
                 .registerModule(new Ddd4JacksonModule(entityIdFactory))
                 .registerModule(new TestModelJacksonModule(entityIdFactory))
         );
@@ -105,7 +105,7 @@ public class SpringBootConfig {
             LOG.info("Registered type '{}' with serializer: {}", tc.type().asBaseType(), jacksonSerDeserializer.getClass().getSimpleName());
         }
         final SerDeserializerRegistry registry = builder.build();
-        mapperBuilder.registerModule(new EscJacksonAdapterModule(registry, registry));
+        mapperBuilder.registerModule(new EscJacksonModule(registry, registry));
         return registry;
     }
 

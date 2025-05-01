@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.jackson.Ddd4JacksonModule;
-import org.fuin.objects4j.jackson.Objects4JJacksonAdapterModule;
+import org.fuin.objects4j.jackson.Objects4JJacksonModule;
 import org.fuin.utils4j.TestOmitted;
 
 /**
@@ -26,8 +26,8 @@ final class TestUtils {
     public static ObjectMapper objectMapper() {
         return new ObjectMapper()
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                .registerModule(new Cqrs4JacksonAdapterModule())
-                .registerModule(new Objects4JJacksonAdapterModule())
+                .registerModule(new Cqrs4JacksonModule())
+                .registerModule(new Objects4JJacksonModule())
                 .registerModule(new Ddd4JacksonModule(ENTITY_ID_FACTORY));
     }
 
