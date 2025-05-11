@@ -12,7 +12,6 @@ import jakarta.json.bind.serializer.JsonbSerializer;
 import org.fuin.cqrs4j.jsonb.JandexJsonbRegistry;
 import org.fuin.cqrs4j.jsonb.JsonbRegistry;
 import org.fuin.cqrs4j.quarkus.base.EventstoreConfig;
-import org.fuin.cqrs4j.quarkus.test.view.PersonsView;
 import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.core.JandexEntityIdFactory;
 import org.fuin.esc.api.EnhancedMimeType;
@@ -41,12 +40,6 @@ import java.nio.charset.StandardCharsets;
 public class QuarkusFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(QuarkusFactory.class);
-
-    // TODO Re-enable after problem with event store connection is solved
-    //@Produces
-    public PersonsView personsView() {
-        return new PersonsView();
-    }
 
     @Produces
     @Singleton

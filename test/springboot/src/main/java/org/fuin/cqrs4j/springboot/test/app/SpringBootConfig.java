@@ -8,9 +8,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import io.kurrent.dbclient.KurrentDBClient;
 import io.kurrent.dbclient.KurrentDBClientSettings;
 import io.kurrent.dbclient.KurrentDBProjectionManagementClient;
+import org.fuin.cqrs4j.core.SimpleViewRegistry;
+import org.fuin.cqrs4j.core.View;
+import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.jackson.Cqrs4JacksonModule;
 import org.fuin.cqrs4j.springboot.base.EventstoreConfig;
-import org.fuin.cqrs4j.springboot.test.view.PersonsView;
 import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.core.JandexEntityIdFactory;
 import org.fuin.ddd4j.jackson.Ddd4JacksonModule;
@@ -40,6 +42,7 @@ import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Configuration
 public class SpringBootConfig {
@@ -47,8 +50,8 @@ public class SpringBootConfig {
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootConfig.class);
 
     @Bean
-    public PersonsView personsView() {
-        return new PersonsView();
+    public ViewRegistry viewClassRegistry(List<View> views) {
+        return new SimpleViewRegistry(views);
     }
 
     @Bean

@@ -26,7 +26,7 @@ import org.fuin.ddd4j.core.EventType;
  *
  * @param <TYPE> Event type.
  */
-public interface JpaEventHandler<TYPE extends Event> {
+public interface EventHandler<TYPE extends Event> {
 
     /**
      * Returns the type of event this handler operates on.

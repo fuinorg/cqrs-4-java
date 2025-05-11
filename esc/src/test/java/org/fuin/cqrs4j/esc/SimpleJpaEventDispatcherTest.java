@@ -18,7 +18,7 @@
 package org.fuin.cqrs4j.esc;
 
 import jakarta.persistence.EntityManager;
-import org.fuin.cqrs4j.core.JpaEventHandler;
+import org.fuin.cqrs4j.core.EventHandler;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.jsonb.AbstractEvent;
@@ -45,8 +45,8 @@ public final class SimpleJpaEventDispatcherTest {
     public final void testDispatchEvents() {
 
         // PREPARE
-        final CollectingJpaEventHandler<EventA> handlerA = new CollectingJpaEventHandler<>(EVENT_TYPE_A);
-        final CollectingJpaEventHandler<EventB> handlerB = new CollectingJpaEventHandler<>(EVENT_TYPE_B);
+        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(EVENT_TYPE_A);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
         final JpaEventDispatcher testee = new SimpleJpaEventDispatcher(handlerA, handlerB);
 
         final List<Event> events = new ArrayList<>();
@@ -76,8 +76,8 @@ public final class SimpleJpaEventDispatcherTest {
     public final void testDispatchCommonEvents() {
 
         // PREPARE
-        final CollectingJpaEventHandler<EventA> handlerA = new CollectingJpaEventHandler<>(EVENT_TYPE_A);
-        final CollectingJpaEventHandler<EventB> handlerB = new CollectingJpaEventHandler<>(EVENT_TYPE_B);
+        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(EVENT_TYPE_A);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
         final JpaEventDispatcher testee = new SimpleJpaEventDispatcher(handlerA, handlerB);
 
         final List<CommonEvent> events = new ArrayList<>();
@@ -107,8 +107,8 @@ public final class SimpleJpaEventDispatcherTest {
     public final void testGetAllTypes() {
 
         // PREPARE
-        final CollectingJpaEventHandler<EventA> handlerA = new CollectingJpaEventHandler<>(EVENT_TYPE_A);
-        final CollectingJpaEventHandler<EventB> handlerB = new CollectingJpaEventHandler<>(EVENT_TYPE_B);
+        final CollectingEventHandler<EventA> handlerA = new CollectingEventHandler<>(EVENT_TYPE_A);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
         final JpaEventDispatcher testee = new SimpleJpaEventDispatcher(handlerA, handlerB);
 
         final List<EventType> typeList = new ArrayList<>();
@@ -124,9 +124,9 @@ public final class SimpleJpaEventDispatcherTest {
     public final void testMultipleEventHandlersForOneEvent() {
 
         // PREPARE
-        final CollectingJpaEventHandler<EventA> handlerA1 = new CollectingJpaEventHandler<>(EVENT_TYPE_A);
-        final CollectingJpaEventHandler<EventA> handlerA2 = new CollectingJpaEventHandler<>(EVENT_TYPE_A);
-        final CollectingJpaEventHandler<EventB> handlerB = new CollectingJpaEventHandler<>(EVENT_TYPE_B);
+        final CollectingEventHandler<EventA> handlerA1 = new CollectingEventHandler<>(EVENT_TYPE_A);
+        final CollectingEventHandler<EventA> handlerA2 = new CollectingEventHandler<>(EVENT_TYPE_A);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
         final JpaEventDispatcher testee = new SimpleJpaEventDispatcher(handlerA1, handlerA2, handlerB);
 
         final List<Event> events = new ArrayList<>();
@@ -184,13 +184,13 @@ public final class SimpleJpaEventDispatcherTest {
     }
 
     @SuppressWarnings({"unused"})
-    private static class CollectingJpaEventHandler<TYPE extends Event> implements JpaEventHandler<TYPE> {
+    private static class CollectingEventHandler<TYPE extends Event> implements EventHandler<TYPE> {
 
         private EventType type;
 
         private List<Event> events;
 
-        public CollectingJpaEventHandler(EventType type) {
+        public CollectingEventHandler(EventType type) {
             super();
             this.type = type;
             this.events = new ArrayList<Event>();

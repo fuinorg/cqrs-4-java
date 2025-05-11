@@ -1,0 +1,56 @@
+package org.fuin.cqrs4j.core;
+
+import jakarta.annotation.Nonnull;
+import org.fuin.ddd4j.core.EventType;
+
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Contains information about all available views.
+ */
+public interface ViewRegistry {
+
+    /**
+     * Returns a list of all view classes.
+     *
+     * @return View classes.
+     */
+    @Nonnull
+    List<Entry> getViews();
+
+    /**
+     * Returns the number of elements in the regsitry.
+     *
+     * @return Number of view classes.
+     */
+    int size();
+
+    /**
+     * Returns the information if no view classes are available.
+     *
+     * @return {@literal true} if no view classes are available.
+     */
+    boolean isEmpty();
+
+    /**
+     * Information about the view.
+     *
+     * @param viewClass   View class.
+     * @param beanName    Name used for the bean.
+     * @param streamName  Name used for the projection stream.
+     * @param displayName Name shown to a human.
+     * @param cron        CRON expression defining how often the view should be updated.
+     * @param chunkSize   Number of events (defaults to 100).
+     * @param eventTypes  Type of events the view is interested in.
+     */
+    record Entry(Class<View> viewClass,
+                 String beanName,
+                 String streamName,
+                 String displayName,
+                 String cron,
+                 int chunkSize,
+                 Set<EventType> eventTypes) {
+    }
+
+}

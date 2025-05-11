@@ -1,10 +1,8 @@
 package org.fuin.cqrs4j.springboot.view;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import org.fuin.cqrs4j.core.CqrsUtils;
-import org.fuin.cqrs4j.core.JpaView;
 import org.fuin.cqrs4j.core.View;
+import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
@@ -17,10 +15,10 @@ import org.fuin.esc.api.StreamEventsSlice;
 import org.fuin.esc.api.TypeName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.core.annotation.Order;
-import org.springframework.orm.jpa.EntityManagerFactoryUtils;
 import org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.CronTask;
@@ -33,6 +31,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -47,13 +46,13 @@ import static org.fuin.utils4j.Utils4J.tryLocked;
  */
 @Component
 @Order(0)
-public class SpringJpaViewManager implements ApplicationListener<ContextClosedEvent>, SchedulingConfigurer {
+public class SpringViewManager implements ApplicationListener<ContextClosedEvent>, SchedulingConfigurer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SpringJpaViewManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SpringViewManager.class);
 
     private final ScheduledAnnotationBeanPostProcessor postProcessor;
 
-    private final List<JpaView> rawViews;
+    private final ViewRegistry viewRegistry;
 
     private final EventStore eventstore;
 
@@ -63,39 +62,39 @@ public class SpringJpaViewManager implements ApplicationListener<ContextClosedEv
 
     private final TransactionTemplate requiresNewTransaction;
 
-    private final EntityManagerFactory entityManagerFactory;
+    private final ConfigurableBeanFactory beanFactory;
 
-    private List<ViewExt> views;
+    private List<ViewJob> views;
 
     /**
      * Constructor with mandatory data.
      *
-     * @param postProcessor        Helps to cancel the scheduled jobs ob shutdown.
-     * @param rawViews             User defined view list.
-     * @param eventstore           Eventstore instance to use.
-     * @param admin                Admin interface to eventstore.
-     * @param projectionService    Service to manage projections.
-     * @param transactionManager   Helps to open necessary transactions manually.
-     * @param entityManagerFactory Entity manager factory.
+     * @param postProcessor      Helps to cancel the scheduled jobs ob shutdown.
+     * @param viewRegistry       List with user defined view classes.
+     * @param eventstore         Eventstore instance to use.
+     * @param admin              Admin interface to eventstore.
+     * @param projectionService  Service to manage projections.
+     * @param transactionManager Helps to open necessary transactions manually.
+     * @param beanFactory        Bean factory.
      */
-    public SpringJpaViewManager(
+    public SpringViewManager(
             final ScheduledAnnotationBeanPostProcessor postProcessor,
-            final List<JpaView> rawViews,
+            final ViewRegistry viewRegistry,
             final EventStore eventstore,
             final ProjectionAdminEventStore admin,
             final ProjectionService projectionService,
             final PlatformTransactionManager transactionManager,
-            final EntityManagerFactory entityManagerFactory) {
+            final ConfigurableBeanFactory beanFactory) {
         this.postProcessor = Objects.requireNonNull(postProcessor, "postProcessor==null");
-        this.rawViews = Objects.requireNonNull(rawViews, "rawViews==null");
+        this.viewRegistry = Objects.requireNonNull(viewRegistry, "viewClassRegistry==null");
         this.eventstore = Objects.requireNonNull(eventstore, "eventstore==null");
         this.admin = Objects.requireNonNull(admin, "admin==null");
         this.projectionService = Objects.requireNonNull(projectionService, "projectionService==null");
         Objects.requireNonNull(transactionManager, "transactionManager==null");
-        this.entityManagerFactory = Objects.requireNonNull(entityManagerFactory, "entityManagerFactory==null");
         this.requiresNewTransaction = new TransactionTemplate(transactionManager);
         this.requiresNewTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.requiresNewTransaction.setTimeout(10);
+        this.beanFactory = beanFactory;
     }
 
     @Override
@@ -109,12 +108,16 @@ public class SpringJpaViewManager implements ApplicationListener<ContextClosedEv
     }
 
     private void createViews(ScheduledTaskRegistrar taskRegistrar) {
-        LOG.info("Create {} views...", rawViews == null ? 0 : rawViews.size());
-        if (rawViews != null && !rawViews.isEmpty()) {
-            views = rawViews.stream().map(ViewExt::new).toList();
-            for (final ViewExt view : views) {
-                LOG.info("Create view: {}", view.getName());
-                view.setCronTask(new CronTask(() -> updateView(view), view.getCron()));
+        LOG.info("Create {} views...", viewRegistry.size());
+        if (viewRegistry.isEmpty()) {
+            views = Collections.emptyList();
+        } else {
+            views = viewRegistry.getViews().stream()
+                    .map(ViewJob::new)
+                    .toList();
+            for (final ViewJob view : views) {
+                LOG.info("Create view: {}", view.getEntry().viewClass().getName());
+                view.setCronTask(new CronTask(() -> updateView(view), view.getEntry().cron()));
                 taskRegistrar.addCronTask(view.getCronTask());
             }
         }
@@ -123,8 +126,8 @@ public class SpringJpaViewManager implements ApplicationListener<ContextClosedEv
     private void shutdownViews() {
         LOG.info("Shutdown {} views...", views == null ? 0 : views.size());
         final Set<ScheduledTask> scheduledTasks = postProcessor.getScheduledTasks();
-        for (final ViewExt view : views) {
-            LOG.info("Shutdown view: {}", view.getName());
+        for (final ViewJob view : views) {
+            LOG.info("Shutdown view: {}", view.getEntry().viewClass().getName());
             scheduledTasks.stream()
                     .filter(scheduled -> scheduled.getTask() == view.getCronTask())
                     .findFirst()
@@ -133,10 +136,10 @@ public class SpringJpaViewManager implements ApplicationListener<ContextClosedEv
     }
 
 
-    private void updateView(final ViewExt view) {
+    private void updateView(final ViewJob view) {
         tryLocked(view.getLock(), () -> new Thread(() -> {
             try {
-                LOG.debug("updateView({})", view.getName());
+                LOG.debug("updateView({})", view.getEntry().viewClass().getName());
                 readStreamEvents(view);
             } catch (final RuntimeException ex) {
                 LOG.error("Error reading events from stream", ex);
@@ -145,11 +148,11 @@ public class SpringJpaViewManager implements ApplicationListener<ContextClosedEv
         ).start());
     }
 
-    private void readStreamEvents(final ViewExt view) {
+    private void readStreamEvents(final ViewJob view) {
 
         // Create an event store projection if it does not exist.
         if (!admin.projectionExists(view.getProjectionStreamId())) {
-            final List<TypeName> typeNames = asTypeNames(view.getEventTypes());
+            final List<TypeName> typeNames = asTypeNames(view.getEntry().eventTypes());
             LOG.info("Create projection '{}' with events: {}", view.getProjectionStreamId(), typeNames);
             try {
                 admin.createProjection(view.getProjectionStreamId(), true, typeNames);
@@ -160,7 +163,7 @@ public class SpringJpaViewManager implements ApplicationListener<ContextClosedEv
 
         // Read and dispatch events
         final Long nextEventNumber = projectionService.readProjectionPosition(view.getProjectionStreamId());
-        eventstore.readAllEventsForward(view.getProjectionStreamId(), nextEventNumber, view.getChunkSize(),
+        eventstore.readAllEventsForward(view.getProjectionStreamId(), nextEventNumber, view.getEntry().chunkSize(),
                 currentSlice -> handleChunk(view, currentSlice));
 
     }
@@ -169,12 +172,11 @@ public class SpringJpaViewManager implements ApplicationListener<ContextClosedEv
         return eventTypes.stream().map(eventType -> new TypeName((eventType.asString()))).toList();
     }
 
-    private void handleChunk(final ViewExt view, final StreamEventsSlice currentSlice) {
+    private void handleChunk(final ViewJob view, final StreamEventsSlice currentSlice) {
         requiresNewTransaction.execute(new TransactionCallbackWithoutResult() {
             public void doInTransactionWithoutResult(TransactionStatus status) {
                 LOG.debug("Handle chunk: {}", currentSlice);
-                final EntityManager em = EntityManagerFactoryUtils.getTransactionalEntityManager(entityManagerFactory);
-                view.handleEvents(em, asEvents(currentSlice.getEvents()));
+                view.handleEvents(beanFactory, asEvents(currentSlice.getEvents()));
                 projectionService.updateProjectionPosition(view.getProjectionStreamId(), currentSlice.getNextEventNumber());
             }
         });
@@ -187,9 +189,9 @@ public class SpringJpaViewManager implements ApplicationListener<ContextClosedEv
     /**
      * Extends the view with some necessary values used only by this class.
      */
-    private static class ViewExt implements JpaView {
+    private static class ViewJob {
 
-        private final JpaView delegate;
+        private final ViewRegistry.Entry entry;
 
         private final ProjectionStreamId projectionStreamId;
 
@@ -197,15 +199,11 @@ public class SpringJpaViewManager implements ApplicationListener<ContextClosedEv
 
         private CronTask cronTask;
 
-        public ViewExt(final JpaView delegate) {
-            this.delegate = delegate;
-
-            final Set<EventType> eventTypes = delegate.getEventTypes();
-            final String name = delegate.getName() + "-" + CqrsUtils.calculateAdler32Checksum(eventTypes);
-            projectionStreamId = new ProjectionStreamId(name);
-
+        public ViewJob(final ViewRegistry.Entry entry) {
+            this.entry = entry;
+            final String streamId = entry.streamName() + "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes());
+            projectionStreamId = new ProjectionStreamId(streamId);
             this.lock = new Semaphore(1);
-
         }
 
         /**
@@ -226,29 +224,17 @@ public class SpringJpaViewManager implements ApplicationListener<ContextClosedEv
             this.cronTask = cronTask;
         }
 
-        @Override
-        public String getName() {
-            return delegate.getName();
+        public ViewRegistry.Entry getEntry() {
+            return entry;
         }
 
-        @Override
-        public String getCron() {
-            return delegate.getCron();
-        }
-
-        @Override
-        public Set<EventType> getEventTypes() {
-            return delegate.getEventTypes();
-        }
-
-        @Override
-        public int getChunkSize() {
-            return delegate.getChunkSize();
-        }
-
-        @Override
-        public void handleEvents(EntityManager em, List<Event> events) {
-            delegate.handleEvents(em, events);
+        public void handleEvents(ConfigurableBeanFactory beanFactory, List<Event> events) {
+            final View view = beanFactory.getBean(entry.beanName(), entry.viewClass());
+            try {
+                view.handleEvents(events);
+            } finally {
+                beanFactory.destroyBean(entry.beanName(), view);
+            }
         }
 
         public ProjectionStreamId getProjectionStreamId() {

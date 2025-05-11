@@ -19,7 +19,7 @@ package org.fuin.cqrs4j.esc;
 
 import jakarta.persistence.EntityManager;
 import jakarta.validation.constraints.NotNull;
-import org.fuin.cqrs4j.core.JpaEventHandler;
+import org.fuin.cqrs4j.core.EventHandler;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.esc.api.CommonEvent;
@@ -38,40 +38,40 @@ import java.util.Set;
 public final class SimpleJpaEventDispatcher implements JpaEventDispatcher {
 
     @SuppressWarnings("rawtypes")
-    private final Map<EventType, List<JpaEventHandler>> eventHandlers;
+    private final Map<EventType, List<EventHandler>> eventHandlers;
 
     /**
      * Constructor with array of event handlers.
      *
-     * @param jpaEventHandlers
+     * @param eventHandlers
      *            Event handlers.
      */
     @SuppressWarnings("rawtypes")
-    public SimpleJpaEventDispatcher(@NotNull final JpaEventHandler... jpaEventHandlers) {
-        this(Arrays.asList(jpaEventHandlers));
+    public SimpleJpaEventDispatcher(@NotNull final EventHandler... eventHandlers) {
+        this(Arrays.asList(eventHandlers));
     }
 
     /**
      * Constructor with list of event handlers.
      *
-     * @param jpaEventHandlers
+     * @param eventHandlers
      *            Event handlers.
      */
     @SuppressWarnings("rawtypes")
-    public SimpleJpaEventDispatcher(@NotNull final List<JpaEventHandler> jpaEventHandlers) {
+    public SimpleJpaEventDispatcher(@NotNull final List<EventHandler> eventHandlers) {
         super();
-        Contract.requireArgNotNull("eventHandlers", jpaEventHandlers);
-        if (jpaEventHandlers.isEmpty()) {
+        Contract.requireArgNotNull("eventHandlers", eventHandlers);
+        if (eventHandlers.isEmpty()) {
             throw new IllegalArgumentException("The argument 'eventHandlers' cannot be an empty list");
         }
         this.eventHandlers = new HashMap<>();
-        for (final JpaEventHandler jpaEventHandler : jpaEventHandlers) {
-            List<JpaEventHandler> handlers = this.eventHandlers.get(jpaEventHandler.getEventType());
+        for (final EventHandler eventHandler : eventHandlers) {
+            List<EventHandler> handlers = this.eventHandlers.get(eventHandler.getEventType());
             if (handlers == null) {
                 handlers = new ArrayList<>();
-                this.eventHandlers.put(jpaEventHandler.getEventType(), handlers);
+                this.eventHandlers.put(eventHandler.getEventType(), handlers);
             }
-            handlers.add(jpaEventHandler);
+            handlers.add(eventHandler);
         }
     }
 
@@ -108,9 +108,9 @@ public final class SimpleJpaEventDispatcher implements JpaEventDispatcher {
 
         Contract.requireArgNotNull("event", event);
 
-        final List<JpaEventHandler> handlers = eventHandlers.get(event.getEventType());
+        final List<EventHandler> handlers = eventHandlers.get(event.getEventType());
         if (handlers != null) {
-            for (final JpaEventHandler handler : handlers) {
+            for (final EventHandler handler : handlers) {
                 handler.handle(em, event);
             }
         }

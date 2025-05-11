@@ -1,18 +1,19 @@
 package org.fuin.cqrs4j.quarkus.view;
 
-import io.quarkus.arc.All;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.runtime.Shutdown;
 import io.quarkus.runtime.Startup;
 import io.quarkus.scheduler.Scheduler;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import org.fuin.cqrs4j.core.CqrsUtils;
-import org.fuin.cqrs4j.core.JpaView;
 import org.fuin.cqrs4j.core.View;
+import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.esc.ProjectionService;
+import org.fuin.cqrs4j.quarkus.base.QuarkusUtils;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.esc.api.CommonEvent;
@@ -24,6 +25,7 @@ import org.fuin.esc.api.TypeName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -36,16 +38,15 @@ import static org.fuin.utils4j.Utils4J.tryLocked;
  * and a "ChunkHandler" class for each view, there is only one simplified "View" class now.
  */
 @ApplicationScoped
-public class QuarkusJpaViewManager {
+public class QuarkusViewManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(QuarkusJpaViewManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuarkusViewManager.class);
 
     @Inject
     Scheduler scheduler;
 
     @Inject
-    @All
-    List<JpaView> rawViews;
+    ViewRegistry viewRegistry;
 
     @Inject
     EventStore eventstore;
@@ -57,20 +58,26 @@ public class QuarkusJpaViewManager {
     ProjectionService projectionService;
 
     @Inject
-    EntityManagerFactory entityManagerFactory;
+    BeanManager beanManager;
 
     private List<ViewExt> views;
 
     @Startup
     void createViews() {
-        LOG.info("Create views...");
-        views = rawViews.stream().map(ViewExt::new).toList();
-        for (final ViewExt view : views) {
-            LOG.info("Create: {}", view.getName());
-            scheduler.newJob(view.getName())
-                    .setCron(view.getCron())
-                    .setTask(executionContext -> updateView(view))
-                    .schedule();
+        LOG.info("Create {} views...", viewRegistry.size());
+        if (viewRegistry.isEmpty()) {
+            views = Collections.emptyList();
+        } else {
+            views = viewRegistry.getViews().stream()
+                    .map(ViewExt::new)
+                    .toList();
+            for (final ViewExt view : views) {
+                LOG.info("Create view: {}", view.getEntry().viewClass().getSimpleName());
+                scheduler.newJob(view.getEntry().beanName())
+                        .setCron(view.getEntry().cron())
+                        .setTask(executionContext -> updateView(view))
+                        .schedule();
+            }
         }
     }
 
@@ -78,36 +85,32 @@ public class QuarkusJpaViewManager {
     void shutdownViews() {
         LOG.info("Shutdown views...");
         for (final ViewExt view : views) {
-            LOG.info("Shutdown: {}", view.getName());
-            scheduler.unscheduleJob(view.getName());
+            LOG.info("Shutdown: {}", view.getEntry().viewClass().getSimpleName());
+            scheduler.unscheduleJob(view.getEntry().beanName());
         }
     }
 
     private void updateView(final ViewExt view) {
         tryLocked(view.getLock(), () -> new Thread(() -> {
-            try (final EntityManager em = entityManagerFactory.createEntityManager()) {
-                LOG.debug("updateView({})", view.getName());
-                readStreamEvents(em, view);
-            } catch (final RuntimeException ex) {
-                LOG.error("Error reading events from stream", ex);
-            }
+            LOG.debug("updateView({})", view.getEntry().viewClass().getSimpleName());
+            readStreamEvents(view);
         }
         ).start());
     }
 
-    private void readStreamEvents(final EntityManager em, final ViewExt view) {
+    private void readStreamEvents(final ViewExt view) {
 
         // Create an event store projection if it does not exist.
         if (!admin.projectionExists(view.getProjectionStreamId())) {
-            final List<TypeName> typeNames = asTypeNames(view.getEventTypes());
+            final List<TypeName> typeNames = asTypeNames(view.getEntry().eventTypes());
             LOG.info("Create projection '{}' with events: {}", view.getProjectionStreamId(), typeNames);
             admin.createProjection(view.getProjectionStreamId(), true, typeNames);
         }
 
         // Read and dispatch events
         final Long nextEventNumber = projectionService.readProjectionPosition(view.getProjectionStreamId());
-        eventstore.readAllEventsForward(view.getProjectionStreamId(), nextEventNumber, view.getChunkSize(),
-                currentSlice -> handleChunk(em, view, currentSlice));
+        eventstore.readAllEventsForward(view.getProjectionStreamId(), nextEventNumber, view.getEntry().chunkSize(),
+                currentSlice -> handleChunk(view, currentSlice));
 
     }
 
@@ -115,12 +118,12 @@ public class QuarkusJpaViewManager {
         return eventTypes.stream().map(eventType -> new TypeName((eventType.asString()))).toList();
     }
 
-    private void handleChunk(final EntityManager em, final ViewExt view, final StreamEventsSlice currentSlice) {
+    private void handleChunk(final ViewExt view, final StreamEventsSlice currentSlice) {
         QuarkusTransaction.requiringNew()
                 .timeout(10)
                 .call(() -> {
                     LOG.debug("Handle chunk: {}", currentSlice);
-                    view.handleEvents(em, asEvents(currentSlice.getEvents()));
+                    view.handleEvents(beanManager, asEvents(currentSlice.getEvents()));
                     projectionService.updateProjectionPosition(view.getProjectionStreamId(), currentSlice.getNextEventNumber());
                     return 0;
                 });
@@ -133,48 +136,29 @@ public class QuarkusJpaViewManager {
     /**
      * Extends the view with some necessary values used only by this class.
      */
-    private static class ViewExt implements JpaView {
+    private static class ViewExt {
 
-        private final JpaView delegate;
+        private final ViewRegistry.Entry entry;
 
         private final ProjectionStreamId projectionStreamId;
 
         private final Semaphore lock;
 
-        public ViewExt(final JpaView delegate) {
-            this.delegate = delegate;
-
-            final Set<EventType> eventTypes = delegate.getEventTypes();
-            final String name = delegate.getName() + "-" + CqrsUtils.calculateAdler32Checksum(eventTypes);
-            projectionStreamId = new ProjectionStreamId(name);
-
+        public ViewExt(final ViewRegistry.Entry entry) {
+            this.entry = entry;
+            final String streamId = entry.streamName() + "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes());
+            projectionStreamId = new ProjectionStreamId(streamId);
             this.lock = new Semaphore(1);
 
         }
 
-        @Override
-        public String getName() {
-            return delegate.getName();
+        public ViewRegistry.Entry getEntry() {
+            return entry;
         }
 
-        @Override
-        public String getCron() {
-            return delegate.getCron();
-        }
-
-        @Override
-        public Set<EventType> getEventTypes() {
-            return delegate.getEventTypes();
-        }
-
-        @Override
-        public int getChunkSize() {
-            return delegate.getChunkSize();
-        }
-
-        @Override
-        public void handleEvents(final EntityManager em, List<Event> events) {
-            delegate.handleEvents(em, events);
+        public void handleEvents(BeanManager beanManager, List<Event> events) {
+            final View view = getView(beanManager, entry);
+            view.handleEvents(events);
         }
 
         public ProjectionStreamId getProjectionStreamId() {
@@ -183,6 +167,14 @@ public class QuarkusJpaViewManager {
 
         public Semaphore getLock() {
             return lock;
+        }
+
+        private static View getView(BeanManager beanManager, ViewRegistry.Entry entry) {
+            final Bean<?> bean = QuarkusUtils.findBean(beanManager, entry.beanName(), entry.viewClass())
+                    .orElseThrow(() -> new IllegalStateException("No bean named '" + entry.beanName()
+                            + "' of type '" + entry.viewClass().getName() + "' found"));
+            final CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
+            return (View) beanManager.getReference(bean, entry.viewClass(), ctx);
         }
 
     }

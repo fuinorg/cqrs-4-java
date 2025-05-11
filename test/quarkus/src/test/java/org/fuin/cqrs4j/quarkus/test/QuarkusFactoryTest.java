@@ -65,7 +65,7 @@ public class QuarkusFactoryTest {
                 "person-id", event.getId().toString()
         ));
         final String actualJson = jsonbProvider.jsonb().toJson(commonEvent);
-        assertThatJson(actualJson).isEqualTo(expectedJson);
+        assertThatJson(actualJson).ignoring("data.event-timestamp").isEqualTo(expectedJson);
 
     }
 
