@@ -18,13 +18,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
@@ -44,8 +42,6 @@ import static org.fuin.utils4j.Utils4J.tryLocked;
  * Avoids boilerplate code: Instead of having a separated "Projector", "EventDispatcher"
  * and a "ChunkHandler" class for each view, there is only one simplified "View" class now.
  */
-@Component
-@Order(0)
 public class SpringViewManager implements ApplicationListener<ContextClosedEvent>, SchedulingConfigurer {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpringViewManager.class);

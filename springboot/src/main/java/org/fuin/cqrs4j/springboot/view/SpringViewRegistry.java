@@ -18,6 +18,12 @@ public class SpringViewRegistry implements ViewRegistry {
 
     private final SimpleViewRegistry delegate;
 
+    /**
+     * Constructor with mandatory data.
+     *
+     * @param beanFactory Bean factory used to get bean definitions from-
+     * @param views Known views.
+     */
     public SpringViewRegistry(ConfigurableBeanFactory beanFactory, List<View> views) {
         // Verify that all beans are dependent scoped
         for (final View view : views) {

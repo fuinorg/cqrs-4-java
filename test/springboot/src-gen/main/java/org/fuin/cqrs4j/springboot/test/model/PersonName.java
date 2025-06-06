@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.persistence.AttributeConverter;
+
 import jakarta.annotation.Generated;
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
@@ -24,10 +25,13 @@ import org.fuin.objects4j.common.ValueObjectWithBaseType;
 import javax.annotation.concurrent.Immutable;
 
 /**
+ * <p class="business">
  * The name of the person.
- * 
+ * </p>
+ * <p class="technical">
  * CAUTION: Instances of this type may contain invalid values by deserializing it.
  * This means if you create it from JSON, XML or database (JPA) it may not have a correct length or pattern.
+ * </p>
  */
 @Generated("Generated class - Manual changes will be overwritten")
 @Immutable

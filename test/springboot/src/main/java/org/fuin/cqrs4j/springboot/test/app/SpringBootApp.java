@@ -11,13 +11,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * Represents the (custom) entry point, most likely used to the Quarkus application in the IDE.
  */
 @SpringBootApplication(scanBasePackages = {
-        "org.fuin.cqrs4j.springboot.view",
         "org.fuin.cqrs4j.springboot.test.view",
         "org.fuin.cqrs4j.springboot.test.app"
 })
-@EnableConfigurationProperties(EventstoreConfig.class)
 @EntityScan(basePackages = {
-        "org.fuin.cqrs4j.springboot.view",
         "org.fuin.cqrs4j.springboot.test.view",
         "org.fuin.cqrs4j.springboot.test.model"
 })
