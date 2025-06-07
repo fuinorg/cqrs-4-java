@@ -11,9 +11,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>cqrs-4-java-springboot-starter</artifactId>
+    <artifactId>cqrs-4-java-springboot-query-starter</artifactId>
     <packaging>jar</packaging>
-    <description>${description} (SPRINGBOOT STARTER)</description>
+    <description>${description} (SPRINGBOOT QUERY STARTER)</description>
 
     <dependencyManagement>
         <dependencies>

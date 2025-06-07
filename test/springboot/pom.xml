@@ -42,7 +42,7 @@
 
         <dependency>
             <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-springboot-starter</artifactId>
+            <artifactId>cqrs-4-java-springboot-query-starter</artifactId>
         </dependency>
 
         <dependency>

@@ -86,7 +86,7 @@
 
             <dependency>
                 <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot-starter</artifactId>
+                <artifactId>cqrs-4-java-springboot-query-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -492,7 +492,7 @@
         <module>jackson</module>
         <module>jacoco</module>
         <module>springboot</module>
-        <module>springboot-starter</module>
+        <module>springboot-query-starter</module>
         <module>quarkus</module>
         <module>test</module>
     </modules>
