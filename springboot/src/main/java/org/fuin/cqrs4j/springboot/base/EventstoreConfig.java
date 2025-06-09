@@ -37,20 +37,25 @@ public class EventstoreConfig {
     @Max(65535)
     private final int port;
 
+    private final boolean tenantMode;
+
     /**
      * Constructor with all data.
      *
-     * @param tls  Use TlS (https) or not (http).
-     * @param host Host name.
-     * @param port Port number.
+     * @param tls        Use TlS (https) or not (http).
+     * @param host       Host name.
+     * @param port       Port number.
+     * @param tenantMode Are tenants enabled?
      */
     public EventstoreConfig(final Boolean tls,
                             final String host,
-                            final Integer port) {
+                            final Integer port,
+                            final boolean tenantMode) {
         super();
         this.tls = tls != null && tls;
         this.host = host == null ? "localhost" : host;
         this.port = port == null ? 2113 : port;
+        this.tenantMode = tenantMode;
     }
 
     /**
@@ -78,6 +83,15 @@ public class EventstoreConfig {
      */
     public int getPort() {
         return port;
+    }
+
+    /**
+     * Determines if the "tenant mode" is enabled.
+     *
+     * @return If we have tenants {@literal true} else {@literal false}.
+     */
+    public boolean isTenantMode() {
+        return tenantMode;
     }
 
 }

@@ -1,9 +1,11 @@
 package org.fuin.cqrs4j.quarkus.test.model;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.ddd4j.core.TenantId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +31,7 @@ public abstract class AbstractPersonsView implements View {
     }
 
     @Override
-    public void handleEvents(final List<Event> events) {
+    public void handleEvents(@Nullable TenantId tenantId, final List<Event> events) {
         for (final Event event : events) {
             if (event instanceof PersonCreatedEvent ev) {
                 handlePersonCreatedEvent(ev);

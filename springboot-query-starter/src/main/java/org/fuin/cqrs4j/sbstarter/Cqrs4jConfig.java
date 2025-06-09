@@ -1,5 +1,6 @@
 package org.fuin.cqrs4j.sbstarter;
 
+import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.esc.ProjectionService;
@@ -22,6 +23,7 @@ import org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProc
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Configures the necessary beans.
@@ -47,10 +49,11 @@ public class Cqrs4jConfig {
                                          final ProjectionAdminEventStore admin,
                                          final ProjectionService projectionService,
                                          final PlatformTransactionManager transactionManager,
-                                         final ConfigurableBeanFactory beanFactory) {
+                                         final ConfigurableBeanFactory beanFactory,
+                                         final Optional<TenantIdsSupplier> tenantIdsSupplier) {
 
         return new SpringViewManager(postProcessor, viewRegistry, eventstore, admin,
-                projectionService, transactionManager, beanFactory);
+                projectionService, transactionManager, beanFactory, tenantIdsSupplier);
 
     }
 

@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.fuin.cqrs4j.quarkus.test.QuarkusTestHelper.commonEvent;
 import static org.fuin.cqrs4j.quarkus.test.QuarkusTestHelper.personCreatedEvent;
@@ -65,7 +65,7 @@ public class QuarkusFactoryTest {
                 "person-id", event.getId().toString()
         ));
         final String actualJson = jsonbProvider.jsonb().toJson(commonEvent);
-        assertThatJson(actualJson).ignoring("data.event-timestamp").isEqualTo(expectedJson);
+        assertThatJson(actualJson).whenIgnoringPaths("data.event-timestamp").isEqualTo(expectedJson);
 
     }
 

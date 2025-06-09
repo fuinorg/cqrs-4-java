@@ -1,8 +1,10 @@
 package org.fuin.cqrs4j.springboot.view;
 
+import jakarta.annotation.Nullable;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.ddd4j.core.TenantId;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +40,6 @@ public class TestView implements View {
     }
 
     @Override
-    public void handleEvents(List<Event> events) {
+    public void handleEvents(@Nullable TenantId tenantId, List<Event> events) {
     }
-
 }

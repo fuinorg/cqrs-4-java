@@ -1,7 +1,9 @@
 package org.fuin.cqrs4j.core;
 
+import jakarta.annotation.Nullable;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.ddd4j.core.TenantId;
 
 import java.util.List;
 import java.util.Set;
@@ -71,8 +73,9 @@ public interface View {
     /**
      * Events to handle by the view.
      *
-     * @param events Events used to update the view.
+     * @param tenantId Tenant the events belong to. May be {@literal null} in case there is no tenant.
+     * @param events   Events used to update the view.
      */
-    void handleEvents(List<Event> events);
+    void handleEvents(@Nullable TenantId tenantId, List<Event> events);
 
 }

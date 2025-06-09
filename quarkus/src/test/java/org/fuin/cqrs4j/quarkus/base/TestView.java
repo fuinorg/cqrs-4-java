@@ -1,10 +1,12 @@
 package org.fuin.cqrs4j.quarkus.base;
 
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Named;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.ddd4j.core.TenantId;
 
 import java.util.List;
 import java.util.Set;
@@ -36,7 +38,7 @@ public class TestView implements View {
     }
 
     @Override
-    public void handleEvents(List<Event> events) {
+    public void handleEvents(@Nullable TenantId tenantId, List<Event> events) {
     }
 
 }

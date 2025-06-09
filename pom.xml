@@ -33,7 +33,7 @@
         <quarkus.version>3.21.0</quarkus.version>
         <spring.boot.version>3.4.4</spring.boot.version>
         <jackson.version>2.18.2</jackson.version>
-        <esc.version>0.9.1-SNAPSHOT</esc.version>
+        <esc.version>0.10.0-SNAPSHOT</esc.version>
         <ddd4j.version>0.8.0-SNAPSHOT</ddd4j.version>
         <objects4j.version>0.11.1-SNAPSHOT</objects4j.version>
         <utils4j.version>0.15.1-SNAPSHOT</utils4j.version>
@@ -352,7 +352,7 @@
 
             <dependency>
                 <groupId>net.javacrumbs.json-unit</groupId>
-                <artifactId>json-unit-fluent</artifactId>
+                <artifactId>json-unit-assertj</artifactId>
                 <version>4.1.0</version>
             </dependency>
 

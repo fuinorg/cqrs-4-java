@@ -1,17 +1,24 @@
 package org.fuin.cqrs4j.springboot.view;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.core.CqrsUtils;
+import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.ddd4j.core.TenantId;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.ProjectionStreamId;
+import org.fuin.esc.api.SimpleTenantId;
 import org.fuin.esc.api.StreamAlreadyExistsException;
 import org.fuin.esc.api.StreamEventsSlice;
+import org.fuin.esc.api.StreamId;
+import org.fuin.esc.api.TenantStreamId;
 import org.fuin.esc.api.TypeName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +39,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
@@ -60,7 +68,9 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private final ConfigurableBeanFactory beanFactory;
 
-    private List<ViewJob> views;
+    private final TenantIdsSupplier tenantIdsSupplier;
+
+    private List<ViewJob> viewJobs;
 
     /**
      * Constructor with mandatory data.
@@ -72,6 +82,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
      * @param projectionService  Service to manage projections.
      * @param transactionManager Helps to open necessary transactions manually.
      * @param beanFactory        Bean factory.
+     * @param tenantIdsSupplier  Supplies the tenant identifiers know at the moment of the call. Required to be thread-safe!
      */
     public SpringViewManager(
             final ScheduledAnnotationBeanPostProcessor postProcessor,
@@ -80,7 +91,8 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             final ProjectionAdminEventStore admin,
             final ProjectionService projectionService,
             final PlatformTransactionManager transactionManager,
-            final ConfigurableBeanFactory beanFactory) {
+            final ConfigurableBeanFactory beanFactory,
+            final Optional<TenantIdsSupplier> tenantIdsSupplier) {
         this.postProcessor = Objects.requireNonNull(postProcessor, "postProcessor==null");
         this.viewRegistry = Objects.requireNonNull(viewRegistry, "viewClassRegistry==null");
         this.eventstore = Objects.requireNonNull(eventstore, "eventstore==null");
@@ -90,7 +102,8 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         this.requiresNewTransaction = new TransactionTemplate(transactionManager);
         this.requiresNewTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.requiresNewTransaction.setTimeout(10);
-        this.beanFactory = beanFactory;
+        this.beanFactory = Objects.requireNonNull(beanFactory, "beanFactory==null");
+        this.tenantIdsSupplier = tenantIdsSupplier.orElse(null);
     }
 
     @Override
@@ -104,14 +117,14 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     }
 
     private void createViews(ScheduledTaskRegistrar taskRegistrar) {
-        LOG.info("Create {} views...", viewRegistry.size());
+        LOG.info("Create {} view jobs...", viewRegistry.size());
         if (viewRegistry.isEmpty()) {
-            views = Collections.emptyList();
+            viewJobs = Collections.emptyList();
         } else {
-            views = viewRegistry.getViews().stream()
+            viewJobs = viewRegistry.getViews().stream()
                     .map(ViewJob::new)
                     .toList();
-            for (final ViewJob view : views) {
+            for (final ViewJob view : viewJobs) {
                 LOG.info("Create view: {}", view.getEntry().viewClass().getName());
                 view.setCronTask(new CronTask(() -> updateView(view), view.getEntry().cron()));
                 taskRegistrar.addCronTask(view.getCronTask());
@@ -120,62 +133,90 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     }
 
     private void shutdownViews() {
-        LOG.info("Shutdown {} views...", views == null ? 0 : views.size());
+        LOG.info("Shutdown {} view jobs...", viewJobs == null ? 0 : viewJobs.size());
         final Set<ScheduledTask> scheduledTasks = postProcessor.getScheduledTasks();
-        for (final ViewJob view : views) {
-            LOG.info("Shutdown view: {}", view.getEntry().viewClass().getName());
+        for (final ViewJob viewJob : viewJobs) {
+            LOG.info("Shutdown job for view: {}", viewJob.getEntry().viewClass().getName());
             scheduledTasks.stream()
-                    .filter(scheduled -> scheduled.getTask() == view.getCronTask())
+                    .filter(scheduled -> scheduled.getTask() == viewJob.getCronTask())
                     .findFirst()
                     .ifPresent(ScheduledTask::cancel);
         }
     }
 
 
-    private void updateView(final ViewJob view) {
-        tryLocked(view.getLock(), () -> new Thread(() -> {
-            try {
-                LOG.debug("updateView({})", view.getEntry().viewClass().getName());
-                readStreamEvents(view);
-            } catch (final RuntimeException ex) {
-                LOG.error("Error reading events from stream", ex);
-            }
+    private void updateView(final ViewJob viewJob) {
+        tryLocked(viewJob.getLock(), () -> new Thread(() -> {
+            LOG.debug("updateView({})", viewJob.getEntry().viewClass().getName());
+            readStreamEvents(viewJob);
         }
         ).start());
     }
 
-    private void readStreamEvents(final ViewJob view) {
+    private void readStreamEvents(@NotNull final ViewJob viewJob) {
+        if (tenantIdsSupplier == null) {
+            readStreamEvents(null, viewJob);
+        } else {
+            tenantIdsSupplier.getTenantIds().forEach(tenantId -> readStreamEvents(tenantId, viewJob));
+        }
+    }
 
-        // Create an event store projection if it does not exist.
-        if (!admin.projectionExists(view.getProjectionStreamId())) {
-            final List<TypeName> typeNames = asTypeNames(view.getEntry().eventTypes());
-            LOG.info("Create projection '{}' with events: {}", view.getProjectionStreamId(), typeNames);
-            try {
-                admin.createProjection(view.getProjectionStreamId(), true, typeNames);
-            } catch (StreamAlreadyExistsException ex) {
-                LOG.info("Race condition: After projectionExists({}) create failed with 'already exists'", view.getProjectionStreamId());
+    private void readStreamEvents(@Nullable final TenantId tenantId, @NotNull final ViewJob viewJob) {
+        try {
+            final StreamId projectionStreamId = projectionStreamId(tenantId, viewJob);
+
+            // Create an event store projection if it does not exist.
+            if (!admin.projectionExists(projectionStreamId)) {
+                createProjection(tenantId, viewJob);
+            }
+
+            // Read and dispatch events
+            final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
+            eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
+                    currentSlice -> handleChunk(tenantId, projectionStreamId, viewJob, currentSlice));
+
+        } catch (final RuntimeException ex) {
+            if (tenantId == null) {
+                LOG.error("Error processing events for viewJob '" + viewJob.entry.beanName() + "'", ex);
+            } else {
+                LOG.error("Error processing events for tenant '" + tenantId + "' viewJob '" + viewJob.entry.beanName() + "'", ex);
             }
         }
 
-        // Read and dispatch events
-        final Long nextEventNumber = projectionService.readProjectionPosition(view.getProjectionStreamId());
-        eventstore.readAllEventsForward(view.getProjectionStreamId(), nextEventNumber, view.getEntry().chunkSize(),
-                currentSlice -> handleChunk(view, currentSlice));
+    }
 
+    private void createProjection(@Nullable final TenantId tenantId,
+                                  @NotNull final ViewJob viewJob) {
+        final List<TypeName> typeNames = asTypeNames(viewJob.getEntry().eventTypes());
+        LOG.info("Create projection '{}'{} with events: {}",
+                viewJob.getProjectionStreamId(), (tenantId == null ? "" : " for tenant '" + tenantId + "'"), typeNames);
+        try {
+            final SimpleTenantId tid = tenantId == null ? null : new SimpleTenantId(tenantId.name());
+            admin.createProjection(tid, viewJob.getProjectionStreamId(), true, typeNames);
+        } catch (StreamAlreadyExistsException ex) {
+            LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
+        }
     }
 
     private List<TypeName> asTypeNames(Set<EventType> eventTypes) {
         return eventTypes.stream().map(eventType -> new TypeName((eventType.asString()))).toList();
     }
 
-    private void handleChunk(final ViewJob view, final StreamEventsSlice currentSlice) {
+    private void handleChunk(final TenantId tenantId, final StreamId projectionStreamId, final ViewJob viewJob, final StreamEventsSlice currentSlice) {
         requiresNewTransaction.execute(new TransactionCallbackWithoutResult() {
             public void doInTransactionWithoutResult(TransactionStatus status) {
                 LOG.debug("Handle chunk: {}", currentSlice);
-                view.handleEvents(beanFactory, asEvents(currentSlice.getEvents()));
-                projectionService.updateProjectionPosition(view.getProjectionStreamId(), currentSlice.getNextEventNumber());
+                viewJob.handleEvents(beanFactory, tenantId, asEvents(currentSlice.getEvents()));
+                projectionService.updateProjectionPosition(projectionStreamId, currentSlice.getNextEventNumber());
             }
         });
+    }
+
+    private static StreamId projectionStreamId(TenantId tenantId, ViewJob viewJob) {
+        if (tenantId == null) {
+            return viewJob.getProjectionStreamId();
+        }
+        return new TenantStreamId(new SimpleTenantId(tenantId.name()), viewJob.getProjectionStreamId());
     }
 
     private static List<Event> asEvents(List<CommonEvent> events) {
@@ -196,7 +237,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         private CronTask cronTask;
 
         public ViewJob(final ViewRegistry.Entry entry) {
-            this.entry = entry;
+            this.entry = Objects.requireNonNull(entry, "entry==null");
             final String streamId = entry.streamName() + "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes());
             projectionStreamId = new ProjectionStreamId(streamId);
             this.lock = new Semaphore(1);
@@ -224,10 +265,12 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             return entry;
         }
 
-        public void handleEvents(ConfigurableBeanFactory beanFactory, List<Event> events) {
+        public void handleEvents(final ConfigurableBeanFactory beanFactory,
+                                 @Nullable final TenantId tenantId,
+                                 final List<Event> events) {
             final View view = beanFactory.getBean(entry.beanName(), entry.viewClass());
             try {
-                view.handleEvents(events);
+                view.handleEvents(tenantId, events);
             } finally {
                 beanFactory.destroyBean(entry.beanName(), view);
             }
