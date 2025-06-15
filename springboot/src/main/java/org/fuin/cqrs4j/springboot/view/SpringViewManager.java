@@ -219,7 +219,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         if (tenantId == null) {
             return viewJob.getProjectionStreamId();
         }
-        return new SimpleStreamId("v_" + tenantId.name() + "-"  + viewJob.getProjectionStreamId());
+        return new ProjectionStreamId("v_" + tenantId.name() + "-"  + viewJob.getProjectionStreamId());
     }
 
     private static List<Event> asEvents(List<CommonEvent> events) {
