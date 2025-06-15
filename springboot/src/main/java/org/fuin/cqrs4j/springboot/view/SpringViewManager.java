@@ -14,6 +14,7 @@ import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.ProjectionStreamId;
+import org.fuin.esc.api.SimpleStreamId;
 import org.fuin.esc.api.SimpleTenantId;
 import org.fuin.esc.api.StreamAlreadyExistsException;
 import org.fuin.esc.api.StreamEventsSlice;
@@ -218,7 +219,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         if (tenantId == null) {
             return viewJob.getProjectionStreamId();
         }
-        return new TenantStreamId(new SimpleTenantId(tenantId.name()), viewJob.getProjectionStreamId());
+        return new SimpleStreamId("v_" + tenantId.name() + "-"  + viewJob.getProjectionStreamId());
     }
 
     private static List<Event> asEvents(List<CommonEvent> events) {
