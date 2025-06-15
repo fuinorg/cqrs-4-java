@@ -166,14 +166,12 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private void readStreamEvents(@Nullable final TenantId tenantId, @NotNull final ViewJob viewJob) {
         try {
-            final StreamId projectionStreamId = projectionStreamId(tenantId, viewJob);
 
             // Create an event store projection if it does not exist.
-            if (!admin.projectionExists(projectionStreamId)) {
-                createProjection(tenantId, viewJob);
-            }
+            createProjection(tenantId, viewJob);
 
             // Read and dispatch events
+            final StreamId projectionStreamId = projectionStreamId(tenantId, viewJob);
             final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
             eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
                     currentSlice -> handleChunk(tenantId, projectionStreamId, viewJob, currentSlice));
@@ -190,14 +188,22 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private void createProjection(@Nullable final TenantId tenantId,
                                   @NotNull final ViewJob viewJob) {
-        final List<TypeName> typeNames = asTypeNames(viewJob.getEntry().eventTypes());
-        LOG.info("Create projection '{}'{} with events: {}",
-                viewJob.getProjectionStreamId(), (tenantId == null ? "" : " for tenant '" + tenantId + "'"), typeNames);
-        try {
-            final SimpleTenantId tid = tenantId == null ? null : new SimpleTenantId(tenantId.name());
-            admin.createProjection(tid, viewJob.getProjectionStreamId(), true, typeNames);
-        } catch (StreamAlreadyExistsException ex) {
-            LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
+        final StreamId streamId;
+        if (tenantId == null) {
+            streamId = viewJob.getProjectionStreamId();
+        } else {
+            streamId = new ProjectionStreamId(tenantId.name() + "-" + viewJob.getProjectionStreamId());
+        }
+        if (!admin.projectionExists(streamId)) {
+            final List<TypeName> typeNames = asTypeNames(viewJob.getEntry().eventTypes());
+            LOG.info("Create projection '{}'{} with events: {}",
+                    viewJob.getProjectionStreamId(), (tenantId == null ? "" : " for tenant '" + tenantId + "'"), typeNames);
+            try {
+                final SimpleTenantId tid = tenantId == null ? null : new SimpleTenantId(tenantId.name());
+                admin.createProjection(tid, viewJob.getProjectionStreamId(), true, typeNames);
+            } catch (StreamAlreadyExistsException ex) {
+                LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
+            }
         }
     }
 

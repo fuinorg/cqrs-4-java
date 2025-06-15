@@ -121,12 +121,10 @@ public class QuarkusViewManager {
     private void readStreamEvents(@Nullable final TenantId tenantId, final ViewExt viewExt) {
 
         // Create an event store projection if it does not exist.
-        final StreamId projectionStreamId = projectionStreamId(tenantId, viewExt);
-        if (!admin.projectionExists(projectionStreamId(tenantId, viewExt))) {
-            createProjection(tenantId, viewExt);
-        }
+        createProjection(tenantId, viewExt);
 
         // Read and dispatch events
+        final StreamId projectionStreamId = projectionStreamId(tenantId, viewExt);
         final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
         eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewExt.getEntry().chunkSize(),
                 currentSlice -> handleChunk(tenantId, projectionStreamId, viewExt, currentSlice));
@@ -135,14 +133,22 @@ public class QuarkusViewManager {
 
     private void createProjection(@Nullable final TenantId tenantId,
                                   @NotNull final ViewExt viewExt) {
-        final List<TypeName> typeNames = asTypeNames(viewExt.getEntry().eventTypes());
-        LOG.info("Create projection '{}'{} with events: {}",
-                viewExt.getProjectionStreamId(), (tenantId == null ? "" : " for tenant '" + tenantId + "'"), typeNames);
-        try {
-            final SimpleTenantId tid = tenantId == null ? null : new SimpleTenantId(tenantId.name());
-            admin.createProjection(tid, viewExt.getProjectionStreamId(), true, typeNames);
-        } catch (StreamAlreadyExistsException ex) {
-            LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
+        final StreamId streamId;
+        if (tenantId == null) {
+            streamId = viewExt.getProjectionStreamId();
+        } else {
+            streamId = new ProjectionStreamId(tenantId.name() + "-" + viewExt.getProjectionStreamId());
+        }
+        if (!admin.projectionExists(streamId)) {
+            final List<TypeName> typeNames = asTypeNames(viewExt.getEntry().eventTypes());
+            LOG.info("Create projection '{}'{} with events: {}",
+                    viewExt.getProjectionStreamId(), (tenantId == null ? "" : " for tenant '" + tenantId + "'"), typeNames);
+            try {
+                final SimpleTenantId tid = tenantId == null ? null : new SimpleTenantId(tenantId.name());
+                admin.createProjection(tid, viewExt.getProjectionStreamId(), true, typeNames);
+            } catch (StreamAlreadyExistsException ex) {
+                LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
+            }
         }
     }
 
