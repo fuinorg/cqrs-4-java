@@ -39,7 +39,8 @@ public final class SpringBootTestHelper {
         return new SimpleCommonEvent(
                 eventId,
                 new TypeName(PersonCreatedEvent.TYPE.asBaseType()),
-                event);
+                event,
+                null);
     }
 
 }

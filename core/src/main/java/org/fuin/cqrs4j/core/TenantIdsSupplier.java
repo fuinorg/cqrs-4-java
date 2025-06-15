@@ -3,7 +3,6 @@ package org.fuin.cqrs4j.core;
 import org.fuin.ddd4j.core.TenantId;
 
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 /**

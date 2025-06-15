@@ -75,14 +75,15 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     /**
      * Constructor with mandatory data.
      *
-     * @param postProcessor      Helps to cancel the scheduled jobs ob shutdown.
-     * @param viewRegistry       List with user defined view classes.
-     * @param eventstore         Eventstore instance to use.
-     * @param admin              Admin interface to eventstore.
-     * @param projectionService  Service to manage projections.
-     * @param transactionManager Helps to open necessary transactions manually.
-     * @param beanFactory        Bean factory.
-     * @param tenantIdsSupplier  Supplies the tenant identifiers know at the moment of the call. Required to be thread-safe!
+     * @param postProcessor       Helps to cancel the scheduled jobs ob shutdown.
+     * @param viewRegistry        List with user defined view classes.
+     * @param eventstore          Eventstore instance to use.
+     * @param admin               Admin interface to eventstore.
+     * @param projectionService   Service to manage projections.
+     * @param transactionManager  Helps to open necessary transactions manually.
+     * @param beanFactory         Bean factory.
+     * @param multitenancyEnabled Determines if multitenancy is enabled or nit.
+     * @param tenantIdsSupplier   Supplies the tenant identifiers know at the moment of the call. Required to be thread-safe!
      */
     public SpringViewManager(
             final ScheduledAnnotationBeanPostProcessor postProcessor,
@@ -92,7 +93,8 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             final ProjectionService projectionService,
             final PlatformTransactionManager transactionManager,
             final ConfigurableBeanFactory beanFactory,
-            final Optional<TenantIdsSupplier> tenantIdsSupplier) {
+            final boolean multitenancyEnabled,
+            final TenantIdsSupplier tenantIdsSupplier) {
         this.postProcessor = Objects.requireNonNull(postProcessor, "postProcessor==null");
         this.viewRegistry = Objects.requireNonNull(viewRegistry, "viewClassRegistry==null");
         this.eventstore = Objects.requireNonNull(eventstore, "eventstore==null");
@@ -103,7 +105,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         this.requiresNewTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.requiresNewTransaction.setTimeout(10);
         this.beanFactory = Objects.requireNonNull(beanFactory, "beanFactory==null");
-        this.tenantIdsSupplier = tenantIdsSupplier.orElse(null);
+        this.tenantIdsSupplier = multitenancyEnabled ? Objects.requireNonNull(tenantIdsSupplier, "tenantIdsSupplier==null") : null;
     }
 
     @Override

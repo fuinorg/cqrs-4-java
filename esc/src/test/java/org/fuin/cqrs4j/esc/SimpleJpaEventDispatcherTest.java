@@ -156,7 +156,7 @@ public final class SimpleJpaEventDispatcherTest {
     private static CommonEvent asCommonEvent(final Event event) {
         final EventId eventId = new EventId(event.getEventId().asBaseType());
         final TypeName typeName = new TypeName(event.getEventType().asBaseType());
-        return new SimpleCommonEvent(eventId, typeName, event);
+        return new SimpleCommonEvent(eventId, typeName, event, null);
     }
 
     private static class EventA extends AbstractEvent {

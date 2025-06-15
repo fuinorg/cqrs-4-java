@@ -9,6 +9,7 @@ import org.fuin.cqrs4j.springboot.view.SpringViewManager;
 import org.fuin.cqrs4j.springboot.view.SpringViewRegistry;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -50,10 +51,12 @@ public class Cqrs4jConfig {
                                          final ProjectionService projectionService,
                                          final PlatformTransactionManager transactionManager,
                                          final ConfigurableBeanFactory beanFactory,
+                                         @Value("${org.fuin.cqrs4j.multitenancy:false}") boolean multitenancy,
                                          final Optional<TenantIdsSupplier> tenantIdsSupplier) {
 
         return new SpringViewManager(postProcessor, viewRegistry, eventstore, admin,
-                projectionService, transactionManager, beanFactory, tenantIdsSupplier);
+                projectionService, transactionManager, beanFactory,
+                multitenancy, tenantIdsSupplier.orElse(null));
 
     }
 

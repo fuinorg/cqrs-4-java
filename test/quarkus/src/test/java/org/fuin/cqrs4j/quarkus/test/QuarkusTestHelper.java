@@ -47,7 +47,8 @@ public final class QuarkusTestHelper {
         return new SimpleCommonEvent(
                 new org.fuin.esc.api.EventId(event.getEventId().asString()),
                 new TypeName(PersonCreatedEvent.TYPE.asBaseType()),
-                event);
+                event,
+                null);
     }
 
 }
