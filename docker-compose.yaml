@@ -1,0 +1,35 @@
+version: '2.4'
+
+services:
+
+  eventstore:
+    image: eventstore/eventstore:24.10
+    container_name: "cqrs-4-java-eventstore"
+    ports:
+      - "1113:1113"
+      - "2113:2113"
+    environment:
+      EVENTSTORE_MEM_DB: "true"
+      EVENTSTORE_RUN_PROJECTIONS: "all"
+      EVENTSTORE_INSECURE: "true"
+      EVENTSTORE_LOG: "/tmp/log-eventstore"
+    networks:
+      - cqrs-4-java-test
+
+  mariadb:
+    image: mariadb:11
+    container_name: "cqrs-4-java-mariadb"
+    environment:
+      MYSQL_ROOT_PASSWORD: xyz
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: mary
+      MYSQL_PASSWORD: abc
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    ports:
+      - "3306:3306"
+    networks:
+      - cqrs-4-java-test
+
+networks:
+  cqrs-4-java-test:
+    name: cqrs-4-java-test
