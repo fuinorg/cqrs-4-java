@@ -7,6 +7,7 @@ import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.cqrs4j.springboot.base.EventstoreConfig;
 import org.fuin.cqrs4j.springboot.view.SpringViewManager;
 import org.fuin.cqrs4j.springboot.view.SpringViewRegistry;
+import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,11 +53,13 @@ public class Cqrs4jConfig {
                                          final PlatformTransactionManager transactionManager,
                                          final ConfigurableBeanFactory beanFactory,
                                          @Value("${org.fuin.cqrs4j.multitenancy:false}") boolean multitenancy,
+                                         final Optional<WritableTenantContext> tenantContext,
                                          final Optional<TenantIdsSupplier> tenantIdsSupplier) {
 
         return new SpringViewManager(postProcessor, viewRegistry, eventstore, admin,
                 projectionService, transactionManager, beanFactory,
-                multitenancy, tenantIdsSupplier.orElse(null));
+                multitenancy, tenantContext.orElse(null),
+                tenantIdsSupplier.orElse(null));
 
     }
 

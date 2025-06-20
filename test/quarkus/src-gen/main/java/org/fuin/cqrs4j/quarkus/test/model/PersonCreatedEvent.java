@@ -19,8 +19,6 @@ import java.util.Map;
 import javax.annotation.concurrent.Immutable;
 import org.fuin.utils4j.Utils4J;
 
-import org.fuin.cqrs4j.quarkus.test.model.PersonId;
-import org.fuin.cqrs4j.quarkus.test.model.PersonName;
 
 /**
  * A person was created.

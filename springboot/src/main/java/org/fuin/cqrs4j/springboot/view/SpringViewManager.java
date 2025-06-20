@@ -10,6 +10,7 @@ import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.TenantId;
+import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
@@ -19,6 +20,7 @@ import org.fuin.esc.api.SimpleTenantId;
 import org.fuin.esc.api.StreamAlreadyExistsException;
 import org.fuin.esc.api.StreamEventsSlice;
 import org.fuin.esc.api.StreamId;
+import org.fuin.esc.api.TenantContext;
 import org.fuin.esc.api.TenantStreamId;
 import org.fuin.esc.api.TypeName;
 import org.slf4j.Logger;
@@ -69,6 +71,8 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private final ConfigurableBeanFactory beanFactory;
 
+    private final WritableTenantContext tenantContext;
+
     private final TenantIdsSupplier tenantIdsSupplier;
 
     private List<ViewJob> viewJobs;
@@ -84,6 +88,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
      * @param transactionManager  Helps to open necessary transactions manually.
      * @param beanFactory         Bean factory.
      * @param multitenancyEnabled Determines if multitenancy is enabled or nit.
+     * @param tenantContext       Tenant context.
      * @param tenantIdsSupplier   Supplies the tenant identifiers know at the moment of the call. Required to be thread-safe!
      */
     public SpringViewManager(
@@ -95,6 +100,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             final PlatformTransactionManager transactionManager,
             final ConfigurableBeanFactory beanFactory,
             final boolean multitenancyEnabled,
+            final WritableTenantContext tenantContext,
             final TenantIdsSupplier tenantIdsSupplier) {
         this.postProcessor = Objects.requireNonNull(postProcessor, "postProcessor==null");
         this.viewRegistry = Objects.requireNonNull(viewRegistry, "viewClassRegistry==null");
@@ -106,6 +112,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         this.requiresNewTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.requiresNewTransaction.setTimeout(10);
         this.beanFactory = Objects.requireNonNull(beanFactory, "beanFactory==null");
+        this.tenantContext = multitenancyEnabled ? Objects.requireNonNull(tenantContext, "tenantContext==null") : null;
         this.tenantIdsSupplier = multitenancyEnabled ? Objects.requireNonNull(tenantIdsSupplier, "tenantIdsSupplier==null") : null;
     }
 
@@ -160,7 +167,14 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         if (tenantIdsSupplier == null) {
             readStreamEvents(null, viewJob);
         } else {
-            tenantIdsSupplier.getTenantIds().forEach(tenantId -> readStreamEvents(tenantId, viewJob));
+            tenantIdsSupplier.getTenantIds().forEach(tenantId -> {
+                tenantContext.setTenantId(tenantId);
+                try {
+                    readStreamEvents(tenantId, viewJob);
+                } finally {
+                    tenantContext.clear();
+                }
+            });
         }
     }
 
