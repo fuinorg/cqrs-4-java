@@ -28,7 +28,7 @@ class QuarkusUtilsTest {
 
     @Test
     void testFindBean() {
-        assertThat(QuarkusUtils.findBean(beanManager, "test-view", TestView.class)).isPresent();
+        assertThat(QuarkusUtils.findBean(beanManager, "TestView", TestView.class)).isPresent();
     }
 
 }

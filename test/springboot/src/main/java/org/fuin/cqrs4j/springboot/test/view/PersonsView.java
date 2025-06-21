@@ -24,9 +24,9 @@ public class PersonsView implements View {
 
     private static final Logger LOG = LoggerFactory.getLogger(PersonsView.class);
 
-    public static final String NAME = "persons";
+    public static final String NAME = "Persons";
 
-    public static final String BEAN_NAME = NAME + "-view";
+    public static final String BEAN_NAME = NAME + "View";
 
     private final EntityManager em;
 
@@ -61,7 +61,7 @@ public class PersonsView implements View {
     }
 
     @Override
-    public void handleEvents(@Nullable TenantId tenantId, final List<Event> events) {
+    public void handleEvents(final List<Event> events) {
         for (final Event event : events) {
             if (event instanceof PersonCreatedEvent ev) {
                 handlePersonCreatedEvent(ev);

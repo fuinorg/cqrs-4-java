@@ -31,7 +31,7 @@ public abstract class AbstractPersonsView implements View {
     }
 
     @Override
-    public void handleEvents(@Nullable TenantId tenantId, final List<Event> events) {
+    public void handleEvents(final List<Event> events) {
         for (final Event event : events) {
             if (event instanceof PersonCreatedEvent ev) {
                 handlePersonCreatedEvent(ev);

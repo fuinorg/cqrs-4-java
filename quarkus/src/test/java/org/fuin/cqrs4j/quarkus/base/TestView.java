@@ -15,9 +15,9 @@ import java.util.Set;
 @Named(TestView.BEAN_NAME)
 public class TestView implements View {
 
-    public static final String NAME = "test";
+    public static final String NAME = "Test";
 
-    public static final String BEAN_NAME = NAME + "-view";
+    public static final String BEAN_NAME = NAME + "View";
 
     @Override
     public String getName() {
@@ -45,7 +45,7 @@ public class TestView implements View {
     }
 
     @Override
-    public void handleEvents(@Nullable TenantId tenantId, List<Event> events) {
+    public void handleEvents(List<Event> events) {
     }
 
 }

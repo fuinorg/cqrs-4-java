@@ -40,7 +40,7 @@ public interface View {
      * @return Name that is unique in this program instance.
      */
     default String getProjectionName() {
-        return getName() + "-projection";
+        return getName() + "Projection";
     }
 
     /**
@@ -49,7 +49,7 @@ public interface View {
      * @return Name that is unique in this program instance.
      */
     default String getStreamName() {
-        return getName() + "-view";
+        return getName() + "Projection";
     }
 
     /**
@@ -79,9 +79,8 @@ public interface View {
     /**
      * Events to handle by the view.
      *
-     * @param tenantId Tenant the events belong to. May be {@literal null} in case there is no tenant.
      * @param events   Events used to update the view.
      */
-    void handleEvents(@Nullable TenantId tenantId, List<Event> events);
+    void handleEvents(List<Event> events);
 
 }

@@ -1,6 +1,5 @@
 package org.fuin.cqrs4j.springboot.view;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.core.CqrsUtils;
 import org.fuin.cqrs4j.core.TenantIdsSupplier;
@@ -9,20 +8,14 @@ import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
-import org.fuin.ddd4j.core.TenantId;
 import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.ProjectionId;
 import org.fuin.esc.api.ProjectionStreamId;
-import org.fuin.esc.api.SimpleStreamId;
-import org.fuin.esc.api.SimpleTenantId;
 import org.fuin.esc.api.StreamAlreadyExistsException;
 import org.fuin.esc.api.StreamEventsSlice;
-import org.fuin.esc.api.StreamId;
-import org.fuin.esc.api.TenantContext;
-import org.fuin.esc.api.TenantStreamId;
 import org.fuin.esc.api.TypeName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +36,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
@@ -86,7 +78,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
      * @param eventstore          Eventstore instance to use.
      * @param admin               Admin interface to eventstore.
      * @param projectionService   Service to manage projections.
-     * @param transactionManager  Helps to open necessary transactions manually.
+     * @param transactionManager  Helps to open the necessary transactions manually.
      * @param beanFactory         Bean factory.
      * @param multitenancyEnabled Determines if multitenancy is enabled or nit.
      * @param tenantContext       Tenant context.
@@ -159,19 +151,19 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     private void updateView(final ViewJob viewJob) {
         tryLocked(viewJob.getLock(), () -> new Thread(() -> {
             LOG.debug("updateView({})", viewJob.getEntry().viewClass().getName());
-            readStreamEvents(viewJob);
+            readTenantsStreamEvents(viewJob);
         }
         ).start());
     }
 
-    private void readStreamEvents(@NotNull final ViewJob viewJob) {
+    private void readTenantsStreamEvents(@NotNull final ViewJob viewJob) {
         if (tenantIdsSupplier == null) {
-            readStreamEvents(null, viewJob);
+            readStreamEvents(viewJob);
         } else {
             tenantIdsSupplier.getTenantIds().forEach(tenantId -> {
                 tenantContext.setTenantId(tenantId);
                 try {
-                    readStreamEvents(tenantId, viewJob);
+                    readStreamEvents(viewJob);
                 } finally {
                     tenantContext.clear();
                 }
@@ -179,36 +171,27 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         }
     }
 
-    private void readStreamEvents(@Nullable final TenantId tenantId, @NotNull final ViewJob viewJob) {
+    private void readStreamEvents(@NotNull final ViewJob viewJob) {
         try {
 
             // Create an event store projection if it does not exist.
-            createProjection(tenantId, viewJob);
+            createProjection(viewJob);
 
             // Read and dispatch events
             final ProjectionStreamId projectionStreamId = viewJob.getProjectionStreamId();
             final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
             eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
-                    currentSlice -> handleChunk(tenantId, projectionStreamId, viewJob, currentSlice));
+                    currentSlice -> handleChunk(viewJob, currentSlice));
 
         } catch (final RuntimeException ex) {
-            if (tenantId == null) {
-                LOG.error("Error processing events for viewJob '" + viewJob.entry.beanName() + "'", ex);
-            } else {
-                LOG.error("Error processing events for tenant '" + tenantId + "' viewJob '" + viewJob.entry.beanName() + "'", ex);
-            }
+            LOG.error("Error processing events for viewJob '" + viewJob.entry.beanName() + "'", ex);
         }
 
     }
 
-    private void createProjection(@Nullable final TenantId tenantId,
-                                  @NotNull final ViewJob viewJob) {
+    private void createProjection(@NotNull final ViewJob viewJob) {
         if (!admin.projectionExists(viewJob.getProjectionId())) {
             final List<TypeName> typeNames = asTypeNames(viewJob.getEntry().eventTypes());
-            LOG.info("Create projection '{}' ({}){} with events: {}",
-                    viewJob.getProjectionId(), viewJob.getProjectionStreamId(),
-                    (tenantId == null ? "" : " for tenant '" + tenantId + "'"),
-                    typeNames);
             try {
                 admin.createProjection(viewJob.getProjectionId(), viewJob.getProjectionStreamId(), true, typeNames);
             } catch (StreamAlreadyExistsException ex) {
@@ -221,12 +204,12 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         return eventTypes.stream().map(eventType -> new TypeName((eventType.asString()))).toList();
     }
 
-    private void handleChunk(final TenantId tenantId, final StreamId projectionStreamId, final ViewJob viewJob, final StreamEventsSlice currentSlice) {
+    private void handleChunk(final ViewJob viewJob, final StreamEventsSlice currentSlice) {
         requiresNewTransaction.execute(new TransactionCallbackWithoutResult() {
             public void doInTransactionWithoutResult(TransactionStatus status) {
                 LOG.debug("Handle chunk: {}", currentSlice);
-                viewJob.handleEvents(beanFactory, tenantId, asEvents(currentSlice.getEvents()));
-                projectionService.updateProjectionPosition(projectionStreamId, currentSlice.getNextEventNumber());
+                viewJob.handleEvents(beanFactory, asEvents(currentSlice.getEvents()));
+                projectionService.updateProjectionPosition(viewJob.getProjectionStreamId(), currentSlice.getNextEventNumber());
             }
         });
     }
@@ -243,6 +226,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         private final ViewRegistry.Entry entry;
 
         private final ProjectionId projectionId;
+
         private final ProjectionStreamId projectionStreamId;
 
         private final Semaphore lock;
@@ -280,11 +264,10 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         }
 
         public void handleEvents(final ConfigurableBeanFactory beanFactory,
-                                 @Nullable final TenantId tenantId,
                                  final List<Event> events) {
             final View view = beanFactory.getBean(entry.beanName(), entry.viewClass());
             try {
-                view.handleEvents(tenantId, events);
+                view.handleEvents(events);
             } finally {
                 beanFactory.destroyBean(entry.beanName(), view);
             }

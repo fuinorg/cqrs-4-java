@@ -4,7 +4,6 @@ import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.runtime.Shutdown;
 import io.quarkus.runtime.Startup;
 import io.quarkus.scheduler.Scheduler;
-import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.Instance;
@@ -12,6 +11,7 @@ import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.fuin.cqrs4j.core.CqrsUtils;
 import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.View;
@@ -20,17 +20,14 @@ import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.cqrs4j.quarkus.base.QuarkusUtils;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
-import org.fuin.ddd4j.core.TenantId;
+import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.ProjectionId;
 import org.fuin.esc.api.ProjectionStreamId;
-import org.fuin.esc.api.SimpleTenantId;
 import org.fuin.esc.api.StreamAlreadyExistsException;
 import org.fuin.esc.api.StreamEventsSlice;
-import org.fuin.esc.api.StreamId;
-import org.fuin.esc.api.TenantStreamId;
 import org.fuin.esc.api.TypeName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +68,12 @@ public class QuarkusViewManager {
     @Inject
     BeanManager beanManager;
 
+    @ConfigProperty(name = "org.fuin.cqrs4j.multitenancy")
+    boolean multitenancy;
+
+    @Inject
+    Instance<WritableTenantContext> tenantContextInstance;
+
     @Inject
     Instance<TenantIdsSupplier> tenantIdsSupplierInstance;
 
@@ -104,54 +107,54 @@ public class QuarkusViewManager {
         }
     }
 
-    private void updateView(final ViewExt view) {
-        tryLocked(view.getLock(), () -> new Thread(() -> {
-            LOG.debug("updateView({})", view.getEntry().viewClass().getSimpleName());
-            readStreamEvents(view);
+    private void updateView(final ViewExt viewJob) {
+        tryLocked(viewJob.getLock(), () -> new Thread(() -> {
+            LOG.debug("updateView({})", viewJob.getEntry().viewClass().getName());
+            readTenantsStreamEvents(viewJob);
         }
         ).start());
     }
 
-    private void readStreamEvents(final ViewExt viewExt) {
-        if (tenantIdsSupplierInstance.isUnsatisfied()) {
-            readStreamEvents(null, viewExt);
+    private void readTenantsStreamEvents(@NotNull final ViewExt viewJob) {
+        if (multitenancy) {
+            final WritableTenantContext tenantContext = tenantContextInstance.get();
+            final TenantIdsSupplier tenantIdsSupplier = tenantIdsSupplierInstance.get();
+            tenantIdsSupplier.getTenantIds().forEach(tenantId -> {
+                tenantContext.setTenantId(tenantId);
+                try {
+                    readStreamEvents(viewJob);
+                } finally {
+                    tenantContext.clear();
+                }
+            });
         } else {
-            tenantIdsSupplierInstance.get().getTenantIds().forEach(tenantId -> readStreamEvents(tenantId, viewExt));
+            readStreamEvents(viewJob);
         }
     }
 
-    private void readStreamEvents(@Nullable final TenantId tenantId, @NotNull final ViewExt viewExt) {
+    private void readStreamEvents(@NotNull final ViewExt viewJob) {
         try {
 
             // Create an event store projection if it does not exist.
-            createProjection(tenantId, viewExt);
+            createProjection(viewJob);
 
             // Read and dispatch events
-            final ProjectionStreamId projectionStreamId = viewExt.getProjectionStreamId();
+            final ProjectionStreamId projectionStreamId = viewJob.getProjectionStreamId();
             final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
-            eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewExt.getEntry().chunkSize(),
-                    currentSlice -> handleChunk(tenantId, projectionStreamId, viewExt, currentSlice));
+            eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
+                    currentSlice -> handleChunk(viewJob, currentSlice));
 
         } catch (final RuntimeException ex) {
-            if (tenantId == null) {
-                LOG.error("Error processing events for viewExt '" + viewExt.entry.beanName() + "'", ex);
-            } else {
-                LOG.error("Error processing events for tenant '" + tenantId + "' viewExt '" + viewExt.entry.beanName() + "'", ex);
-            }
+            LOG.error("Error processing events for viewJob '" + viewJob.entry.beanName() + "'", ex);
         }
 
     }
 
-    private void createProjection(@Nullable final TenantId tenantId,
-                                  @NotNull final ViewExt viewExt) {
-        if (!admin.projectionExists(viewExt.getProjectionId())) {
-            final List<TypeName> typeNames = asTypeNames(viewExt.getEntry().eventTypes());
-            LOG.info("Create projection '{}' ({}){} with events: {}",
-                    viewExt.getProjectionId(), viewExt.getProjectionStreamId(),
-                    (tenantId == null ? "" : " for tenant '" + tenantId + "'"),
-                    typeNames);
+    private void createProjection(@NotNull final ViewExt viewJob) {
+        if (!admin.projectionExists(viewJob.getProjectionId())) {
+            final List<TypeName> typeNames = asTypeNames(viewJob.getEntry().eventTypes());
             try {
-                admin.createProjection(viewExt.getProjectionId(), viewExt.getProjectionStreamId(), true, typeNames);
+                admin.createProjection(viewJob.getProjectionId(), viewJob.getProjectionStreamId(), true, typeNames);
             } catch (StreamAlreadyExistsException ex) {
                 LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
             }
@@ -162,16 +165,14 @@ public class QuarkusViewManager {
         return eventTypes.stream().map(eventType -> new TypeName((eventType.asString()))).toList();
     }
 
-    private void handleChunk(@Nullable final TenantId tenantId,
-                             final StreamId projectionStreamId,
-                             final ViewExt viewExt,
+    private void handleChunk(final ViewExt viewExt,
                              final StreamEventsSlice currentSlice) {
         QuarkusTransaction.requiringNew()
                 .timeout(10)
                 .call(() -> {
                     LOG.debug("Handle chunk: {}", currentSlice);
-                    viewExt.handleEvents(beanManager, tenantId, asEvents(currentSlice.getEvents()));
-                    projectionService.updateProjectionPosition(projectionStreamId, currentSlice.getNextEventNumber());
+                    viewExt.handleEvents(beanManager, asEvents(currentSlice.getEvents()));
+                    projectionService.updateProjectionPosition(viewExt.getProjectionStreamId(), currentSlice.getNextEventNumber());
                     return 0;
                 });
     }
@@ -206,9 +207,9 @@ public class QuarkusViewManager {
             return entry;
         }
 
-        public void handleEvents(BeanManager beanManager, TenantId tenantId, List<Event> events) {
+        public void handleEvents(BeanManager beanManager, List<Event> events) {
             final View view = getView(beanManager, entry);
-            view.handleEvents(tenantId, events);
+            view.handleEvents(events);
         }
 
         public ProjectionId getProjectionId() {

@@ -155,7 +155,7 @@ public class SpringBootConfig {
     @Bean(destroyMethod = "close")
     public ProjectionAdminEventStore getProjectionAdminEventStore(final KurrentDBProjectionManagementClient client,
                                                                   final Optional<TenantContext> tenantContext) {
-        return new GrpcProjectionAdminEventStore(client, tenantContext.orElse(null)).open();
+        return new GrpcProjectionAdminEventStore(client, null).open();
     }
 
     @Bean
