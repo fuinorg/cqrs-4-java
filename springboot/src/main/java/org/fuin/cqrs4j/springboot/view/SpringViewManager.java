@@ -179,9 +179,11 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
             // Read and dispatch events
             final ProjectionStreamId projectionStreamId = viewJob.getProjectionStreamId();
-            final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
-            eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
-                    currentSlice -> handleChunk(viewJob, currentSlice));
+            if (eventstore.streamExists(projectionStreamId)) { // May not exist if no events have been projected
+                final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
+                eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
+                        currentSlice -> handleChunk(viewJob, currentSlice));
+            }
 
         } catch (final RuntimeException ex) {
             LOG.error("Error processing events for viewJob '" + viewJob.entry.beanName() + "'", ex);
