@@ -21,6 +21,12 @@ class CqrsUtilsTest {
         assertThat(CqrsUtils.calculateAdler32Checksum(List.of(new EventType("A"), new EventType("B"))))
                 .isEqualTo(12976260L);
 
+        assertThat(CqrsUtils.calculateAdler32Checksum(List.of(new EventType("CustomerCreatedEvent"), new EventType("CustomerDeletedEvent"))))
+                .isEqualTo(1230901272L);
+
+        assertThat(CqrsUtils.calculateAdler32Checksum(List.of(new EventType("CustomerDeletedEvent"), new EventType("CustomerCreatedEvent"))))
+                .isEqualTo(1230901272L);
+
     }
 
 }

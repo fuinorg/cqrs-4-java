@@ -3,7 +3,11 @@ package org.fuin.cqrs4j.core;
 import org.fuin.ddd4j.core.EventType;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.zip.Adler32;
 
 /**
@@ -25,8 +29,10 @@ public final class CqrsUtils {
         if (eventTypes == null || eventTypes.isEmpty()) {
             throw new IllegalArgumentException("eventTypes cannot be null or empty");
         }
+        final List<EventType> sortedList = new ArrayList<>(eventTypes);
+        Collections.sort(sortedList);
         final Adler32 checksum = new Adler32();
-        for (final EventType eventType : eventTypes) {
+        for (final EventType eventType : sortedList) {
             checksum.update(eventType.asBaseType().getBytes(StandardCharsets.US_ASCII));
         }
         return checksum.getValue();
