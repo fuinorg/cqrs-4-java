@@ -24,6 +24,7 @@ import org.fuin.ddd4j.core.TenantId;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
+import org.fuin.esc.api.ProjectionId;
 import org.fuin.esc.api.ProjectionStreamId;
 import org.fuin.esc.api.SimpleTenantId;
 import org.fuin.esc.api.StreamAlreadyExistsException;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
@@ -118,34 +120,38 @@ public class QuarkusViewManager {
         }
     }
 
-    private void readStreamEvents(@Nullable final TenantId tenantId, final ViewExt viewExt) {
+    private void readStreamEvents(@Nullable final TenantId tenantId, @NotNull final ViewExt viewExt) {
+        try {
 
-        // Create an event store projection if it does not exist.
-        createProjection(tenantId, viewExt);
+            // Create an event store projection if it does not exist.
+            createProjection(tenantId, viewExt);
 
-        // Read and dispatch events
-        final StreamId projectionStreamId = projectionStreamId(tenantId, viewExt);
-        final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
-        eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewExt.getEntry().chunkSize(),
-                currentSlice -> handleChunk(tenantId, projectionStreamId, viewExt, currentSlice));
+            // Read and dispatch events
+            final ProjectionStreamId projectionStreamId = viewExt.getProjectionStreamId();
+            final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
+            eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewExt.getEntry().chunkSize(),
+                    currentSlice -> handleChunk(tenantId, projectionStreamId, viewExt, currentSlice));
+
+        } catch (final RuntimeException ex) {
+            if (tenantId == null) {
+                LOG.error("Error processing events for viewExt '" + viewExt.entry.beanName() + "'", ex);
+            } else {
+                LOG.error("Error processing events for tenant '" + tenantId + "' viewExt '" + viewExt.entry.beanName() + "'", ex);
+            }
+        }
 
     }
 
     private void createProjection(@Nullable final TenantId tenantId,
                                   @NotNull final ViewExt viewExt) {
-        final StreamId streamId;
-        if (tenantId == null) {
-            streamId = viewExt.getProjectionStreamId();
-        } else {
-            streamId = new ProjectionStreamId(tenantId.name() + "-" + viewExt.getProjectionStreamId());
-        }
-        if (!admin.projectionExists(streamId)) {
+        if (!admin.projectionExists(viewExt.getProjectionId())) {
             final List<TypeName> typeNames = asTypeNames(viewExt.getEntry().eventTypes());
-            LOG.info("Create projection '{}'{} with events: {}",
-                    viewExt.getProjectionStreamId(), (tenantId == null ? "" : " for tenant '" + tenantId + "'"), typeNames);
+            LOG.info("Create projection '{}' ({}){} with events: {}",
+                    viewExt.getProjectionId(), viewExt.getProjectionStreamId(),
+                    (tenantId == null ? "" : " for tenant '" + tenantId + "'"),
+                    typeNames);
             try {
-                final SimpleTenantId tid = tenantId == null ? null : new SimpleTenantId(tenantId.name());
-                admin.createProjection(tid, viewExt.getProjectionStreamId(), true, typeNames);
+                admin.createProjection(viewExt.getProjectionId(), viewExt.getProjectionStreamId(), true, typeNames);
             } catch (StreamAlreadyExistsException ex) {
                 LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
             }
@@ -170,13 +176,6 @@ public class QuarkusViewManager {
                 });
     }
 
-    private static StreamId projectionStreamId(TenantId tenantId, ViewExt viewExt) {
-        if (tenantId == null) {
-            return viewExt.getProjectionStreamId();
-        }
-        return new TenantStreamId(new SimpleTenantId(tenantId.name()), viewExt.getProjectionStreamId());
-    }
-
     private List<org.fuin.ddd4j.core.Event> asEvents(List<CommonEvent> events) {
         return events.stream().map(event -> (Event) event.getData()).toList();
     }
@@ -188,14 +187,17 @@ public class QuarkusViewManager {
 
         private final ViewRegistry.Entry entry;
 
+        private final ProjectionId projectionId;
+
         private final ProjectionStreamId projectionStreamId;
 
         private final Semaphore lock;
 
         public ViewExt(final ViewRegistry.Entry entry) {
-            this.entry = entry;
-            final String streamId = entry.streamName() + "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes());
-            projectionStreamId = new ProjectionStreamId(streamId);
+            this.entry = Objects.requireNonNull(entry, "entry==null");
+            final String checksumPostfix = "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes());
+            projectionId = new ProjectionId(entry.projectionName() + checksumPostfix);
+            projectionStreamId = new ProjectionStreamId(entry.streamName() + checksumPostfix);
             this.lock = new Semaphore(1);
 
         }
@@ -207,6 +209,10 @@ public class QuarkusViewManager {
         public void handleEvents(BeanManager beanManager, TenantId tenantId, List<Event> events) {
             final View view = getView(beanManager, entry);
             view.handleEvents(tenantId, events);
+        }
+
+        public ProjectionId getProjectionId() {
+            return projectionId;
         }
 
         public ProjectionStreamId getProjectionStreamId() {

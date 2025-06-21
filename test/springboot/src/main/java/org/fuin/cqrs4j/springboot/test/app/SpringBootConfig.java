@@ -18,6 +18,7 @@ import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.SerDeserializerRegistry;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
 import org.fuin.esc.api.SimpleSerializerDeserializerRegistry;
+import org.fuin.esc.api.TenantContext;
 import org.fuin.esc.client.JandexSerializedDataTypeRegistry;
 import org.fuin.esc.esgrpc.ESGrpcEventStore;
 import org.fuin.esc.esgrpc.GrpcProjectionAdminEventStore;
@@ -39,6 +40,7 @@ import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @Configuration
 public class SpringBootConfig {
@@ -146,12 +148,14 @@ public class SpringBootConfig {
      * Creates an GRPC based projection admin event store.
      *
      * @param client Client to use.
+     * @param tenantContext Optional tenant context.
      * @return New event store instance.
      */
     @SuppressWarnings("java:S2095") // Spring will correctly close it by calling "close()" on instance
     @Bean(destroyMethod = "close")
-    public ProjectionAdminEventStore getProjectionAdminEventStore(final KurrentDBProjectionManagementClient client) {
-        return new GrpcProjectionAdminEventStore(client).open();
+    public ProjectionAdminEventStore getProjectionAdminEventStore(final KurrentDBProjectionManagementClient client,
+                                                                  final Optional<TenantContext> tenantContext) {
+        return new GrpcProjectionAdminEventStore(client, tenantContext.orElse(null)).open();
     }
 
     @Bean

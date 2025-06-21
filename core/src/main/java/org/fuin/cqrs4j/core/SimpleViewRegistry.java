@@ -21,9 +21,10 @@ public class SimpleViewRegistry implements ViewRegistry {
         viewClasses = views.stream()
                 .map(v -> new Entry((Class<View>)
                         v.getBeanClass(),
+                        v.getName(),
                         v.getBeanName(),
+                        v.getProjectionName(),
                         v.getStreamName(),
-                        v.getDisplayName(),
                         v.getCron(),
                         v.getChunkSize(),
                         v.getEventTypes()))

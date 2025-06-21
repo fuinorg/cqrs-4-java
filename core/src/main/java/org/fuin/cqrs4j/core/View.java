@@ -14,11 +14,11 @@ import java.util.Set;
 public interface View {
 
     /**
-     * Unique name of the view used for finding the bean.
+     * Unique name of the view.
      *
      * @return Name that is unique in this program instance.
      */
-    String getBeanName();
+    String getName();
 
     /**
      * Returns the name of the view class.
@@ -28,22 +28,28 @@ public interface View {
     Class<? extends View> getBeanClass();
 
     /**
+     * Unique name of the view used for finding the bean.
+     *
+     * @return Name that is unique in this program instance.
+     */
+    String getBeanName();
+
+    /**
+     * Unique name that is used for the projection stream in the event store.
+     *
+     * @return Name that is unique in this program instance.
+     */
+    default String getProjectionName() {
+        return getName() + "-projection";
+    }
+
+    /**
      * Unique name that is used for the projection stream in the event store.
      *
      * @return Name that is unique in this program instance.
      */
     default String getStreamName() {
-        return getBeanName();
-    }
-
-
-    /**
-     * Unique name that is used in the user interface.
-     *
-     * @return Name that is unique in this program instance.
-     */
-    default String getDisplayName() {
-        return getBeanName();
+        return getName() + "-view";
     }
 
     /**

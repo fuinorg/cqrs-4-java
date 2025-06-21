@@ -24,12 +24,19 @@ public class PersonsView implements View {
 
     private static final Logger LOG = LoggerFactory.getLogger(PersonsView.class);
 
-    public static final String BEAN_NAME = "persons-view";
+    public static final String NAME = "persons";
+
+    public static final String BEAN_NAME = NAME + "-view";
 
     private final EntityManager em;
 
     public PersonsView(final EntityManager em) {
         this.em = em;
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
     }
 
     @Override

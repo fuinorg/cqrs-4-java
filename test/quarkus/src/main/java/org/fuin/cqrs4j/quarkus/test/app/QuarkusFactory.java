@@ -3,6 +3,7 @@ package org.fuin.cqrs4j.quarkus.test.app;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Singleton;
 import jakarta.json.bind.JsonbConfig;
@@ -19,6 +20,7 @@ import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.SerDeserializerRegistry;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
 import org.fuin.esc.api.SimpleSerializerDeserializerRegistry;
+import org.fuin.esc.api.TenantContext;
 import org.fuin.esc.client.JandexSerializedDataTypeRegistry;
 import org.fuin.esc.esgrpc.ESGrpcEventStore;
 import org.fuin.esc.esgrpc.GrpcProjectionAdminEventStore;
@@ -136,8 +138,10 @@ public class QuarkusFactory {
     @Produces
     @Dependent
     @SuppressWarnings("java:S2095") // Resource will be closed with "disposes" method
-    public ProjectionAdminEventStore getProjectionAdminEventStore(final KurrentDBWrapper kurrentDBWrapper) {
-        return new GrpcProjectionAdminEventStore(kurrentDBWrapper.getProjectionManagementClient()).open();
+    public ProjectionAdminEventStore getProjectionAdminEventStore(final KurrentDBWrapper kurrentDBWrapper,
+                                                                  final Instance<TenantContext> tenantContext) {
+        return new GrpcProjectionAdminEventStore(kurrentDBWrapper.getProjectionManagementClient(),
+                tenantContext.isUnsatisfied() ? null : tenantContext.get()).open();
 
     }
 

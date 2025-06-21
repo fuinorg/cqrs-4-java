@@ -14,6 +14,7 @@ import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
+import org.fuin.esc.api.ProjectionId;
 import org.fuin.esc.api.ProjectionStreamId;
 import org.fuin.esc.api.SimpleStreamId;
 import org.fuin.esc.api.SimpleTenantId;
@@ -185,7 +186,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             createProjection(tenantId, viewJob);
 
             // Read and dispatch events
-            final StreamId projectionStreamId = projectionStreamId(tenantId, viewJob);
+            final ProjectionStreamId projectionStreamId = viewJob.getProjectionStreamId();
             final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
             eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
                     currentSlice -> handleChunk(tenantId, projectionStreamId, viewJob, currentSlice));
@@ -202,19 +203,14 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private void createProjection(@Nullable final TenantId tenantId,
                                   @NotNull final ViewJob viewJob) {
-        final StreamId streamId;
-        if (tenantId == null) {
-            streamId = viewJob.getProjectionStreamId();
-        } else {
-            streamId = new ProjectionStreamId(tenantId.name() + "-" + viewJob.getProjectionStreamId());
-        }
-        if (!admin.projectionExists(streamId)) {
+        if (!admin.projectionExists(viewJob.getProjectionId())) {
             final List<TypeName> typeNames = asTypeNames(viewJob.getEntry().eventTypes());
-            LOG.info("Create projection '{}'{} with events: {}",
-                    viewJob.getProjectionStreamId(), (tenantId == null ? "" : " for tenant '" + tenantId + "'"), typeNames);
+            LOG.info("Create projection '{}' ({}){} with events: {}",
+                    viewJob.getProjectionId(), viewJob.getProjectionStreamId(),
+                    (tenantId == null ? "" : " for tenant '" + tenantId + "'"),
+                    typeNames);
             try {
-                final SimpleTenantId tid = tenantId == null ? null : new SimpleTenantId(tenantId.name());
-                admin.createProjection(tid, viewJob.getProjectionStreamId(), true, typeNames);
+                admin.createProjection(viewJob.getProjectionId(), viewJob.getProjectionStreamId(), true, typeNames);
             } catch (StreamAlreadyExistsException ex) {
                 LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
             }
@@ -235,13 +231,6 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         });
     }
 
-    private static StreamId projectionStreamId(TenantId tenantId, ViewJob viewJob) {
-        if (tenantId == null) {
-            return viewJob.getProjectionStreamId();
-        }
-        return new ProjectionStreamId("v_" + tenantId.name() + "-"  + viewJob.getProjectionStreamId());
-    }
-
     private static List<Event> asEvents(List<CommonEvent> events) {
         return events.stream().map(event -> (Event) event.getData()).toList();
     }
@@ -253,6 +242,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
         private final ViewRegistry.Entry entry;
 
+        private final ProjectionId projectionId;
         private final ProjectionStreamId projectionStreamId;
 
         private final Semaphore lock;
@@ -261,8 +251,9 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
         public ViewJob(final ViewRegistry.Entry entry) {
             this.entry = Objects.requireNonNull(entry, "entry==null");
-            final String streamId = entry.streamName() + "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes());
-            projectionStreamId = new ProjectionStreamId(streamId);
+            final String checksumPostfix = "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes());
+            projectionId = new ProjectionId(entry.projectionName() + checksumPostfix);
+            projectionStreamId = new ProjectionStreamId(entry.streamName() + checksumPostfix);
             this.lock = new Semaphore(1);
         }
 
@@ -297,6 +288,10 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             } finally {
                 beanFactory.destroyBean(entry.beanName(), view);
             }
+        }
+
+        public ProjectionId getProjectionId() {
+            return projectionId;
         }
 
         public ProjectionStreamId getProjectionStreamId() {

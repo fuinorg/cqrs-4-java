@@ -17,7 +17,13 @@ import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_PROT
 @Component(TestView.BEAN_NAME)
 public class TestView implements View {
 
-    public static final String BEAN_NAME = "test-view";
+    public static final String NAME = "test";
+    public static final String BEAN_NAME = NAME + "-view";
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
 
     @Override
     public String getBeanName() {

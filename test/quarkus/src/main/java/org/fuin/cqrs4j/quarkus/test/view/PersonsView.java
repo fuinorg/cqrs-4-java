@@ -11,11 +11,18 @@ import org.fuin.cqrs4j.quarkus.test.model.AbstractPersonsView;
 @Named(PersonsView.BEAN_NAME)
 public class PersonsView extends AbstractPersonsView {
 
-    public static final String BEAN_NAME = "persons-view";
+    public static final String NAME = "persons";
+
+    public static final String BEAN_NAME = NAME + "-view";
 
     @Inject
     protected PersonsView(EntityManager em) {
         super(em);
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
     }
 
     @Override

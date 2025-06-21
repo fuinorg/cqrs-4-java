@@ -38,16 +38,17 @@ public interface ViewRegistry {
      *
      * @param viewClass   View class.
      * @param beanName    Name used for the bean.
+     * @param projectionName Name used for the projection.
      * @param streamName  Name used for the projection stream.
-     * @param displayName Name shown to a human.
      * @param cron        CRON expression defining how often the view should be updated.
      * @param chunkSize   Number of events (defaults to 100).
      * @param eventTypes  Type of events the view is interested in.
      */
     record Entry(Class<View> viewClass,
+                 String name,
                  String beanName,
+                 String projectionName,
                  String streamName,
-                 String displayName,
                  String cron,
                  int chunkSize,
                  Set<EventType> eventTypes) {
