@@ -128,7 +128,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
                     .map(ViewJob::new)
                     .toList();
             for (final ViewJob view : viewJobs) {
-                LOG.info("Create view: {}", view.getEntry().viewClass().getName());
+                LOG.info("Create view: {}", view.getEntry().name());
                 view.setCronTask(new CronTask(() -> updateView(view), view.getEntry().cron()));
                 taskRegistrar.addCronTask(view.getCronTask());
             }
@@ -139,7 +139,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         LOG.info("Shutdown {} view jobs...", viewJobs == null ? 0 : viewJobs.size());
         final Set<ScheduledTask> scheduledTasks = postProcessor.getScheduledTasks();
         for (final ViewJob viewJob : viewJobs) {
-            LOG.info("Shutdown job for view: {}", viewJob.getEntry().viewClass().getName());
+            LOG.info("Shutdown job for view: {}", viewJob.getEntry().name());
             scheduledTasks.stream()
                     .filter(scheduled -> scheduled.getTask() == viewJob.getCronTask())
                     .findFirst()
@@ -149,15 +149,19 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
 
     private void updateView(final ViewJob viewJob) {
-        tryLocked(viewJob.getLock(), () -> new Thread(() -> {
-            LOG.debug("updateView({})", viewJob.getEntry().viewClass().getName());
+        final Semaphore lock = viewJob.getLock();
+        LOG.trace("Lock: {} {} ({})", lock, viewJob.getEntry().name(), viewJob.hashCode());
+        tryLocked(lock, () -> new Thread(() -> {
+            LOG.trace("Enter locked view: {} ({} / Permits={})", viewJob.getEntry().name(), viewJob.hashCode(), lock.availablePermits());
             readTenantsStreamEvents(viewJob);
+            LOG.trace("Leave locked view: {} ({})", viewJob.getEntry().name(), viewJob.hashCode());
         }
         ).start());
     }
 
     private void readTenantsStreamEvents(@NotNull final ViewJob viewJob) {
         if (tenantIdsSupplier == null) {
+            LOG.debug("No tenant supplier found...");
             readStreamEvents(viewJob);
         } else {
             tenantIdsSupplier.getTenantIds().forEach(tenantId -> {
@@ -192,8 +196,11 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     }
 
     private void createProjection(@NotNull final ViewJob viewJob) {
-        if (!admin.projectionExists(viewJob.getProjectionId())) {
+        if (admin.projectionExists(viewJob.getProjectionId())) {
+            LOG.trace("Projection already exists: {}", viewJob.getProjectionId());
+        } else {
             final List<TypeName> typeNames = asTypeNames(viewJob.getEntry().eventTypes());
+            LOG.debug("Creating projection: {} ({})", viewJob.getProjectionId(), typeNames);
             try {
                 admin.createProjection(viewJob.getProjectionId(), viewJob.getProjectionStreamId(), true, typeNames);
             } catch (StreamAlreadyExistsException ex) {
@@ -207,17 +214,24 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     }
 
     private void handleChunk(final ViewJob viewJob, final StreamEventsSlice currentSlice) {
+        LOG.debug("Handle chunk: {}", currentSlice);
         requiresNewTransaction.execute(new TransactionCallbackWithoutResult() {
             public void doInTransactionWithoutResult(TransactionStatus status) {
-                LOG.debug("Handle chunk: {}", currentSlice);
+                LOG.debug("Begin transaction: {}", viewJob.getProjectionStreamId());
                 viewJob.handleEvents(beanFactory, asEvents(currentSlice.getEvents()));
+                LOG.atDebug().setMessage("Events handled: {}").addArgument(() -> asEventNames(currentSlice.getEvents())).log();
                 projectionService.updateProjectionPosition(viewJob.getProjectionStreamId(), currentSlice.getNextEventNumber());
+                LOG.debug("End transaction: {} (NextEventNumber={})", viewJob.getProjectionStreamId(), currentSlice.getNextEventNumber());
             }
         });
     }
 
     private static List<Event> asEvents(List<CommonEvent> events) {
         return events.stream().map(event -> (Event) event.getData()).toList();
+    }
+
+    private static List<String> asEventNames(List<CommonEvent> events) {
+        return events.stream().map(CommonEvent::getDataType).map(TypeName::asBaseType).toList();
     }
 
     /**
@@ -267,11 +281,13 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
         public void handleEvents(final ConfigurableBeanFactory beanFactory,
                                  final List<Event> events) {
+            LOG.debug("Creating view bean: {}", entry.beanName());
             final View view = beanFactory.getBean(entry.beanName(), entry.viewClass());
             try {
                 view.handleEvents(events);
             } finally {
                 beanFactory.destroyBean(entry.beanName(), view);
+                LOG.debug("Destroyed view bean: {}", view.getBeanName());
             }
         }
 
