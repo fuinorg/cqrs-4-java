@@ -37,9 +37,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Semaphore;
-
-import static org.fuin.utils4j.Utils4J.tryLocked;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Creates scheduler update tasks for all classes implementing the {@link View} interface.
@@ -129,7 +128,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
                     .toList();
             for (final ViewJob view : viewJobs) {
                 LOG.info("Create view: {}", view.getEntry().name());
-                view.setCronTask(new CronTask(() -> updateView(view), view.getEntry().cron()));
+                view.setCronTask(new CronTask(() -> tryLocked(view, () -> readTenantsStreamEvents(view)), view.getEntry().cron()));
                 taskRegistrar.addCronTask(view.getCronTask());
             }
         }
@@ -147,17 +146,6 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         }
     }
 
-
-    private void updateView(final ViewJob viewJob) {
-        final Semaphore lock = viewJob.getLock();
-        LOG.trace("Lock: {} {} ({})", lock, viewJob.getEntry().name(), viewJob.hashCode());
-        tryLocked(lock, () -> new Thread(() -> {
-            LOG.trace("Enter locked view: {} ({} / Permits={})", viewJob.getEntry().name(), viewJob.hashCode(), lock.availablePermits());
-            readTenantsStreamEvents(viewJob);
-            LOG.trace("Leave locked view: {} ({})", viewJob.getEntry().name(), viewJob.hashCode());
-        }
-        ).start());
-    }
 
     private void readTenantsStreamEvents(@NotNull final ViewJob viewJob) {
         if (tenantIdsSupplier == null) {
@@ -234,6 +222,27 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         return events.stream().map(CommonEvent::getDataType).map(TypeName::asBaseType).toList();
     }
 
+    private static void tryLocked(final ViewJob viewJob, final Runnable code) {
+        Objects.requireNonNull(viewJob, "view==null");
+        Objects.requireNonNull(code, "code==null");
+        new Thread(() -> {
+            final String name = viewJob.getEntry().name();
+            final Lock lock = viewJob.getLock();
+            if (lock.tryLock()) {
+                LOG.trace("Locked acquired: {} ({})", name, viewJob.hashCode());
+                try {
+                    code.run();
+                } finally {
+                    lock.unlock();
+                    LOG.trace("Lock released: {} ({})", name, viewJob.hashCode());
+                }
+            } else {
+                LOG.trace("Lock missed: {} ({})", name, viewJob.hashCode());
+            }
+        }).start();
+    }
+
+
     /**
      * Extends the view with some necessary values used only by this class.
      */
@@ -245,7 +254,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
         private final ProjectionStreamId projectionStreamId;
 
-        private final Semaphore lock;
+        private final Lock lock;
 
         private CronTask cronTask;
 
@@ -254,7 +263,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             final String checksumPostfix = "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes());
             projectionId = new ProjectionId(entry.projectionName() + checksumPostfix);
             projectionStreamId = new ProjectionStreamId(entry.streamName() + checksumPostfix);
-            this.lock = new Semaphore(1);
+            this.lock = new ReentrantLock(true);
         }
 
         /**
@@ -299,7 +308,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             return projectionStreamId;
         }
 
-        public Semaphore getLock() {
+        public Lock getLock() {
             return lock;
         }
 

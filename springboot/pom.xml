@@ -42,11 +42,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.fuin</groupId>
-            <artifactId>utils4j</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.fuin.cqrs4j</groupId>
             <artifactId>cqrs-4-java-core</artifactId>
         </dependency>
