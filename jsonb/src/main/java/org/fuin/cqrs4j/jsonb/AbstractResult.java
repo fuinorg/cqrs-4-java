@@ -17,7 +17,7 @@
  */
 package org.fuin.cqrs4j.jsonb;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.json.bind.annotation.JsonbProperty;
 import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.core.Result;
@@ -130,11 +130,13 @@ public abstract class AbstractResult<DATA> implements Result<DATA>, Serializable
     }
 
     @Override
+    @Nullable
     public final String getCode() {
         return code;
     }
 
     @Override
+    @Nullable
     public final String getMessage() {
         return message;
     }

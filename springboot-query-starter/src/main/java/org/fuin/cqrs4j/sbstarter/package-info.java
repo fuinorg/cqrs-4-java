@@ -17,9 +17,9 @@
  */
 
 /**
- * Command Query Responsibility Segregation base classes.
+ * Spring Boot starter for the CQRS query side.
  */
 @NullMarked
-package org.fuin.cqrs4j.core;
+package org.fuin.cqrs4j.sbstarter;
 
 import org.jspecify.annotations.NullMarked;

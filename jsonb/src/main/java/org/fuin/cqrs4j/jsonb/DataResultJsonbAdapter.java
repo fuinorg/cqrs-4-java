@@ -24,6 +24,7 @@ import jakarta.json.JsonReader;
 import jakarta.json.JsonWriter;
 import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.Nullable;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.jsonb.JsonbProvider;
@@ -86,7 +87,7 @@ public final class DataResultJsonbAdapter implements JsonbAdapter<DataResult, Js
                         "The '" + DataResult.DATA_ELEMENT_PROPERTY + "' was not found, but is required fro JSON-B: " + jsonObj);
             }
             final Class<?> dataClass = Class.forName(jsonObj.getString(DataResult.DATA_CLASS_PROPERTY));
-            final String dataElement = getString(jsonObj, DataResult.DATA_ELEMENT_PROPERTY);
+            final String dataElement = jsonObj.getString(DataResult.DATA_ELEMENT_PROPERTY);
             final JsonObject data = jsonObj.getJsonObject(dataElement);
             final String json = marshal(data);
             final Object obj = jsonbProvider.jsonb().fromJson(json, dataClass);
@@ -111,6 +112,7 @@ public final class DataResultJsonbAdapter implements JsonbAdapter<DataResult, Js
 
     }
 
+    @Nullable
     private String getString(final JsonObject jsonObj, final String name) {
         if (jsonObj.containsKey(name)) {
             return jsonObj.getString(name);

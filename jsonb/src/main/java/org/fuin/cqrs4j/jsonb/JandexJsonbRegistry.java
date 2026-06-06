@@ -9,6 +9,7 @@ import org.fuin.esc.api.DeserializerRegistry;
 import org.fuin.esc.api.SerializerRegistry;
 import org.fuin.objects4j.jsonb.JsonbProvider;
 import org.fuin.utils4j.jandex.JandexUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +96,7 @@ public final class JandexJsonbRegistry implements JsonbRegistry {
     }
 
     @SuppressWarnings("unchecked")
-    static <T> T createInstance(final EntityIdFactory entityIdFactory,
+    static <T> @Nullable T createInstance(final EntityIdFactory entityIdFactory,
                                 final SerializerRegistry serializerRegistry,
                                 final DeserializerRegistry deserializerRegistry,
                                 final JsonbProvider jsonbProvider,
@@ -159,7 +160,7 @@ public final class JandexJsonbRegistry implements JsonbRegistry {
         return Optional.empty();
     }
 
-    private static <T> T createInstance(final Class<?> clasz, final NewInstanceSupplier<T> supplier) {
+    private static <T> @Nullable T createInstance(final Class<?> clasz, final NewInstanceSupplier<T> supplier) {
         try {
             return supplier.supply();
         } catch (final InstantiationException | IllegalAccessException | InvocationTargetException ex) {

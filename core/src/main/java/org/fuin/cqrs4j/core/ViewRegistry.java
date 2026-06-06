@@ -1,6 +1,5 @@
 package org.fuin.cqrs4j.core;
 
-import jakarta.annotation.Nonnull;
 import org.fuin.ddd4j.core.EventType;
 
 import java.util.List;
@@ -16,7 +15,6 @@ public interface ViewRegistry {
      *
      * @return View classes.
      */
-    @Nonnull
     List<Entry> getViews();
 
     /**

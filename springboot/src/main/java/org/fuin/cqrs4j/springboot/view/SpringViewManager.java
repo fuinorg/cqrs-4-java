@@ -1,6 +1,7 @@
 package org.fuin.cqrs4j.springboot.view;
 
 import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.Nullable;
 import org.fuin.cqrs4j.core.CqrsUtils;
 import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.View;
@@ -63,11 +64,13 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private final ConfigurableBeanFactory beanFactory;
 
+    @Nullable
     private final WritableTenantContext tenantContext;
 
+    @Nullable
     private final TenantIdsSupplier tenantIdsSupplier;
 
-    private List<ViewJob> viewJobs;
+    private List<ViewJob> viewJobs = Collections.emptyList();
 
     /**
      * Constructor with mandatory data.
@@ -92,8 +95,8 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             final PlatformTransactionManager transactionManager,
             final ConfigurableBeanFactory beanFactory,
             final boolean multitenancyEnabled,
-            final WritableTenantContext tenantContext,
-            final TenantIdsSupplier tenantIdsSupplier) {
+            @Nullable final WritableTenantContext tenantContext,
+            @Nullable final TenantIdsSupplier tenantIdsSupplier) {
         this.postProcessor = Objects.requireNonNull(postProcessor, "postProcessor==null");
         this.viewRegistry = Objects.requireNonNull(viewRegistry, "viewClassRegistry==null");
         this.eventstore = Objects.requireNonNull(eventstore, "eventstore==null");
@@ -135,7 +138,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     }
 
     private void shutdownViews() {
-        LOG.info("Shutdown {} view jobs...", viewJobs == null ? 0 : viewJobs.size());
+        LOG.info("Shutdown {} view jobs...", viewJobs.size());
         final Set<ScheduledTask> scheduledTasks = postProcessor.getScheduledTasks();
         for (final ViewJob viewJob : viewJobs) {
             LOG.info("Shutdown job for view: {}", viewJob.getEntry().name());
@@ -148,16 +151,18 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
 
     private void readTenantsStreamEvents(@NotNull final ViewJob viewJob) {
-        if (tenantIdsSupplier == null) {
+        final TenantIdsSupplier supplier = this.tenantIdsSupplier;
+        final WritableTenantContext tc = this.tenantContext;
+        if (supplier == null || tc == null) {
             LOG.debug("No tenant supplier found...");
             readStreamEvents(viewJob);
         } else {
-            tenantIdsSupplier.getTenantIds().forEach(tenantId -> {
-                tenantContext.setTenantId(tenantId);
+            supplier.getTenantIds().forEach(tenantId -> {
+                tc.setTenantId(tenantId);
                 try {
                     readStreamEvents(viewJob);
                 } finally {
-                    tenantContext.clear();
+                    tc.clear();
                 }
             });
         }
@@ -256,6 +261,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
         private final Lock lock;
 
+        @Nullable
         private CronTask cronTask;
 
         public ViewJob(final ViewRegistry.Entry entry) {
@@ -271,6 +277,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
          *
          * @return Task.
          */
+        @Nullable
         public CronTask getCronTask() {
             return cronTask;
         }

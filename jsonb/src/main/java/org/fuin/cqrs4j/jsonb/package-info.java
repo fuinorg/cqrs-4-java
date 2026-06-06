@@ -17,9 +17,9 @@
  */
 
 /**
- * Command Query Responsibility Segregation base classes.
+ * JSON-B based implementation of the CQRS base classes.
  */
 @NullMarked
-package org.fuin.cqrs4j.core;
+package org.fuin.cqrs4j.jsonb;
 
 import org.jspecify.annotations.NullMarked;

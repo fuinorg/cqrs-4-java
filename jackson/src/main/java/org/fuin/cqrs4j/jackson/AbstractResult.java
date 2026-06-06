@@ -20,7 +20,7 @@ package org.fuin.cqrs4j.jackson;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.core.Result;
 import org.fuin.cqrs4j.core.ResultType;
@@ -136,12 +136,14 @@ public abstract class AbstractResult<DATA> implements Result<DATA>, Serializable
 
     @Override
     @JsonIgnore
+    @Nullable
     public final String getCode() {
         return code;
     }
 
     @Override
     @JsonIgnore
+    @Nullable
     public final String getMessage() {
         return message;
     }

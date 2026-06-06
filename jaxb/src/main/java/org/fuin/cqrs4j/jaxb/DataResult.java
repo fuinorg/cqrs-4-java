@@ -17,7 +17,7 @@
  */
 package org.fuin.cqrs4j.jaxb;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.xml.bind.annotation.XmlAnyElement;
@@ -53,9 +53,11 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
     static final String DATA_ELEMENT_PROPERTY = "data-element";
 
     @XmlTransient
+    @Nullable
     private String dataClass;
 
     @XmlTransient
+    @Nullable
     private String dataElement;
 
     @Label("Data")
@@ -65,6 +67,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
     @Valid
     @XmlAnyElement(lax = true)
     @SuppressWarnings("java:S1948") // We assume the unknown data is serializable
+    @Nullable
     private Object data;
 
     /**
@@ -145,6 +148,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
      *
      * @return Full qualified class name.
      */
+    @Nullable
     public final String getDataClass() {
         return dataClass;
     }
@@ -154,6 +158,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
      *
      * @return Data element name.
      */
+    @Nullable
     public final String getDataElement() {
         return dataElement;
     }

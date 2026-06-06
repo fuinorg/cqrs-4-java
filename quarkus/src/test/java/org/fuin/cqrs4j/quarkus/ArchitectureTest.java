@@ -36,6 +36,7 @@ public class ArchitectureTest {
                     "org.fuin.esc.api..",
                     "org.fuin.objects4j.common..",
                     "org.fuin.utils4j..",
+                    "org.jspecify.annotations..",
                     "org.slf4j..",
                     "io.quarkus.arc..",
                     "io.quarkus.narayana.jta..",

@@ -17,7 +17,7 @@
  */
 package org.fuin.cqrs4j.jackson;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.core.Command;
 import org.fuin.ddd4j.core.EntityId;

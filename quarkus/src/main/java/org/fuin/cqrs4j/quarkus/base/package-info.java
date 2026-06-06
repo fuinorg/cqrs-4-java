@@ -17,9 +17,9 @@
  */
 
 /**
- * Command Query Responsibility Segregation base classes.
+ * Quarkus integration base classes for CQRS.
  */
 @NullMarked
-package org.fuin.cqrs4j.core;
+package org.fuin.cqrs4j.quarkus.base;
 
 import org.jspecify.annotations.NullMarked;

@@ -17,7 +17,7 @@
  */
 package org.fuin.cqrs4j.jsonb;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.json.bind.annotation.JsonbProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -49,9 +49,11 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
     static final String DATA_ELEMENT_PROPERTY = "data-element";
 
     @JsonbProperty(DATA_CLASS_PROPERTY)
+    @Nullable
     private String dataClass;
 
     @JsonbProperty(DATA_ELEMENT_PROPERTY)
+    @Nullable
     private String dataElement;
 
     @Label("Data")
@@ -60,6 +62,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
     @Prompt("Optional Data")
     @Valid
     @SuppressWarnings("java:S1948") // We assume the unknown data is serializable
+    @Nullable
     private Object data;
 
     /**
@@ -131,6 +134,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
      *
      * @return Full qualified class name.
      */
+    @Nullable
     public final String getDataClass() {
         return dataClass;
     }
@@ -140,6 +144,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
      *
      * @return Data element name.
      */
+    @Nullable
     public final String getDataElement() {
         return dataElement;
     }

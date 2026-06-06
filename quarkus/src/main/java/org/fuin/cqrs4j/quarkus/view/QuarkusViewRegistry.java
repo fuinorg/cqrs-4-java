@@ -1,7 +1,6 @@
 package org.fuin.cqrs4j.quarkus.view;
 
 import io.quarkus.arc.All;
-import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.spi.Bean;
@@ -21,7 +20,9 @@ public class QuarkusViewRegistry implements ViewRegistry {
     private final SimpleViewRegistry delegate;
 
     protected QuarkusViewRegistry() {
-        delegate = null;
+        // Required by CDI for the client proxy of this normal-scoped bean. The proxy never
+        // serves business calls, so an empty delegate is sufficient and avoids a null field.
+        delegate = new SimpleViewRegistry(List.of());
     }
 
     @Inject
@@ -38,7 +39,6 @@ public class QuarkusViewRegistry implements ViewRegistry {
         delegate = new SimpleViewRegistry(views);
     }
 
-    @Nonnull
     @Override
     public List<Entry> getViews() {
         return delegate.getViews();

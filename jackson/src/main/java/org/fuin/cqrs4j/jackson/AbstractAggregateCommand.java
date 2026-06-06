@@ -19,7 +19,7 @@ package org.fuin.cqrs4j.jackson;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.core.AggregateCommand;
 import org.fuin.ddd4j.core.AggregateRootId;

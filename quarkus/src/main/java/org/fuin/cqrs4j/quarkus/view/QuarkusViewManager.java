@@ -77,7 +77,7 @@ public class QuarkusViewManager {
     @Inject
     Instance<TenantIdsSupplier> tenantIdsSupplierInstance;
 
-    private List<ViewExt> views;
+    private List<ViewExt> views = Collections.emptyList();
 
     @Startup
     void createViews() {

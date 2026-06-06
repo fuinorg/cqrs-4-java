@@ -1,6 +1,5 @@
 package org.fuin.cqrs4j.springboot.view;
 
-import jakarta.annotation.Nonnull;
 import org.fuin.cqrs4j.core.SimpleViewRegistry;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
@@ -43,7 +42,6 @@ public class SpringViewRegistry implements ViewRegistry {
         delegate = new SimpleViewRegistry(views);
     }
 
-    @Nonnull
     @Override
     public List<Entry> getViews() {
         return delegate.getViews();

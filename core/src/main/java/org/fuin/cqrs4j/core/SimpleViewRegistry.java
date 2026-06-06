@@ -1,7 +1,5 @@
 package org.fuin.cqrs4j.core;
 
-import jakarta.annotation.Nonnull;
-
 import java.util.List;
 
 /**
@@ -31,7 +29,6 @@ public class SimpleViewRegistry implements ViewRegistry {
                 .toList();
     }
 
-    @Nonnull
     @Override
     public List<Entry> getViews() {
         return viewClasses;

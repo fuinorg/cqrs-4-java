@@ -19,7 +19,7 @@ package org.fuin.cqrs4j.jackson;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.core.ResultType;
@@ -50,9 +50,11 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
     static final String DATA_ELEMENT_PROPERTY = "data-element";
 
     @JsonProperty(DATA_CLASS_PROPERTY)
+    @Nullable
     private String dataClass;
 
     @JsonProperty(DATA_ELEMENT_PROPERTY)
+    @Nullable
     private String dataElement;
 
     @Label("Data")
@@ -61,6 +63,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
     @Prompt("Optional Data")
     @Valid
     @SuppressWarnings("java:S1948") // We assume the unknown data is serializable
+    @Nullable
     private Object data;
 
     /**
@@ -133,6 +136,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
      * @return Full qualified class name.
      */
     @JsonIgnore
+    @Nullable
     public final String getDataClass() {
         return dataClass;
     }
@@ -143,6 +147,7 @@ public final class DataResult<DATA> extends AbstractResult<DATA> {
      * @return Data element name.
      */
     @JsonIgnore
+    @Nullable
     public final String getDataElement() {
         return dataElement;
     }

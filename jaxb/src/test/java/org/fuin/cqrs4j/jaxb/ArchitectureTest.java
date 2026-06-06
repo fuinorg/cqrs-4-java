@@ -38,6 +38,7 @@ public class ArchitectureTest {
                     "jakarta.validation..",
                     "jakarta.annotation..",
                     "jakarta.xml.bind..",
+                    "org.jspecify.annotations..",
                     "org.slf4j..",
                     "javax.annotation.concurrent.."
                     );

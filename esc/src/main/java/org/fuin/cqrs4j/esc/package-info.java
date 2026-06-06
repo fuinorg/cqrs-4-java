@@ -17,9 +17,9 @@
  */
 
 /**
- * Command Query Responsibility Segregation base classes.
+ * Integration of the CQRS base classes with the Event Store Commons (ESC).
  */
 @NullMarked
-package org.fuin.cqrs4j.core;
+package org.fuin.cqrs4j.esc;
 
 import org.jspecify.annotations.NullMarked;

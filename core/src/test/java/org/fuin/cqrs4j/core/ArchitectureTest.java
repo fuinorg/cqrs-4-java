@@ -32,6 +32,7 @@ public class ArchitectureTest {
                     "org.fuin.objects4j.core..",
                     "jakarta.validation.constraints..",
                     "jakarta.annotation..",
+                    "org.jspecify.annotations..",
                     "org.slf4j..",
                     "javax.annotation.concurrent.."
                     );
