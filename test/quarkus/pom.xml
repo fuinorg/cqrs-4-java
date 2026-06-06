@@ -140,11 +140,6 @@
             <artifactId>hibernate-validator</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.fuin.ddd4j</groupId>
-            <artifactId>ddd-4-java-codegen-api</artifactId>
-        </dependency>
-
         <!-- test -->
 
         <dependency>
@@ -211,21 +206,6 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <generatedSourcesDirectory>${project.basedir}/src-gen/main/java</generatedSourcesDirectory>
-                    <annotationProcessorPaths>
-                        <annotationProcessorPath>
-                            <groupId>org.fuin.ddd4j</groupId>
-                            <artifactId>ddd-4-java-codegen-processor</artifactId>
-                            <version>${ddd4j.version}</version>
-                        </annotationProcessorPath>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>3.1.1</version>
                 <configuration>
@@ -262,6 +242,10 @@
                 <configuration>
                     <systemProperties>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                        <!-- Byte Buddy 1.15.11 (managed by quarkus-bom) rejects Java 25 class
+                             files; allow it on the forked test JVM until a Java-25-aware
+                             Byte Buddy is on the classpath. -->
+                        <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
                     </systemProperties>
                 </configuration>
             </plugin>
@@ -279,6 +263,7 @@
                         <configuration>
                             <systemProperties>
                                 <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                                <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
                             </systemProperties>
                         </configuration>
                     </execution>
