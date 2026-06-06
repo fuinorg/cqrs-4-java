@@ -265,6 +265,7 @@
     </build>
 
     <modules>
+        <module>bom</module>
         <module>core</module>
         <module>esc</module>
         <module>jaxb</module>

@@ -17,6 +17,40 @@ Base classes for Command Query Responsibility Segregation (CQRS) with Java
 - 0.2.1 = **Java 8**
 
 
+## Bill of Materials (BOM)
+The [cqrs-4-java-bom](bom) module is a [Maven BOM](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#bill-of-materials-bom-poms) that manages the versions of all modules of this library. Import it into the `dependencyManagement` section of your project, then declare the modules you need without specifying their version:
+
+```xml
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-bom</artifactId>
+            <version>0.7.0-SNAPSHOT</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<dependencies>
+    <dependency>
+        <groupId>org.fuin.cqrs4j</groupId>
+        <artifactId>cqrs-4-java-core</artifactId>
+    </dependency>
+</dependencies>
+```
+
+The BOM manages the following modules:
+- `cqrs-4-java-core`
+- `cqrs-4-java-esc`
+- `cqrs-4-java-jaxb`
+- `cqrs-4-java-jsonb`
+- `cqrs-4-java-jackson`
+- `cqrs-4-java-springboot`
+- `cqrs-4-java-springboot-query-starter`
+- `cqrs-4-java-quarkus`
+
 ## Example
 See [ddd-cqrs-4-java-example](https://github.com/fuinorg/ddd-cqrs-4-java-example) for example microservices using the classes of this library.
 
