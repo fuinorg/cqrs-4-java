@@ -25,7 +25,7 @@ public class PersonEntity implements Comparable<PersonEntity> {
     public String name;
 
     /**
-     * Constructor used by JPA & JSON-B.
+     * Constructor used by JPA &amp; JSON-B.
      */
     protected PersonEntity() {
     }
