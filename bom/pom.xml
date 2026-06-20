@@ -52,7 +52,25 @@
 
             <dependency>
                 <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot</artifactId>
+                <artifactId>cqrs-4-java-springboot-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-springboot-command-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-springboot-command-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-springboot-query-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

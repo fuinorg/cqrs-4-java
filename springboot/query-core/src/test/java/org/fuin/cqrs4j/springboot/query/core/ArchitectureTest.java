@@ -1,10 +1,9 @@
-package org.fuin.cqrs4j.jsonb;
+package org.fuin.cqrs4j.springboot.query.core;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import org.fuin.cqrs4j.core.Command;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.library.DependencyRules.NO_CLASSES_SHOULD_DEPEND_UPPER_PACKAGES;
@@ -15,9 +14,7 @@ import static com.tngtech.archunit.library.DependencyRules.NO_CLASSES_SHOULD_DEP
 @AnalyzeClasses(packagesOf = ArchitectureTest.class, importOptions = ImportOption.DoNotIncludeTests.class)
 public class ArchitectureTest {
 
-    private static final String THIS_PACKAGE = ArchitectureTest.class.getPackageName();
-
-    private static final String CORE_PACKAGE = Command.class.getPackageName();
+    private static final String THIS_PACKAGE = ArchitectureTest.class.getPackageName() + "..";
 
     @ArchTest
     static final ArchRule no_accesses_to_upper_package = NO_CLASSES_SHOULD_DEPEND_UPPER_PACKAGES;
@@ -28,22 +25,23 @@ public class ArchitectureTest {
             .resideInAPackage(THIS_PACKAGE)
             .should()
             .onlyDependOnClassesThat()
-            .resideInAnyPackage(THIS_PACKAGE, CORE_PACKAGE, "java..",
-                    "org.fuin.ddd4j.common..",
-                    "org.fuin.ddd4j.core..",
-                    "org.fuin.ddd4j.jsonb..",
-                    "org.fuin.esc.api..",
-                    "org.fuin.objects4j.jsonb..",
-                    "org.fuin.utils4j..",
-                    "org.fuin.objects4j.ui..",
-                    "org.fuin.objects4j.common..",
-                    "org.fuin.objects4j.core..",
+            .resideInAnyPackage(THIS_PACKAGE, "java..",
+                    "jakarta.persistence..",
                     "jakarta.validation..",
-                    "jakarta.annotation..",
-                    "jakarta.json..",
+                    "org.fuin.cqrs4j.core..",
+                    "org.fuin.cqrs4j.esc..",
+                    "org.fuin.ddd4j.core..",
+                    "org.fuin.esc.api..",
+                    "org.fuin.objects4j.common..",
+                    "org.fuin.utils4j..",
                     "org.jspecify.annotations..",
                     "org.slf4j..",
-                    "javax.annotation.concurrent.."
+                    "org.springframework.beans..",
+                    "org.springframework.boot..",
+                    "org.springframework.context..",
+                    "org.springframework.scheduling..",
+                    "org.springframework.stereotype..",
+                    "org.springframework.transaction.."
                     );
 
 }

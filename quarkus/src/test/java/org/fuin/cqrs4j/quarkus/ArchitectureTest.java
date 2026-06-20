@@ -14,7 +14,7 @@ import static com.tngtech.archunit.library.DependencyRules.NO_CLASSES_SHOULD_DEP
 @AnalyzeClasses(packagesOf = ArchitectureTest.class, importOptions = ImportOption.DoNotIncludeTests.class)
 public class ArchitectureTest {
 
-    private static final String THIS_PACKAGE = ArchitectureTest.class.getPackageName();
+    private static final String THIS_PACKAGE = ArchitectureTest.class.getPackageName() + "..";
 
     @ArchTest
     static final ArchRule no_accesses_to_upper_package = NO_CLASSES_SHOULD_DEPEND_UPPER_PACKAGES;
@@ -27,6 +27,8 @@ public class ArchitectureTest {
             .onlyDependOnClassesThat()
             .resideInAnyPackage(THIS_PACKAGE, "java..",
                     "jakarta.enterprise.context..",
+                    "jakarta.enterprise.inject..",
+                    "org.eclipse.microprofile.config..",
                     "jakarta.inject..",
                     "jakarta.persistence..",
                     "jakarta.validation.constraints..",

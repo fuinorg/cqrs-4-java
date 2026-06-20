@@ -30,6 +30,7 @@ public class ArchitectureTest {
                     "org.fuin.ddd4j.core..",
                     "org.fuin.objects4j.common..",
                     "org.fuin.objects4j.core..",
+                    "jakarta.persistence..",
                     "jakarta.validation.constraints..",
                     "jakarta.annotation..",
                     "org.jspecify.annotations..",

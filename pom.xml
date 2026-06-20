@@ -117,7 +117,25 @@
 
             <dependency>
                 <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot</artifactId>
+                <artifactId>cqrs-4-java-springboot-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-springboot-command-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-springboot-command-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-springboot-query-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -192,10 +210,13 @@
                     </executions>
                 </plugin>
 
+                <!-- Surefire 3.5.5 (not 3.5.3): 3.5.3 has a JUnit Platform regression where non-Jupiter
+                     test engines (here the ArchUnit engine for @ArchTest rules) are silently skipped, so
+                     every ArchitectureTest reported "Tests run: 0" and enforced nothing. 3.5.5 runs them. -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.3</version>
+                    <version>3.5.5</version>
                     <configuration>
                         <argLine>-Duser.country=US -Duser.language=en --add-opens java.base/java.util=ALL-UNNAMED ${argLine}</argLine>
                     </configuration>
@@ -273,7 +294,6 @@
         <module>jackson</module>
         <module>jacoco</module>
         <module>springboot</module>
-        <module>springboot-query-starter</module>
         <module>quarkus</module>
         <module>test</module>
     </modules>

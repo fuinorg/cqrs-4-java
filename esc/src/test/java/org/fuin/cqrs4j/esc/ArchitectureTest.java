@@ -35,6 +35,7 @@ public class ArchitectureTest {
                     "org.fuin.esc.api..",
                     "org.fuin.objects4j.common..",
                     "org.fuin.objects4j.core..",
+                    "jakarta.persistence..",
                     "jakarta.validation.constraints..",
                     "org.jspecify.annotations..",
                     "org.slf4j..",

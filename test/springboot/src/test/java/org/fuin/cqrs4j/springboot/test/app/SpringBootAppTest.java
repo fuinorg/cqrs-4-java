@@ -1,7 +1,7 @@
 package org.fuin.cqrs4j.springboot.test.app;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.fuin.cqrs4j.springboot.base.EventstoreConfig;
+import org.fuin.cqrs4j.springboot.query.core.base.EventstoreConfig;
 import org.fuin.cqrs4j.springboot.test.model.PersonEntity;
 import org.fuin.cqrs4j.springboot.test.model.PersonId;
 import org.fuin.cqrs4j.springboot.test.model.PersonName;

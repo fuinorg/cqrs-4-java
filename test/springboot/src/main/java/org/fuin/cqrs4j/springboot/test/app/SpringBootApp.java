@@ -1,6 +1,6 @@
 package org.fuin.cqrs4j.springboot.test.app;
 
-import org.fuin.cqrs4j.springboot.base.EventstoreConfig;
+import org.fuin.cqrs4j.springboot.query.core.base.EventstoreConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
