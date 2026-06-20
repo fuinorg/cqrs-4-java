@@ -38,7 +38,6 @@
         <objects4j.version>0.11.1-SNAPSHOT</objects4j.version>
         <utils4j.version>0.15.1-SNAPSHOT</utils4j.version>
         <units4j.version>0.12.0</units4j.version>
-        <archunit.version>1.4.0</archunit.version>
         <errorprone.version>2.49.0</errorprone.version>
         <nullaway.version>0.13.5</nullaway.version>
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../jacoco/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
@@ -210,13 +209,13 @@
                     </executions>
                 </plugin>
 
-                <!-- Surefire 3.5.5 (not 3.5.3): 3.5.3 has a JUnit Platform regression where non-Jupiter
-                     test engines (here the ArchUnit engine for @ArchTest rules) are silently skipped, so
-                     every ArchitectureTest reported "Tests run: 0" and enforced nothing. 3.5.5 runs them. -->
+                <!-- Version intentionally inherited from the parent (org.fuin:pom = 3.5.5); this block only
+                     customizes argLine. Do NOT pin/downgrade to 3.5.3: it has a JUnit Platform regression that
+                     silently skips non-Jupiter engines (the ArchUnit @ArchTest engine), making every
+                     ArchitectureTest report "Tests run: 0" and enforce nothing. -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.5</version>
                     <configuration>
                         <argLine>-Duser.country=US -Duser.language=en --add-opens java.base/java.util=ALL-UNNAMED ${argLine}</argLine>
                     </configuration>
