@@ -146,6 +146,18 @@
 
             <dependency>
                 <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-springboot-keycloak-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-springboot-keycloak-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
                 <artifactId>cqrs-4-java-quarkus</artifactId>
                 <version>${project.version}</version>
             </dependency>

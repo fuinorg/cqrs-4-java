@@ -51,6 +51,23 @@
             <artifactId>jakarta.persistence-api</artifactId>
         </dependency>
 
+        <!-- Classpath scanning for the Jandex-based command handler registry -->
+
+        <dependency>
+            <groupId>org.fuin</groupId>
+            <artifactId>utils4j</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.smallrye</groupId>
+            <artifactId>jandex</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
         <!-- Test -->
 
         <dependency>

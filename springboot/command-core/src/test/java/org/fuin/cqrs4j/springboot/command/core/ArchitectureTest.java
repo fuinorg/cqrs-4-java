@@ -26,6 +26,19 @@ public class ArchitectureTest {
             .should()
             .onlyDependOnClassesThat()
             .resideInAnyPackage(THIS_PACKAGE, "java..",
-                    "org.jspecify.annotations..");
+                    "com.fasterxml.jackson..",
+                    "jakarta.servlet..",
+                    "jakarta.validation..",
+                    "org.fuin.cqrs4j.core..",
+                    "org.fuin.cqrs4j.jackson..",
+                    "org.fuin.ddd4j.core..",
+                    "org.fuin.esc.api..",
+                    "org.fuin.objects4j.common..",
+                    "org.jspecify.annotations..",
+                    "org.slf4j..",
+                    "org.springframework.context..",
+                    "org.springframework.core..",
+                    "org.springframework.http..",
+                    "org.springframework.web..");
 
 }

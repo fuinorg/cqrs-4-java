@@ -21,6 +21,8 @@
         <module>command-starter</module>
         <module>query-core</module>
         <module>query-starter</module>
+        <module>keycloak-core</module>
+        <module>keycloak-starter</module>
     </modules>
 
 </project>

@@ -11,9 +11,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>cqrs-4-java-springboot-common</artifactId>
+    <artifactId>cqrs-4-java-springboot-keycloak-starter</artifactId>
     <packaging>jar</packaging>
-    <description>${description} (SPRINGBOOT COMMON)</description>
+    <description>${description} (SPRINGBOOT KEYCLOAK STARTER)</description>
 
     <dependencyManagement>
         <dependencies>
@@ -37,13 +37,28 @@
         </dependency>
 
         <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-springboot-keycloak-core</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.fuin.ddd4j</groupId>
             <artifactId>ddd-4-java-core</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
         </dependency>
 
         <dependency>
@@ -56,15 +71,7 @@
             <artifactId>spring-beans</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
-        </dependency>
+        <!-- test -->
 
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
@@ -77,6 +84,7 @@
             <artifactId>archunit-junit5</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -110,7 +118,7 @@
                     </includes>
                     <archive>
                         <manifestEntries>
-                            <Automatic-Module-Name>org.fuin.cqrs4j.springboot.common</Automatic-Module-Name>
+                            <Automatic-Module-Name>org.fuin.cqrs4j.springboot.keycloak.starter</Automatic-Module-Name>
                         </manifestEntries>
                     </archive>
                 </configuration>

@@ -1,4 +1,4 @@
-package org.fuin.cqrs4j.springboot.common;
+package org.fuin.cqrs4j.springboot.keycloak.starter;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -26,9 +26,14 @@ public class ArchitectureTest {
             .should()
             .onlyDependOnClassesThat()
             .resideInAnyPackage(THIS_PACKAGE, "java..",
-                    "jakarta.servlet..",
+                    "com.nimbusds..",
+                    "org.fuin.cqrs4j.springboot.keycloak.core..",
                     "org.fuin.ddd4j.core..",
                     "org.jspecify.annotations..",
-                    "org.springframework.web..");
+                    "org.springframework.beans..",
+                    "org.springframework.boot..",
+                    "org.springframework.context..",
+                    "org.springframework.security.."
+                    );
 
 }

@@ -26,6 +26,7 @@ public class ArchitectureTest {
             .should()
             .onlyDependOnClassesThat()
             .resideInAnyPackage(THIS_PACKAGE, "java..",
+                    "javax.sql..",
                     "jakarta.persistence..",
                     "jakarta.validation..",
                     "org.fuin.cqrs4j.core..",
@@ -39,6 +40,7 @@ public class ArchitectureTest {
                     "org.springframework.beans..",
                     "org.springframework.boot..",
                     "org.springframework.context..",
+                    "org.springframework.jdbc..",
                     "org.springframework.scheduling..",
                     "org.springframework.stereotype..",
                     "org.springframework.transaction.."

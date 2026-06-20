@@ -15,15 +15,11 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library. If not, see http://www.gnu.org/licenses/.
  */
-package org.fuin.cqrs4j.springboot.common;
 
 /**
- * Placeholder until real classes are added to this module.
+ * Spring Boot starter that auto-configures the multi-tenant Keycloak/JWT security infrastructure.
  */
-public final class Placeholder {
+@NullMarked
+package org.fuin.cqrs4j.springboot.keycloak.starter;
 
-    private Placeholder() {
-        throw new UnsupportedOperationException("Placeholder class");
-    }
-
-}
+import org.jspecify.annotations.NullMarked;

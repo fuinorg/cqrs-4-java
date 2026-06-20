@@ -15,15 +15,20 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library. If not, see http://www.gnu.org/licenses/.
  */
-package org.fuin.cqrs4j.springboot.command.core;
+package org.fuin.cqrs4j.core;
 
 /**
- * Placeholder until real classes are added to this module.
+ * A handler class was not found for a given command class.
  */
-public final class Placeholder {
+public class CommandHandlerClassNotFoundException extends RuntimeException {
 
-    private Placeholder() {
-        throw new UnsupportedOperationException("Placeholder class");
+    /**
+     * Constructor with mandatory data.
+     *
+     * @param cmdClass Command class that caused the problem.
+     */
+    public CommandHandlerClassNotFoundException(Class<? extends Command> cmdClass) {
+        super("Failed to find a command handler for " + cmdClass.getSimpleName());
     }
 
 }

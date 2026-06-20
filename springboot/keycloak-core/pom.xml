@@ -11,9 +11,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>cqrs-4-java-springboot-common</artifactId>
+    <artifactId>cqrs-4-java-springboot-keycloak-core</artifactId>
     <packaging>jar</packaging>
-    <description>${description} (SPRINGBOOT COMMON)</description>
+    <description>${description} (SPRINGBOOT KEYCLOAK CORE)</description>
 
     <dependencyManagement>
         <dependencies>
@@ -37,8 +37,35 @@
         </dependency>
 
         <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-core</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.fuin.ddd4j</groupId>
             <artifactId>ddd-4-java-core</artifactId>
+        </dependency>
+
+        <!-- com.nimbusds:nimbus-jose-jwt is provided transitively by spring-security-oauth2-jose -->
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-resource-server</artifactId>
         </dependency>
 
         <dependency>
@@ -48,23 +75,15 @@
 
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
         </dependency>
+
+        <!-- test -->
 
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
@@ -77,6 +96,7 @@
             <artifactId>archunit-junit5</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -110,7 +130,7 @@
                     </includes>
                     <archive>
                         <manifestEntries>
-                            <Automatic-Module-Name>org.fuin.cqrs4j.springboot.common</Automatic-Module-Name>
+                            <Automatic-Module-Name>org.fuin.cqrs4j.springboot.keycloak.core</Automatic-Module-Name>
                         </manifestEntries>
                     </archive>
                 </configuration>

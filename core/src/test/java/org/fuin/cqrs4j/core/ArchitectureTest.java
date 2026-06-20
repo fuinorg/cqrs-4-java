@@ -35,6 +35,8 @@ public class ArchitectureTest {
                     "jakarta.annotation..",
                     "org.jspecify.annotations..",
                     "org.slf4j..",
+                    "org.fuin.utils4j..",
+                    "org.jboss.jandex..",
                     "javax.annotation.concurrent.."
                     );
 
