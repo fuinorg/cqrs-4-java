@@ -19,6 +19,7 @@ package org.fuin.cqrs4j.springboot.query.core;
 
 import org.fuin.ddd4j.core.TenantRemovedEvent;
 import org.fuin.ddd4j.core.TenantAddedEvent;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 
@@ -27,7 +28,10 @@ import javax.sql.DataSource;
 /**
  * A {@link DataSource} that is aware of tenants being added or removed at runtime and adjusts its
  * managed connections accordingly.
+ * <p>
+ * All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface TenantDataSource extends DataSource {
 
     /**

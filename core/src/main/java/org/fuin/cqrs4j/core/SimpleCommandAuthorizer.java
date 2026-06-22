@@ -17,41 +17,40 @@
  */
 package org.fuin.cqrs4j.core;
 
-import org.fuin.ddd4j.core.EntityIdPath;
-import org.fuin.ddd4j.core.EntityRole;
-import org.fuin.ddd4j.core.EntityRoleInstance;
-import org.fuin.ddd4j.core.SecurityRole;
-import org.fuin.ddd4j.core.SimpleRole;
+import org.fuin.ddd4j.core.*;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Static mapping from commands to allowed roles.
  */
-public final class StaticCommandSecurityFilter implements CommandSecurityFilter {
+@ThreadSafe
+public final class SimpleCommandAuthorizer implements CommandAuthorizer {
 
-    private final Map<Class<? extends Command>, List<SecurityRole>> commandRoleMap;
+    // private final Map<Class<? extends Command>, List<SecurityRole>> commandRoleMap;
+    private final CommandRoleService commandRoleService;
 
     /**
      * Constructor with the command-to-roles mapping.
      *
-     * @param commandRoleMap Maps each command class to the roles allowed to execute it. An empty
-     *                       list means everyone is allowed, a missing entry means access is denied.
+     * @param commandRoleService Service returning roles allowed to execute a command. An empty
+     *                           list means everyone is allowed, a missing entry means access is denied.
      */
-    public StaticCommandSecurityFilter(Map<Class<? extends Command>, List<SecurityRole>> commandRoleMap) {
-        this.commandRoleMap = Objects.requireNonNull(commandRoleMap, "commandRoleMap==null");
+    public SimpleCommandAuthorizer(CommandRoleService commandRoleService) {
+        this.commandRoleService = Objects.requireNonNull(commandRoleService, "roleService==null");
     }
 
     @Override
     public boolean authorized(Command command, List<SimpleRole> userRoles) {
-        final List<SecurityRole> commandRoles = commandRoleMap.get(command.getClass());
-        if (commandRoles == null) {
+        final Optional<List<SecurityRole>> result = commandRoleService.readAllowedRoles(command.getClass());
+        if (result.isEmpty()) {
             // Assume that we forgot to configure a role and deny access
             return false;
         }
+        final List<SecurityRole> commandRoles = result.get();
         if (commandRoles.isEmpty()) {
             // No roles means that everyone can access the command
             return true;
@@ -80,9 +79,27 @@ public final class StaticCommandSecurityFilter implements CommandSecurityFilter 
         }
         if (command instanceof AggregateCommand<?, ?> ac && role instanceof EntityRole er) {
             final EntityIdPath entityIdPath = ac.getEntityIdPath();
-            return Optional.of(new EntityRoleInstance(entityIdPath, er.name()).asSimpleRole());
+            return Optional.of(new EntityRoleInstance(entityIdPath, er).asSimpleRole());
         }
         return Optional.empty();
+    }
+
+    /**
+     * Provides the necessary roles to check permissions.
+     */
+    public interface CommandRoleService {
+
+        /**
+         * Returns a list of roles for a given command type.
+         *
+         * @param cmdClass Type of command to return roles that are allowed to execute the command.
+         * @return All roles that are allowed to execute the command.
+         * An empty list means everyone is allowed to execute the command.
+         * An empty value means no one is allowed (all access denied).
+         * In that case most likely the config is incomplete and nothing is configured for that command.
+         */
+        Optional<List<SecurityRole>> readAllowedRoles(Class<? extends Command> cmdClass);
+
     }
 
 }

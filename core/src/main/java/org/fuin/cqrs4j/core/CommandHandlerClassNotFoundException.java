@@ -17,9 +17,12 @@
  */
 package org.fuin.cqrs4j.core;
 
+import org.fuin.objects4j.common.NotThreadSafe;
+
 /**
  * A handler class was not found for a given command class.
  */
+@NotThreadSafe
 public class CommandHandlerClassNotFoundException extends RuntimeException {
 
     /**

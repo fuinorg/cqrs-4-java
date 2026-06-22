@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.util.Map;
 import java.util.Objects;
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Validates that a given tenant is known and the "iss" claim in a Jwt matches a configured value.
  * See <a href="https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/multitenancy.html">Multitenancy in Spring Docs</a>.
  */
+@ThreadSafe
 public class JwtTenantIssuerValidator implements OAuth2TokenValidator<Jwt> {
 
     private final JwtTenantRepository tenantRepository;

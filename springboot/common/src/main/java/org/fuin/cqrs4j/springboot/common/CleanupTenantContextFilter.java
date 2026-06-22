@@ -22,6 +22,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.fuin.ddd4j.core.WritableTenantContext;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -31,6 +32,7 @@ import java.util.Objects;
  * Servlet filter that clears the tenant from the {@link WritableTenantContext} after every request.
  * This prevents a tenant from leaking into a subsequent request handled by the same (pooled) thread.
  */
+@ThreadSafe
 public class CleanupTenantContextFilter extends OncePerRequestFilter {
 
     private final WritableTenantContext tenantContext;

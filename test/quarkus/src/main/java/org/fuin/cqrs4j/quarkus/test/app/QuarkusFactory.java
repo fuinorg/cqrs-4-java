@@ -28,6 +28,7 @@ import org.fuin.esc.esgrpc.IESGrpcEventStore;
 import org.fuin.esc.jsonb.BaseTypeFactory;
 import org.fuin.esc.jsonb.EscJsonbUtils;
 import org.fuin.esc.jsonb.JsonbSerDeserializer;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.objects4j.jsonb.FieldAccessStrategy;
 import org.fuin.objects4j.jsonb.JsonbProvider;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * CDI factory that creates necessary beans.
  */
+@ThreadSafe
 @ApplicationScoped
 public class QuarkusFactory {
 

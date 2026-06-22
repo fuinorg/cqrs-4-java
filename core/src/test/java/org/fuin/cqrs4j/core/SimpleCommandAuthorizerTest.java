@@ -23,41 +23,37 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests for {@link StaticCommandSecurityFilter}.
+ * Tests for {@link SimpleCommandAuthorizer}.
  */
-public class StaticCommandSecurityFilterTest {
+public class SimpleCommandAuthorizerTest {
 
     @Test
     public void testDeniedWhenCommandNotConfigured() {
         final Map<Class<? extends Command>, List<SecurityRole>> map = Map.of();
-        final StaticCommandSecurityFilter testee = new StaticCommandSecurityFilter(map);
+        final SimpleCommandAuthorizer testee = new SimpleCommandAuthorizer(cmdClass -> Optional.empty());
         assertThat(testee.authorized(new MyCmd(), List.of(new SimpleRole("admin")))).isFalse();
     }
 
     @Test
     public void testAllowedWhenNoRolesConfigured() {
-        final Map<Class<? extends Command>, List<SecurityRole>> map = Map.of(MyCmd.class, List.of());
-        final StaticCommandSecurityFilter testee = new StaticCommandSecurityFilter(map);
+        final SimpleCommandAuthorizer testee = new SimpleCommandAuthorizer(cmdClass -> Optional.of(List.of()));
         assertThat(testee.authorized(new MyCmd(), List.of())).isTrue();
     }
 
     @Test
     public void testAllowedWhenUserHasMatchingRole() {
-        final Map<Class<? extends Command>, List<SecurityRole>> map =
-                Map.of(MyCmd.class, List.of(new SimpleRole("admin")));
-        final StaticCommandSecurityFilter testee = new StaticCommandSecurityFilter(map);
+        final SimpleCommandAuthorizer testee = new SimpleCommandAuthorizer(cmdClass -> Optional.of(List.of(new SimpleRole("admin"))));
         assertThat(testee.authorized(new MyCmd(), List.of(new SimpleRole("admin")))).isTrue();
     }
 
     @Test
     public void testDeniedWhenUserRoleDoesNotMatch() {
-        final Map<Class<? extends Command>, List<SecurityRole>> map =
-                Map.of(MyCmd.class, List.of(new SimpleRole("admin")));
-        final StaticCommandSecurityFilter testee = new StaticCommandSecurityFilter(map);
+        final SimpleCommandAuthorizer testee = new SimpleCommandAuthorizer(cmdClass -> Optional.of(List.of(new SimpleRole("admin"))));
         assertThat(testee.authorized(new MyCmd(), List.of(new SimpleRole("user")))).isFalse();
     }
 

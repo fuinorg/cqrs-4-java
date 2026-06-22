@@ -24,6 +24,7 @@ import org.fuin.ddd4j.core.AggregateNotFoundException;
 import org.fuin.ddd4j.core.AggregateVersionConflictException;
 import org.fuin.ddd4j.core.AggregateVersionNotFoundException;
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.util.Set;
 
@@ -33,7 +34,10 @@ import java.util.Set;
  * @param <CONTEXT> Type of context for the command execution.
  * @param <RESULT>  Result of the command execution.
  * @param <CMD>     Type of command to execute.
+ *                  <p>
+ *                  All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface CommandExecutor<CONTEXT, RESULT, CMD extends Command> {
 
     /**

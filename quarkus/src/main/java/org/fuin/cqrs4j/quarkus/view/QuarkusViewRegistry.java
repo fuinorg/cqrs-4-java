@@ -10,10 +10,12 @@ import org.fuin.cqrs4j.core.SimpleViewRegistry;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.quarkus.base.QuarkusUtils;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
 
+@ThreadSafe
 @ApplicationScoped
 public class QuarkusViewRegistry implements ViewRegistry {
 

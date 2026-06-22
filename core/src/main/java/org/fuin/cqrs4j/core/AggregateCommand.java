@@ -21,6 +21,7 @@ import jakarta.validation.constraints.NotNull;
 import org.fuin.ddd4j.core.AggregateRootId;
 import org.fuin.ddd4j.core.DomainEvent;
 import org.fuin.ddd4j.core.EntityId;
+import org.fuin.objects4j.common.ThreadSafe;
 
 /**
  * Common behavior shared by all commands related to an aggregate.
@@ -29,7 +30,10 @@ import org.fuin.ddd4j.core.EntityId;
  *            Type of the aggregate root identifier.
  * @param <ENTITY_ID>
  *            Type of the identifier (the last one in the path).
+ *            <p>
+ *            All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface AggregateCommand<ROOT_ID extends AggregateRootId, ENTITY_ID extends EntityId> extends Command, DomainEvent<ENTITY_ID> {
 
     /**

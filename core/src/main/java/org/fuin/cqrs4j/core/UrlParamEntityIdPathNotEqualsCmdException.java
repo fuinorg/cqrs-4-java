@@ -1,6 +1,7 @@
 package org.fuin.cqrs4j.core;
 
 import org.fuin.ddd4j.core.EntityIdPath;
+import org.fuin.objects4j.common.NotThreadSafe;
 
 /**
  * The entity identifier path constructed from the URL does not match the one that is inside the received command.
@@ -9,6 +10,7 @@ import org.fuin.ddd4j.core.EntityIdPath;
  * Example: POST /customer/f832a5a4-dd80-49df-856a-7274de82cd6b/create (Command send in the request body)<br>
  * The ID from the URL must match the aggregate ID that is passed via the command in the body.
  */
+@NotThreadSafe
 @SuppressWarnings("rawtypes")
 public class UrlParamEntityIdPathNotEqualsCmdException extends Exception {
 

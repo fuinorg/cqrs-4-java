@@ -17,9 +17,12 @@
  */
 package org.fuin.cqrs4j.core;
 
+import org.fuin.objects4j.common.NotThreadSafe;
+
 /**
  * The same name already exists in another entity.
  */
+@NotThreadSafe
 public class DuplicateNameException extends Exception {
 
     /**

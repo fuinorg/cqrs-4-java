@@ -26,6 +26,7 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.ddd4j.core.ExceptionData;
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.common.ImmutableAfterUnmarshal;
 import org.fuin.objects4j.common.MarshalInformation;
 import org.fuin.objects4j.ui.Label;
 import org.fuin.objects4j.ui.Prompt;
@@ -42,6 +43,7 @@ import java.io.Serial;
  * @param <DATA>
  *            Type of data returned in case of success (type = {@link ResultType#OK}).
  */
+@ImmutableAfterUnmarshal
 @XmlRootElement(name = "result")
 public final class DataResult<DATA> extends AbstractResult<DATA> {
 

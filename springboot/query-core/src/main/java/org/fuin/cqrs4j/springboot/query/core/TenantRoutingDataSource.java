@@ -22,6 +22,7 @@ import org.fuin.ddd4j.core.TenantId;
 import org.fuin.cqrs4j.core.TenantRepository;
 import org.fuin.ddd4j.core.TenantAddedEvent;
 import org.fuin.ddd4j.core.TenantRemovedEvent;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -38,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * A datasource that switches the database connection based on a tenant in the context.
  */
+@ThreadSafe
 public class TenantRoutingDataSource extends AbstractRoutingDataSource implements TenantDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(TenantRoutingDataSource.class);

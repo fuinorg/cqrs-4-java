@@ -19,10 +19,14 @@ package org.fuin.cqrs4j.core;
 
 import org.fuin.ddd4j.core.TenantId;
 import org.fuin.ddd4j.core.User;
+import org.fuin.objects4j.common.ThreadSafe;
 
 /**
  * Provides information about things like logged-in user and tenant.
+ * <p>
+ * All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface CommandExecutionContext {
 
     /**

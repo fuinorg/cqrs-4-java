@@ -24,12 +24,14 @@ import org.fuin.ddd4j.core.EntityId;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.jackson.AbstractEvent;
+import org.fuin.objects4j.common.ImmutableAfterUnmarshal;
 
 import java.io.Serial;
 
 /**
  * Base class for all commands.
  */
+@ImmutableAfterUnmarshal
 public abstract class AbstractCommand extends AbstractEvent implements Command {
 
     @Serial

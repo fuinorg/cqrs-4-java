@@ -3,6 +3,7 @@ package org.fuin.cqrs4j.springboot.query.core.view;
 import org.fuin.cqrs4j.core.SimpleViewRegistry;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -15,6 +16,7 @@ import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_PROT
 /**
  * Registry that verifies that views have 'prototype' scope.
  */
+@ThreadSafe
 public class SpringViewRegistry implements ViewRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpringViewRegistry.class);

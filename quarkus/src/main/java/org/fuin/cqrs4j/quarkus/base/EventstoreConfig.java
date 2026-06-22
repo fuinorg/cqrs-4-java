@@ -5,10 +5,12 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.fuin.objects4j.common.ThreadSafe;
 
 /**
  * Configuration for the eventstore.
  */
+@ThreadSafe
 @ApplicationScoped
 public class EventstoreConfig {
 

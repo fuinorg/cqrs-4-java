@@ -21,17 +21,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import org.fuin.cqrs4j.core.Command;
-import org.fuin.cqrs4j.core.CommandExecutionContext;
-import org.fuin.cqrs4j.core.CommandExecutionFailedException;
-import org.fuin.cqrs4j.core.CommandHandler;
-import org.fuin.cqrs4j.core.CommandHandlerRegistry;
-import org.fuin.cqrs4j.core.CommandSecurityFilter;
+import org.fuin.cqrs4j.core.*;
 import org.fuin.ddd4j.core.SimpleRole;
 import org.fuin.ddd4j.core.UnauthorizedException;
 import org.fuin.esc.api.SerializedDataType;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
 import org.fuin.objects4j.common.ConstraintViolationException;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -41,10 +37,11 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Handles incoming commands and dispatches them to the appropriate command handlers.
- * Helper class that can be used in command controllers and avoids duplicating the
- * dispatch code in each and every controller.
+ * Handles incoming commands, validates them, verifies if the current user is authorized to execute it
+ * and dispatches them to the appropriate command handlers. This object is meant be used in command
+ * controllers and avoids duplicating the dispatch code in each and every controller.
  */
+@ThreadSafe
 public class CommandDispatcher {
 
     private static final Logger LOG = LoggerFactory.getLogger(CommandDispatcher.class);
@@ -53,7 +50,7 @@ public class CommandDispatcher {
 
     private final SerializedDataTypeRegistry typeRegistry;
 
-    private final CommandSecurityFilter commandSecurityFilter;
+    private final CommandAuthorizer authorizer;
 
     private final Validator validator;
 
@@ -66,20 +63,20 @@ public class CommandDispatcher {
      *
      * @param objectMapper           Maps the command JSON to/from objects.
      * @param typeRegistry           Resolves a command type name to the concrete command class.
-     * @param commandSecurityFilter  Decides if the current user may execute a command.
+     * @param authorizer             Decides if the current user may execute a command.
      * @param validator              Validates the deserialized command.
      * @param commandHandlerRegistry Resolves the handler class for a given command class.
      * @param context                Spring context used to look up the command handler bean.
      */
     public CommandDispatcher(ObjectMapper objectMapper,
                              SerializedDataTypeRegistry typeRegistry,
-                             CommandSecurityFilter commandSecurityFilter,
+                             CommandAuthorizer authorizer,
                              Validator validator,
                              CommandHandlerRegistry commandHandlerRegistry,
                              ApplicationContext context) {
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper==null");
         this.typeRegistry = Objects.requireNonNull(typeRegistry, "typeRegistry==null");
-        this.commandSecurityFilter = Objects.requireNonNull(commandSecurityFilter, "commandSecurityFilter==null");
+        this.authorizer = Objects.requireNonNull(authorizer, "commandSecurityFilter==null");
         this.validator = Objects.requireNonNull(validator, "validator==null");
         this.commandHandlerRegistry = Objects.requireNonNull(commandHandlerRegistry, "commandHandlerRegistry==null");
         this.context = Objects.requireNonNull(context, "context==null");
@@ -99,8 +96,13 @@ public class CommandDispatcher {
     public String dispatch(String cmdType, String cmdJson, CommandExecutionContext executionContext,
                            List<SimpleRole> userRoles) throws CommandExecutionFailedException {
         final Class<?> objClass = findType(cmdType);
-        final String username = executionContext.getUser().getUserName();
-        LOG.info("User '{}' posted {}: {}", username, objClass.getSimpleName(), cmdJson);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("User '{}' posted {}: {}", executionContext.getUser().getUserName(),
+                    objClass.getSimpleName(), cmdJson);
+        } else {
+            LOG.debug("User '{}' posted: {}", executionContext.getUser().getUserId(),
+                    objClass.getSimpleName());
+        }
         final Object obj = parseJson(cmdJson, objClass);
         final Set<ConstraintViolation<Object>> violations = validator.validate(obj);
         if (!violations.isEmpty()) {
@@ -111,8 +113,8 @@ public class CommandDispatcher {
         if (obj instanceof Command cmd) {
             final Class<? extends CommandHandler> commandHandlerClass = commandHandlerRegistry.findHandlerClass((Class<? extends Command>) objClass);
             final CommandHandler commandHandler = context.getBean(commandHandlerClass);
-            if (!commandSecurityFilter.authorized(cmd, userRoles)) {
-                LOG.error("User '{}' is not authorized to execute: {}", username, objClass.getSimpleName());
+            if (!authorizer.authorized(cmd, userRoles)) {
+                LOG.error("User '{}' is not authorized to execute: {}", executionContext.getUser().getUserId(), objClass.getSimpleName());
                 throw new UnauthorizedException();
             }
             final Object result = commandHandler.handle(executionContext, cmd);

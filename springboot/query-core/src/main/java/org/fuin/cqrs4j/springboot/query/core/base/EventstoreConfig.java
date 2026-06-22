@@ -3,11 +3,13 @@ package org.fuin.cqrs4j.springboot.query.core.base;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * Configuration for the eventstore.
  */
+@ThreadSafe
 @ConfigurationProperties(EventstoreConfig.PREFIX)
 public class EventstoreConfig {
 

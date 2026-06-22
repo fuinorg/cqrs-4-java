@@ -27,6 +27,7 @@ import jakarta.validation.constraints.NotNull;
 import org.jspecify.annotations.Nullable;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.objects4j.jsonb.JsonbProvider;
 
 import java.io.IOException;
@@ -36,6 +37,7 @@ import java.io.StringWriter;
 /**
  * Converts an {@link DataResult} from/to JSON.
  */
+@ThreadSafe
 @SuppressWarnings("rawtypes")
 public final class DataResultJsonbAdapter implements JsonbAdapter<DataResult, JsonObject> {
 

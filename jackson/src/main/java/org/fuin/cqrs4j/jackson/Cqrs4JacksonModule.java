@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.module.SimpleDeserializers;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.utils4j.TestOmitted;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
 /**
  * Module that registers the adapters for the package.
  */
+@ThreadSafe
 @TestOmitted("Tested with other tests")
 public class Cqrs4JacksonModule extends Module {
 

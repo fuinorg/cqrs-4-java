@@ -20,12 +20,15 @@ package org.fuin.cqrs4j.core;
 import jakarta.persistence.EntityManager;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.objects4j.common.ThreadSafe;
 
 /**
  * Event handler that maps an event to JPA entities.
+ * All implementations are expected to be thread safe.
  *
  * @param <TYPE> Event type.
  */
+@ThreadSafe
 public interface EventHandler<TYPE extends Event> {
 
     /**

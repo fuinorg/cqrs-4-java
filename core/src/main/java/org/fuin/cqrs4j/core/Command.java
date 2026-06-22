@@ -18,10 +18,14 @@
 package org.fuin.cqrs4j.core;
 
 import org.fuin.ddd4j.core.Event;
+import org.fuin.objects4j.common.ThreadSafe;
 
 /**
  * Common behavior shared by all commands.
+ * <p>
+ * All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface Command extends Event {
 
 }

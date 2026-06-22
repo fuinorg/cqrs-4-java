@@ -17,6 +17,7 @@
  */
 package org.fuin.cqrs4j.springboot.keycloak.core;
 
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -35,6 +36,7 @@ import static java.util.stream.Collectors.toSet;
 /**
  * Converts JWT token into authentication token.
  */
+@ThreadSafe
 public final class KeycloakJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
     private static final String ROLE_PREFIX = "ROLE_";

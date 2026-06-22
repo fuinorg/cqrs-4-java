@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import org.fuin.cqrs4j.core.ResultType;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.objects4j.jackson.Objects4JacksonUtils;
 
 import java.io.IOException;
@@ -30,6 +31,7 @@ import java.io.IOException;
 /**
  * Converts an {@link DataResult} from/to JSON.
  */
+@ThreadSafe
 @SuppressWarnings("rawtypes")
 public final class DataResultJacksonDeserializer extends StdDeserializer<DataResult> {
 

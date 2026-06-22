@@ -29,6 +29,7 @@ import org.fuin.cqrs4j.core.DuplicateNameException;
 import org.fuin.ddd4j.core.UnauthorizedException;
 import org.fuin.objects4j.common.ConstraintViolationException;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -43,6 +44,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Translates exceptions thrown while processing a command into an appropriate {@link Result} and
  * HTTP status code. Registered as a Spring {@link ControllerAdvice} so it applies to all controllers.
  */
+@ThreadSafe
 @ControllerAdvice
 public class CommandExceptionHandlers {
 

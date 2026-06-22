@@ -9,6 +9,7 @@ import org.fuin.cqrs4j.springboot.test.model.PersonName;
 import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.jackson.EntityIdJacksonDeserializer;
 import org.fuin.ddd4j.jackson.EntityIdJacksonSerializer;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.objects4j.jackson.ValueObjectStringJacksonDeserializer;
 import org.fuin.objects4j.jackson.ValueObjectStringJacksonSerializer;
 
@@ -17,6 +18,7 @@ import java.util.Objects;
 /**
  * Jackson module that has the test classes.
  */
+@ThreadSafe
 public final class TestModelJacksonModule extends Module {
 
     private final EntityIdFactory entityIdFactory;

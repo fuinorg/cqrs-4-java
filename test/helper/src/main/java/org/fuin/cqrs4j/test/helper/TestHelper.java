@@ -1,6 +1,7 @@
 package org.fuin.cqrs4j.test.helper;
 
 import com.sun.security.auth.module.UnixSystem;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
@@ -12,6 +13,7 @@ import java.util.Map;
 /**
  * Helper functions for the test modules.
  */
+@ThreadSafe
 public final class TestHelper {
 
     private TestHelper() {

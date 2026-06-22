@@ -1,16 +1,20 @@
 package org.fuin.cqrs4j.core;
 
+import org.fuin.objects4j.common.ThreadSafe;
 import org.jspecify.annotations.Nullable;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.TenantId;
+import org.fuin.objects4j.common.ThreadSafetyUndefined;
 
 import java.util.List;
 import java.util.Set;
 
 /**
  * Defines a unit that projects events into another representation.
+ * All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface View {
 
     /**

@@ -1,6 +1,7 @@
 package org.fuin.cqrs4j.core;
 
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.zip.Adler32;
 /**
  * CQRS related helper functions.
  */
+@ThreadSafe
 public final class CqrsUtils {
 
     private CqrsUtils() {

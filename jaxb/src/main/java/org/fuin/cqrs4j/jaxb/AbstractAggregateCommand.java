@@ -31,6 +31,7 @@ import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.jaxb.AggregateVersionXmlAdapter;
 import org.fuin.ddd4j.jaxb.EntityIdPathXmlAdapter;
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.common.ImmutableAfterUnmarshal;
 
 import java.io.Serial;
 
@@ -40,6 +41,7 @@ import java.io.Serial;
  * @param <ROOT_ID>   Type of the aggregate root identifier.
  * @param <ENTITY_ID> Type of the identifier (the last one in the path).
  */
+@ImmutableAfterUnmarshal
 public abstract class AbstractAggregateCommand<ROOT_ID extends AggregateRootId, ENTITY_ID extends EntityId> extends AbstractCommand
         implements AggregateCommand<ROOT_ID, ENTITY_ID> {
 

@@ -1,15 +1,17 @@
 package org.fuin.cqrs4j.core;
 
 import org.fuin.ddd4j.core.TenantId;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.util.stream.Stream;
 
 /**
  * Supplies the tenant identifiers know at the moment of the call.
  * <p>
- * CAUTION: Implementations are required to be thread-safe!
+ * All implementations are expected to be thread safe.
  * </p>
  */
+@ThreadSafe
 public interface TenantIdsSupplier {
 
     /**

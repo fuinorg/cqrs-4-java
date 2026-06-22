@@ -17,9 +17,14 @@
  */
 package org.fuin.cqrs4j.core;
 
+import org.fuin.objects4j.common.ThreadSafe;
+
 /**
  * Mapping between handler classes and command classes.
+ * <p>
+ * All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface CommandHandlerRegistry {
 
     /**

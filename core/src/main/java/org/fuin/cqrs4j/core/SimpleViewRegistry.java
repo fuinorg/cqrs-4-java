@@ -1,10 +1,13 @@
 package org.fuin.cqrs4j.core;
 
+import org.fuin.objects4j.common.ThreadSafe;
+
 import java.util.List;
 
 /**
  * Registry that copies information from the view instances.
  */
+@ThreadSafe
 public class SimpleViewRegistry implements ViewRegistry {
 
     private final List<Entry> viewClasses;

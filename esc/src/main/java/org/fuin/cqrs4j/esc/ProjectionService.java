@@ -19,10 +19,13 @@ package org.fuin.cqrs4j.esc;
 
 import jakarta.validation.constraints.NotNull;
 import org.fuin.esc.api.StreamId;
+import org.fuin.objects4j.common.ThreadSafe;
 
 /**
  * Provides functionality related to projections.
+ * All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface ProjectionService {
 
     /**

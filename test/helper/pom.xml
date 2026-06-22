@@ -25,6 +25,11 @@
         <!-- Compile -->
 
         <dependency>
+            <groupId>org.fuin.objects4j</groupId>
+            <artifactId>objects4j-common</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${testcontainers.version}</version>

@@ -7,6 +7,7 @@ import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.jsonb.EntityIdJsonbAdapter;
 import org.fuin.esc.api.DeserializerRegistry;
 import org.fuin.esc.api.SerializerRegistry;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.objects4j.jsonb.JsonbProvider;
 import org.fuin.utils4j.jandex.JandexUtils;
 import org.jspecify.annotations.Nullable;
@@ -24,6 +25,7 @@ import java.util.Optional;
  * Registry that is built up by scanning for classes that implement {@link jakarta.json.bind.adapter.JsonbAdapter}.
  * It also cares about specialized {@link EntityIdJsonbAdapter} that require a {@link EntityIdFactory} as constructor argument.
  */
+@ThreadSafe
 public final class JandexJsonbRegistry implements JsonbRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(JandexJsonbRegistry.class);

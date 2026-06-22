@@ -19,6 +19,7 @@ package org.fuin.cqrs4j.springboot.keycloak.core;
 
 import org.fuin.ddd4j.core.TenantId;
 import org.fuin.ddd4j.core.TenantAddedEvent;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Map;
@@ -31,6 +32,7 @@ import java.util.stream.Stream;
  * Tenant repository backed by Keycloak realms. Tenants are discovered lazily by their issuer URI
  * and cached. A {@link TenantAddedEvent} is published whenever a previously unknown tenant is added.
  */
+@ThreadSafe
 public class KeycloakTenantRepository implements JwtTenantRepository {
 
     private final String baseUri;

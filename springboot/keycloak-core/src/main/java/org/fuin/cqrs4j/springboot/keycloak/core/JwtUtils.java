@@ -40,6 +40,7 @@ import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -67,6 +68,7 @@ import java.util.*;
  * @author Rafiullah Hamedy
  * @since 5.2
  */
+@ThreadSafe
 final class JwtUtils {
 
     private static final String OIDC_METADATA_PATH = "/.well-known/openid-configuration";

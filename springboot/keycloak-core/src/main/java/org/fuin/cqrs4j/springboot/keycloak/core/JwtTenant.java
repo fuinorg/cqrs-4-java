@@ -22,6 +22,7 @@ import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.fuin.ddd4j.core.TenantId;
 import org.fuin.ddd4j.core.Tenant;
+import org.fuin.objects4j.common.Immutable;
 
 import java.net.URI;
 import java.util.Map;
@@ -31,6 +32,7 @@ import java.util.Optional;
 /**
  * Represents a tenant including its settings.
  */
+@Immutable
 public class JwtTenant implements Tenant {
 
     private final TenantId tenantId;

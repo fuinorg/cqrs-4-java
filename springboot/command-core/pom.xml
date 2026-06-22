@@ -112,6 +112,12 @@
             <artifactId>archunit-junit5</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.fuin</groupId>
+            <artifactId>units4j</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

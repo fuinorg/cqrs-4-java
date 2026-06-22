@@ -6,12 +6,14 @@ import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.esc.api.StreamId;
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service to read and persist the next position of a stream to read.
  */
+@ThreadSafe
 @Repository
 public class QryProjectionService implements ProjectionService {
 

@@ -23,6 +23,7 @@ import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.JWTClaimsSetAwareJWSKeySelector;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.security.Key;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Extracts the tenant from the JWT URI and compares it with tenants from a repository.
  * See <a href="https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/multitenancy.html">Multitenancy in Spring Docs</a>.
  */
+@ThreadSafe
 public class JwtTenantKeySelector implements JWTClaimsSetAwareJWSKeySelector<SecurityContext> {
 
     private final JwtTenantRepository tenantRepository;

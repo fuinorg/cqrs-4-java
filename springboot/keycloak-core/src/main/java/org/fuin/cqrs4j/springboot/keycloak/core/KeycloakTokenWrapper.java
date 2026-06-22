@@ -21,6 +21,7 @@ import org.fuin.ddd4j.core.TenantId;
 import org.fuin.ddd4j.core.User;
 import org.fuin.cqrs4j.core.CommandExecutionContext;
 import org.fuin.ddd4j.core.SimpleRole;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -31,6 +32,7 @@ import java.util.List;
 /**
  * Helper class to extract values from the {@link JwtAuthenticationToken}.
  */
+@ThreadSafe
 public class KeycloakTokenWrapper implements CommandExecutionContext {
 
     private static final String ROLE_PREFIX = "ROLE_";

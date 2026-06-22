@@ -29,6 +29,7 @@ import org.fuin.cqrs4j.springboot.keycloak.core.KeycloakJwtAuthenticationConvert
 import org.fuin.cqrs4j.springboot.keycloak.core.KeycloakTenantRepository;
 import org.fuin.ddd4j.core.TenantId;
 import org.fuin.ddd4j.core.WritableTenantContext;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -50,6 +51,7 @@ import java.util.Optional;
  * without configuring them by hand. Every bean is conditional, so an application can override any of
  * them by declaring its own.
  */
+@ThreadSafe
 @AutoConfiguration
 public class KeycloakSecurityAutoConfiguration {
 

@@ -17,9 +17,14 @@
  */
 package org.fuin.cqrs4j.core;
 
+import org.fuin.objects4j.common.ThreadSafe;
+
 /**
  * Contains information about all available tenants.
+ * <p>
+ * All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface TenantRepository extends TenantIdsSupplier {
 
 }

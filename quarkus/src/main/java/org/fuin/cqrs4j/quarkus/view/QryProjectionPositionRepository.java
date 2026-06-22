@@ -7,10 +7,12 @@ import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.esc.api.StreamId;
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.common.ThreadSafe;
 
 /**
  * Repository that contains the position of the stream.
  */
+@ThreadSafe
 @ApplicationScoped
 public class QryProjectionPositionRepository implements ProjectionService {
 

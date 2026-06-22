@@ -18,13 +18,17 @@
 package org.fuin.cqrs4j.core;
 
 import org.fuin.ddd4j.core.SimpleRole;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.util.List;
 
 /**
  * Decides if a user has the rights to execute a command.
+ * <p>
+ * All implementations are expected to be thread safe.
  */
-public interface CommandSecurityFilter {
+@ThreadSafe
+public interface CommandAuthorizer {
 
     /**
      * Determines if a user is authorized to execute the given command.

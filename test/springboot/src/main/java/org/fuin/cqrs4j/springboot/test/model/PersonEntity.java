@@ -5,6 +5,7 @@ import jakarta.json.bind.annotation.JsonbProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import org.fuin.objects4j.common.NotThreadSafe;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -12,6 +13,7 @@ import java.util.UUID;
 /**
  * Represents a person. Equals/hashCode are based on the ID only and the entity is sorted by the name.
  */
+@NotThreadSafe
 @Entity(name = "PERSON")
 public class PersonEntity implements Comparable<PersonEntity> {
 

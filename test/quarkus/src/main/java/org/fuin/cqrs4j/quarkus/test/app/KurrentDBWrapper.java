@@ -4,22 +4,21 @@ import io.kurrent.dbclient.KurrentDBClient;
 import io.kurrent.dbclient.KurrentDBClientSettings;
 import io.kurrent.dbclient.KurrentDBProjectionManagementClient;
 import org.fuin.cqrs4j.quarkus.base.EventstoreConfig;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Helper class that wraps the KurrentDB clients to be compliant with required CDI default constructor.
+ * Helper class that bundles the (thread-safe) KurrentDB clients into a single CDI bean with a shared lifecycle.
  */
+@ThreadSafe
 public class KurrentDBWrapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(KurrentDBWrapper.class);
 
-    private KurrentDBClient client;
+    private final KurrentDBClient client;
 
-    private KurrentDBProjectionManagementClient projectionManagementClient;
-
-    protected KurrentDBWrapper() {
-    }
+    private final KurrentDBProjectionManagementClient projectionManagementClient;
 
     public KurrentDBWrapper(final EventstoreConfig config) {
         client = kurrentDBClient(config);

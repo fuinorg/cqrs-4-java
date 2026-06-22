@@ -18,6 +18,7 @@ import org.fuin.esc.api.ProjectionStreamId;
 import org.fuin.esc.api.StreamAlreadyExistsException;
 import org.fuin.esc.api.StreamEventsSlice;
 import org.fuin.esc.api.TypeName;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -46,6 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Avoids boilerplate code: Instead of having a separated "Projector", "EventDispatcher"
  * and a "ChunkHandler" class for each view, there is only one simplified "View" class now.
  */
+@ThreadSafe
 public class SpringViewManager implements ApplicationListener<ContextClosedEvent>, SchedulingConfigurer {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpringViewManager.class);
@@ -70,7 +72,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     @Nullable
     private final TenantIdsSupplier tenantIdsSupplier;
 
-    private List<ViewJob> viewJobs = Collections.emptyList();
+    private volatile List<ViewJob> viewJobs = Collections.emptyList();
 
     /**
      * Constructor with mandatory data.

@@ -17,9 +17,12 @@
  */
 package org.fuin.cqrs4j.springboot.command.starter;
 
+import org.fuin.objects4j.common.ThreadSafe;
+
 /**
  * Placeholder until real classes are added to this module.
  */
+@ThreadSafe
 public final class Placeholder {
 
     private Placeholder() {

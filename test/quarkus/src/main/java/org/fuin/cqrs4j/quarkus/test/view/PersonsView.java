@@ -6,7 +6,9 @@ import jakarta.inject.Named;
 import jakarta.persistence.EntityManager;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.quarkus.test.model.AbstractPersonsView;
+import org.fuin.objects4j.common.ThreadSafe;
 
+@ThreadSafe
 @Dependent
 @Named(PersonsView.BEAN_NAME)
 public class PersonsView extends AbstractPersonsView {

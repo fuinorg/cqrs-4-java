@@ -8,6 +8,7 @@ import org.fuin.cqrs4j.springboot.test.model.PersonEntity;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.TenantId;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -18,6 +19,7 @@ import java.util.Set;
 
 import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_PROTOTYPE;
 
+@ThreadSafe
 @Component(PersonsView.BEAN_NAME)
 @Scope(SCOPE_PROTOTYPE)
 public class PersonsView implements View {

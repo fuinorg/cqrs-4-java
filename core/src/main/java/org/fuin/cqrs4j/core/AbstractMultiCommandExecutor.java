@@ -26,6 +26,7 @@ import org.fuin.ddd4j.core.AggregateVersionNotFoundException;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.objects4j.common.ConstraintViolationException;
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,6 +42,7 @@ import java.util.Set;
  * @param <RESULT>
  *            Result of the command execution.
  */
+@ThreadSafe
 @SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class AbstractMultiCommandExecutor<CONTEXT, RESULT> implements CommandExecutor<CONTEXT, RESULT, Command> {
 

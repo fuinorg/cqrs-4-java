@@ -17,6 +17,7 @@
  */
 package org.fuin.cqrs4j.core;
 
+import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.utils4j.jandex.JandexIndexFileReader;
 import org.fuin.utils4j.jandex.JandexUtils;
 import org.jboss.jandex.*;
@@ -35,6 +36,7 @@ import java.util.*;
  *     <li>Implement the {@link CommandHandler} interface</li>
  * </ul>
  */
+@ThreadSafe
 public class JandexCommandHandlerRegistry implements CommandHandlerRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(JandexCommandHandlerRegistry.class);

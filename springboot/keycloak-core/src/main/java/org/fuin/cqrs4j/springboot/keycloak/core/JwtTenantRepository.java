@@ -18,12 +18,15 @@
 package org.fuin.cqrs4j.springboot.keycloak.core;
 
 import org.fuin.cqrs4j.core.TenantRepository;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.util.Optional;
 
 /**
  * A {@link TenantRepository} that can additionally resolve tenants by their JWT issuer URI.
+ * All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface JwtTenantRepository extends TenantRepository {
 
     /**

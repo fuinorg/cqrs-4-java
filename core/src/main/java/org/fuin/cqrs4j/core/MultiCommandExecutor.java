@@ -18,6 +18,7 @@
 package org.fuin.cqrs4j.core;
 
 import jakarta.validation.constraints.NotEmpty;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ import java.util.List;
  * @param <RESULT>
  *            Result of the command execution.
  */
+@ThreadSafe
 @SuppressWarnings("rawtypes")
 public final class MultiCommandExecutor<CONTEXT, RESULT> extends AbstractMultiCommandExecutor<CONTEXT, RESULT> {
 

@@ -22,13 +22,17 @@ import jakarta.validation.constraints.NotNull;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.esc.api.CommonEvent;
+import org.fuin.objects4j.common.ThreadSafe;
 
 import java.util.List;
 import java.util.Set;
 
 /**
  * Registry with all JPA event handlers.
+ * <p>
+ * All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface JpaEventDispatcher {
 
     /**

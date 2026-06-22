@@ -31,6 +31,7 @@ import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.jsonb.AggregateVersionJsonbAdapter;
 import org.fuin.ddd4j.jsonb.EntityIdPathJsonbAdapter;
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.common.ImmutableAfterUnmarshal;
 
 import java.io.Serial;
 
@@ -42,6 +43,7 @@ import java.io.Serial;
  * @param <ENTITY_ID>
  *            Type of the identifier (the last one in the path).
  */
+@ImmutableAfterUnmarshal
 public abstract class AbstractAggregateCommand<ROOT_ID extends AggregateRootId, ENTITY_ID extends EntityId> extends AbstractCommand
         implements AggregateCommand<ROOT_ID, ENTITY_ID> {
 

@@ -3,12 +3,15 @@ package org.fuin.cqrs4j.quarkus.base;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
 
+import org.fuin.objects4j.common.ThreadSafe;
+
 import java.util.Optional;
 import java.util.Set;
 
 /**
  * Helper routines related to Quarkus.
  */
+@ThreadSafe
 public final class QuarkusUtils {
 
     private QuarkusUtils() {

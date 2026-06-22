@@ -17,9 +17,12 @@
  */
 package org.fuin.cqrs4j.core;
 
+import org.fuin.objects4j.common.ThreadSafetyUndefined;
+
 /**
  * Marks an object that can be converted into a result.
  */
+@ThreadSafetyUndefined
 public interface ToResultCapable {
 
     /**

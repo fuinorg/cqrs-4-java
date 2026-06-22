@@ -10,6 +10,7 @@ import org.fuin.cqrs4j.springboot.query.core.view.SpringViewRegistry;
 import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -30,6 +31,7 @@ import java.util.Optional;
 /**
  * Configures the necessary beans.
  */
+@ThreadSafe
 @AutoConfigureBefore(JpaRepositoriesAutoConfiguration.class)
 @EnableJpaRepositories(basePackages = {"org.fuin.cqrs4j.springboot.query.core.view"})
 @EnableConfigurationProperties({EventstoreConfig.class})

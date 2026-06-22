@@ -21,6 +21,7 @@ import org.fuin.cqrs4j.quarkus.base.QuarkusUtils;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.WritableTenantContext;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
@@ -45,6 +46,7 @@ import static org.fuin.utils4j.Utils4J.tryLocked;
  * Avoids boilerplate code: Instead of having a separated "Projector", "EventDispatcher"
  * and a "ChunkHandler" class for each view, there is only one simplified "View" class now.
  */
+@ThreadSafe
 @ApplicationScoped
 public class QuarkusViewManager {
 
@@ -77,7 +79,7 @@ public class QuarkusViewManager {
     @Inject
     Instance<TenantIdsSupplier> tenantIdsSupplierInstance;
 
-    private List<ViewExt> views = Collections.emptyList();
+    private volatile List<ViewExt> views = Collections.emptyList();
 
     @Startup
     void createViews() {

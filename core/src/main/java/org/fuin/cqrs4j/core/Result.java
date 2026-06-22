@@ -19,6 +19,7 @@ package org.fuin.cqrs4j.core;
 
 import org.jspecify.annotations.Nullable;
 import jakarta.validation.constraints.NotNull;
+import org.fuin.objects4j.common.ThreadSafe;
 
 /**
  * Result of a request. The type signals if the execution was successful or not. In case the result is not {@link ResultType#OK}, the
@@ -27,7 +28,10 @@ import jakarta.validation.constraints.NotNull;
  *
  * @param <DATA>
  *            Type of data returned.
+ *            <p>
+ *            All implementations are expected to be thread safe.
  */
+@ThreadSafe
 public interface Result<DATA> {
 
     /**

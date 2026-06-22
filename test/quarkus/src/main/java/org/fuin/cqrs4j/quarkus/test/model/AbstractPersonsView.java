@@ -6,6 +6,7 @@ import org.fuin.cqrs4j.core.View;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.TenantId;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,7 @@ import java.util.Set;
 /**
  * Handles the events required to maintain the persons view.
  */
+@ThreadSafe
 public abstract class AbstractPersonsView implements View {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractPersonsView.class);

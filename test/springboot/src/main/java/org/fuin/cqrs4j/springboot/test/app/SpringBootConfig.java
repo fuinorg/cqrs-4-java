@@ -27,6 +27,7 @@ import org.fuin.esc.jackson.BaseTypeFactory;
 import org.fuin.esc.jackson.EscJacksonModule;
 import org.fuin.esc.jackson.EscJacksonUtils;
 import org.fuin.esc.jackson.JacksonSerDeserializer;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.objects4j.jackson.ImmutableObjectMapper;
 import org.fuin.objects4j.jackson.Objects4JJacksonModule;
 import org.slf4j.Logger;
@@ -42,6 +43,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
+@ThreadSafe
 @Configuration
 public class SpringBootConfig {
 

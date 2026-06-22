@@ -22,6 +22,7 @@ import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
+import org.fuin.objects4j.common.ImmutableAfterUnmarshal;
 
 import java.io.Serial;
 
@@ -30,6 +31,7 @@ import java.io.Serial;
  * fields code and message should contain unique information to help the user identifying the cause of the problem. A simple result does not
  * carry any additional data.
  */
+@ImmutableAfterUnmarshal
 public final class SimpleResult extends AbstractResult<Void> {
 
     @Serial

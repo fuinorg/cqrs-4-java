@@ -18,12 +18,14 @@
 package org.fuin.cqrs4j.core;
 
 import jakarta.validation.constraints.NotNull;
+import org.fuin.objects4j.common.NotThreadSafe;
 
 import java.io.Serial;
 
 /**
  * The execution of a command failed. This exception is used for "tunneling" other checked exceptions during command execution.
  */
+@NotThreadSafe
 public final class CommandExecutionFailedException extends Exception {
 
     @Serial

@@ -9,12 +9,14 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.cqrs4j.quarkus.test.model.PersonEntity;
 import org.fuin.cqrs4j.quarkus.test.model.PersonId;
 
 /**
  * REST resource reading persons.
  */
+@ThreadSafe
 @Path("/persons")
 @Transactional
 public class PersonResource {

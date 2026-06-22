@@ -8,10 +8,12 @@ import jakarta.validation.constraints.NotNull;
 import org.fuin.esc.api.SimpleStreamId;
 import org.fuin.esc.api.StreamId;
 import org.fuin.objects4j.common.Contract;
+import org.fuin.objects4j.common.NotThreadSafe;
 
 /**
  * Stores the next position to read from a projection in the event store.
  */
+@NotThreadSafe
 @Entity
 @Table(name = "SPRING_QRY_PROJECTION_POS")
 public class QryProjectionPosition {

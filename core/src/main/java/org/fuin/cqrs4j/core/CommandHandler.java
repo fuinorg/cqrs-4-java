@@ -17,12 +17,16 @@
  */
 package org.fuin.cqrs4j.core;
 
+import org.fuin.objects4j.common.ThreadSafe;
+
 /**
  * Handles a single command.
+ * All implementations are expected to be thread safe.
  *
  * @param <T> Type of the command.
  * @param <R> Type of result.
  */
+@ThreadSafe
 public interface CommandHandler<T extends Command, R> {
 
     /**

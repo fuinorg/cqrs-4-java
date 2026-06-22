@@ -1,6 +1,7 @@
 package org.fuin.cqrs4j.springboot.test.app;
 
 import org.fuin.cqrs4j.springboot.query.core.base.EventstoreConfig;
+import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -10,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * Represents the (custom) entry point, most likely used to the Quarkus application in the IDE.
  */
+@ThreadSafe
 @SpringBootApplication(scanBasePackages = {
         "org.fuin.cqrs4j.springboot.test.view",
         "org.fuin.cqrs4j.springboot.test.app"

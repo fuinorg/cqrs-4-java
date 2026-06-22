@@ -24,6 +24,7 @@ import org.fuin.cqrs4j.core.Result;
 import org.fuin.cqrs4j.core.ResultType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ExceptionShortIdentifable;
+import org.fuin.objects4j.common.ImmutableAfterUnmarshal;
 import org.fuin.objects4j.ui.Label;
 import org.fuin.objects4j.ui.Prompt;
 import org.fuin.objects4j.ui.ShortLabel;
@@ -40,6 +41,7 @@ import java.io.Serializable;
  * @param <DATA>
  *            Type of data returned.
  */
+@ImmutableAfterUnmarshal
 public abstract class AbstractResult<DATA> implements Result<DATA>, Serializable {
 
     @Serial
