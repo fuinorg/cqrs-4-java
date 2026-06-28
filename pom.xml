@@ -327,6 +327,7 @@
         <module>jacoco</module>
         <module>springboot</module>
         <module>quarkus</module>
+        <module>process-manager</module>
         <module>test</module>
     </modules>
 
