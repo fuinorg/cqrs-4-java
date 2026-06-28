@@ -36,25 +36,37 @@ public class SimpleCommandAuthorizerTest {
     public void testDeniedWhenCommandNotConfigured() {
         final Map<Class<? extends Command>, List<SecurityRole>> map = Map.of();
         final SimpleCommandAuthorizer testee = new SimpleCommandAuthorizer(cmdClass -> Optional.empty());
-        assertThat(testee.authorized(new MyCmd(), List.of(new SimpleRole("admin")))).isFalse();
+        final CommandAuthorizer.Result result = testee.authorized(new MyCmd(), List.of(new SimpleRole("admin")));
+        assertThat(result.success()).isFalse();
+        assertThat(result.getMessage()).isEqualTo("Authorization for command MyCmd failed - " +
+                "Allowed roles: NONE / User's roles: [admin]");
     }
 
     @Test
     public void testAllowedWhenNoRolesConfigured() {
         final SimpleCommandAuthorizer testee = new SimpleCommandAuthorizer(cmdClass -> Optional.of(List.of()));
-        assertThat(testee.authorized(new MyCmd(), List.of())).isTrue();
+        final CommandAuthorizer.Result result = testee.authorized(new MyCmd(), List.of());
+        assertThat(result.success()).isTrue();
+        assertThat(result.getMessage()).isEqualTo("Authorization for command MyCmd successfully verified - " +
+                "Allowed roles: [] / User's roles: []");
     }
 
     @Test
     public void testAllowedWhenUserHasMatchingRole() {
         final SimpleCommandAuthorizer testee = new SimpleCommandAuthorizer(cmdClass -> Optional.of(List.of(new SimpleRole("admin"))));
-        assertThat(testee.authorized(new MyCmd(), List.of(new SimpleRole("admin")))).isTrue();
+        final CommandAuthorizer.Result result = testee.authorized(new MyCmd(), List.of(new SimpleRole("admin")));
+        assertThat(result.success()).isTrue();
+        assertThat(result.getMessage()).isEqualTo("Authorization for command MyCmd successfully verified - " +
+                "Allowed roles: [admin] / User's roles: [admin]");
     }
 
     @Test
     public void testDeniedWhenUserRoleDoesNotMatch() {
         final SimpleCommandAuthorizer testee = new SimpleCommandAuthorizer(cmdClass -> Optional.of(List.of(new SimpleRole("admin"))));
-        assertThat(testee.authorized(new MyCmd(), List.of(new SimpleRole("user")))).isFalse();
+        final CommandAuthorizer.Result result = testee.authorized(new MyCmd(), List.of(new SimpleRole("user")));
+        assertThat(result.success()).isFalse();
+        assertThat(result.getMessage()).isEqualTo("Authorization for command MyCmd failed - " +
+                "Allowed roles: [admin] / User's roles: [user]");
     }
 
 }

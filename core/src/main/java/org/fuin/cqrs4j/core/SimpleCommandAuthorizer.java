@@ -44,16 +44,16 @@ public final class SimpleCommandAuthorizer implements CommandAuthorizer {
     }
 
     @Override
-    public boolean authorized(Command command, List<SimpleRole> userRoles) {
+    public Result authorized(Command command, List<SimpleRole> userRoles) {
         final Optional<List<SecurityRole>> result = commandRoleService.readAllowedRoles(command.getClass());
         if (result.isEmpty()) {
             // Assume that we forgot to configure a role and deny access
-            return false;
+            return new Result(false, command, null, userRoles);
         }
         final List<SecurityRole> commandRoles = result.get();
         if (commandRoles.isEmpty()) {
             // No roles means that everyone can access the command
-            return true;
+            return new Result(true, command, List.of(), userRoles);
         }
 
         final List<SimpleRole> allowedRoles = commandRoles.stream()
@@ -66,11 +66,11 @@ public final class SimpleCommandAuthorizer implements CommandAuthorizer {
         for (final SimpleRole userRole : userRoles) {
             for (final SimpleRole allowedRole : allowedRoles) {
                 if (userRole.equals(allowedRole)) {
-                    return true;
+                    return new Result(true, command, allowedRoles, userRoles);
                 }
             }
         }
-        return false;
+        return new Result(false, command, allowedRoles, userRoles);
     }
 
     private Optional<SimpleRole> map2SimpleRole(SecurityRole role, Command command) {

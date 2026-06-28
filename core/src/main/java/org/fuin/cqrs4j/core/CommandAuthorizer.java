@@ -19,8 +19,10 @@ package org.fuin.cqrs4j.core;
 
 import org.fuin.ddd4j.core.SimpleRole;
 import org.fuin.objects4j.common.ThreadSafe;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Decides if a user has the rights to execute a command.
@@ -35,8 +37,44 @@ public interface CommandAuthorizer {
      *
      * @param command   Command to execute.
      * @param userRoles Security roles the user has assigned.
-     * @return {@literal true} if the user is allowed to execute the command.
+     * @return Result of the verification.
      */
-    boolean authorized(Command command, List<SimpleRole> userRoles);
+    Result authorized(Command command, List<SimpleRole> userRoles);
+
+    /**
+     * Result of the authorization check.
+     *
+     * @param success If the user is authorized to execute the command {@literal true}.
+     * @param command Command that should be executed.
+     * @param allowedRoles Roles allowed to execute the command.
+     * @param userRoles Roles the user has.
+     */
+    record Result(boolean success, Command command, @Nullable List<SimpleRole> allowedRoles, List<SimpleRole> userRoles) {
+
+        /**
+         * Returns a message for the result.
+         *
+         * @return Result information.
+         */
+        public String getMessage() {
+            final String result;
+            if (success) {
+                result = "Authorization for command " + command.getClass().getSimpleName() + " successfully verified";
+            } else {
+                result = "Authorization for command " + command.getClass().getSimpleName() + " failed";
+            }
+            final String allowedRolesStr;
+            if (allowedRoles == null) {
+                allowedRolesStr = "NONE";
+            } else {
+                allowedRolesStr = allowedRoles.stream().map(SimpleRole::toString)
+                        .collect(Collectors.joining(", ", "[", "]"));
+            }
+            final String userRolesStr = userRoles.stream().map(SimpleRole::toString)
+                    .collect(Collectors.joining(", ", "[", "]"));
+            return result + " - Allowed roles: " + allowedRolesStr + " / User's roles: " + userRolesStr;
+        }
+
+    }
 
 }

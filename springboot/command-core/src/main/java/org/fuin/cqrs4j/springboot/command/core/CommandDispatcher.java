@@ -76,7 +76,7 @@ public class CommandDispatcher {
                              ApplicationContext context) {
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper==null");
         this.typeRegistry = Objects.requireNonNull(typeRegistry, "typeRegistry==null");
-        this.authorizer = Objects.requireNonNull(authorizer, "commandSecurityFilter==null");
+        this.authorizer = Objects.requireNonNull(authorizer, "authorizer==null");
         this.validator = Objects.requireNonNull(validator, "validator==null");
         this.commandHandlerRegistry = Objects.requireNonNull(commandHandlerRegistry, "commandHandlerRegistry==null");
         this.context = Objects.requireNonNull(context, "context==null");
@@ -113,8 +113,9 @@ public class CommandDispatcher {
         if (obj instanceof Command cmd) {
             final Class<? extends CommandHandler> commandHandlerClass = commandHandlerRegistry.findHandlerClass((Class<? extends Command>) objClass);
             final CommandHandler commandHandler = context.getBean(commandHandlerClass);
-            if (!authorizer.authorized(cmd, userRoles)) {
-                LOG.error("User '{}' is not authorized to execute: {}", executionContext.getUser().getUserId(), objClass.getSimpleName());
+            final CommandAuthorizer.Result authResult  = authorizer.authorized(cmd, userRoles);
+            if (!authResult.success()) {
+                LOG.error("User '{}' not authorized! {}", executionContext.getUser().getUserId(), authResult.getMessage());
                 throw new UnauthorizedException();
             }
             final Object result = commandHandler.handle(executionContext, cmd);
