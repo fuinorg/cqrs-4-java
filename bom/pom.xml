@@ -98,12 +98,6 @@
                 <version>${project.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-pm</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
         </dependencies>
 
     </dependencyManagement>
