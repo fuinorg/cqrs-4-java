@@ -47,6 +47,11 @@
 
         <dependency>
             <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-springboot-pm-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
             <artifactId>cqrs-4-java-jackson</artifactId>
         </dependency>
 

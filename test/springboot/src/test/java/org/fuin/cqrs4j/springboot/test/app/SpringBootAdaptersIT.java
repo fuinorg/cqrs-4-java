@@ -52,9 +52,9 @@ import static org.fuin.cqrs4j.test.helper.TestHelper.createMariaDBContainer;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-class SpringBootAppTest {
+class SpringBootAdaptersIT {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SpringBootAppTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SpringBootAdaptersIT.class);
 
     static GenericContainer<?> es = createEventstoreContainer("24.10");
 
