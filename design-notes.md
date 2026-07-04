@@ -94,6 +94,23 @@ database-checkpoint, poll-based catch-up: simple, atomic, easy to monitor (head 
   JSON-B via `JsonbProvider`, and `QUARKUS_PM_*` tables. Behaviour is covered by library unit tests (Spring adds
   Docker-free slice tests; the live outbox→`/cmd` round-trip is IT territory).
 
+## Keycloak / OIDC authentication
+
+- Both runtimes derive the `CommandExecutionContext` (tenant + user) from the request's OIDC bearer token and
+  populate the writable tenant context from the Keycloak **realm** (the segment after the last `/` of the `iss`
+  claim → `TenantId`). Spring: `KeycloakTokenWrapper` over a `JwtAuthenticationToken`, whose `NimbusJwtDecoder`
+  pushes the realm into the `WritableTenantContext` on each decode (`keycloak-core`/`keycloak-starter`). Quarkus:
+  `JsonWebTokenCommandExecutionContext` over MicroProfile `JsonWebToken`, with a JAX-RS filter
+  (`TenantContextRequestFilter`) that sets the realm on entry and clears it on response (`quarkus/keycloak`).
+- **Multi-tenant.** Realms are discovered lazily by issuer and cached (`KeycloakTenantRepository`); a
+  `TenantAddedEvent` is fired when a new tenant appears so the query side can provision its projection/datasource.
+  Spring selects per-realm signing keys via a `JWTClaimsSetAwareJWSKeySelector`; Quarkus delegates OIDC discovery,
+  JWKS and issuer validation to `quarkus-oidc`, with a `TenantConfigResolver` mapping the token issuer to a
+  per-realm tenant config.
+- Neutral types (`TenantId`, `User`, `SimpleRole`, `WritableTenantContext`/`ThreadLocalTenantContext`,
+  `TenantAddedEvent`) are shared. The reference apps ship a fixed system context, so the keycloak modules are
+  validated by their own unit tests (a live Keycloak round-trip is IT territory).
+
 ## Observability (metrics)
 
 - Metrics are Micrometer `MeterBinder`s (auto-bound in both Spring and Quarkus). Micrometer is an **optional**

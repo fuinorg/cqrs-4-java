@@ -111,6 +111,11 @@
             <artifactId>cqrs-4-java-quarkus-process-manager</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-quarkus-keycloak</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

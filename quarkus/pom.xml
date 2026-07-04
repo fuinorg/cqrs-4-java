@@ -20,6 +20,7 @@
         <module>query</module>
         <module>command</module>
         <module>process-manager</module>
+        <module>keycloak</module>
     </modules>
 
     <dependencyManagement>
