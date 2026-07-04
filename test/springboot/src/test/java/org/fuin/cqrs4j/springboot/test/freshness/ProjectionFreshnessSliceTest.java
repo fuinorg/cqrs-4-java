@@ -1,4 +1,4 @@
-package org.fuin.cqrs4j.springboot.test.app;
+package org.fuin.cqrs4j.springboot.test.freshness;
 
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
@@ -6,6 +6,7 @@ import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.cqrs4j.esc.ProjectionStreamIds;
 import org.fuin.cqrs4j.springboot.query.core.view.ProjectionFreshnessService;
 import org.fuin.cqrs4j.springboot.query.core.view.QryProjectionService;
+import org.fuin.cqrs4j.springboot.test.app.FreshnessResource;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionStreamId;

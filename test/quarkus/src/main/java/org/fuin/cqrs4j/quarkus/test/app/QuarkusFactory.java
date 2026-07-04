@@ -2,6 +2,7 @@ package org.fuin.cqrs4j.quarkus.test.app;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
@@ -10,9 +11,20 @@ import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.json.bind.serializer.JsonbDeserializer;
 import jakarta.json.bind.serializer.JsonbSerializer;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import org.fuin.cqrs4j.core.CommandAuthorizer;
+import org.fuin.cqrs4j.core.CommandExecutionContext;
+import org.fuin.cqrs4j.core.CommandHandler;
+import org.fuin.cqrs4j.core.CommandHandlerRegistry;
+import org.fuin.cqrs4j.core.JandexCommandHandlerRegistry;
+import org.fuin.cqrs4j.core.ProcessedCommandStore;
 import org.fuin.cqrs4j.jsonb.JandexJsonbRegistry;
 import org.fuin.cqrs4j.jsonb.JsonbRegistry;
 import org.fuin.cqrs4j.quarkus.base.EventstoreConfig;
+import org.fuin.cqrs4j.quarkus.cmd.QuarkusCommandDispatcher;
+import org.fuin.cqrs4j.quarkus.test.cmd.FixedCommandExecutionContext;
+import org.fuin.cqrs4j.quarkus.test.cmd.PermitAllCommandAuthorizer;
 import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.core.JandexEntityIdFactory;
 import org.fuin.esc.api.ConverterRegistry;
@@ -107,6 +119,59 @@ public class QuarkusFactory {
 
         return registry;
 
+    }
+
+    @Produces
+    @Singleton
+    public Validator validator() {
+        return Validation.buildDefaultValidatorFactory().getValidator();
+    }
+
+    @Produces
+    @Singleton
+    public CommandHandlerRegistry commandHandlerRegistry() {
+        return new JandexCommandHandlerRegistry();
+    }
+
+    @Produces
+    @Singleton
+    public CommandAuthorizer commandAuthorizer() {
+        return new PermitAllCommandAuthorizer();
+    }
+
+    @Produces
+    @Singleton
+    public CommandExecutionContext commandExecutionContext() {
+        return new FixedCommandExecutionContext();
+    }
+
+    /**
+     * Creates the Quarkus command dispatcher. The {@code serDeserializerRegistry} parameter is injected only to
+     * force the JSON-B adapters (registered as a side effect of building that registry) onto the shared
+     * {@link JsonbProvider} config before the command {@link jakarta.json.bind.Jsonb} is created.
+     *
+     * @param jsonbProvider          Configured JSON-B provider.
+     * @param serDeserializerRegistry Registers the JSON-B adapters onto the provider config (ordering only).
+     * @param typeRegistry           Resolves a command type name to the concrete command class.
+     * @param authorizer             Decides if the current user may execute a command.
+     * @param validator              Validates the deserialized command.
+     * @param commandHandlerRegistry Resolves the handler class for a given command class.
+     * @param commandHandlers        CDI instance used to look up the command handler bean.
+     * @param processedCommandStore  Dedup store for effectively-once receipt.
+     * @return Command dispatcher.
+     */
+    @Produces
+    @Singleton
+    public QuarkusCommandDispatcher commandDispatcher(final JsonbProvider jsonbProvider,
+                                                      final SerDeserializerRegistry serDeserializerRegistry,
+                                                      final SerializedDataTypeRegistry typeRegistry,
+                                                      final CommandAuthorizer authorizer,
+                                                      final Validator validator,
+                                                      final CommandHandlerRegistry commandHandlerRegistry,
+                                                      @Any final Instance<CommandHandler> commandHandlers,
+                                                      final ProcessedCommandStore processedCommandStore) {
+        return new QuarkusCommandDispatcher(jsonbProvider.jsonb(), typeRegistry, authorizer, validator,
+                commandHandlerRegistry, commandHandlers, processedCommandStore);
     }
 
     @Produces

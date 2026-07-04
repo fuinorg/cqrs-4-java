@@ -66,8 +66,12 @@ database-checkpoint, poll-based catch-up: simple, atomic, easy to monitor (head 
 - **Effectively-once, not exactly-once:** the handler's event-store append and the JPA dedup row are separate
   resources (no shared transaction), so a crash *between* them can re-run a command — covered by the aggregate's
   expected-version check. Each row records a `PROCESSED_TS` to support retention/cleanup.
-- **Spring-only** (the command receiver lives in `command-core`). Demonstrated in the reference app
-  (`CommandController` + sample command/handler) with a slice test.
+- **Both runtimes.** Spring `CommandDispatcher` (`command-core`) and Quarkus `QuarkusCommandDispatcher`
+  (`quarkus/.../cmd`) run the same neutral pipeline (type-resolve → validate → authorize → dedup → dispatch),
+  differing only in glue: `ApplicationContext.getBean` ↔ CDI `Instance<CommandHandler>.select`, Jackson
+  `ObjectMapper` ↔ JSON-B `Jsonb`, `QryProcessedCommandStore` (`SPRING_CMD_PROCESSED`) ↔
+  `QuarkusProcessedCommandStore` (`QUARKUS_CMD_PROCESSED`). The receiver controller/resource lives in the app
+  (Spring `CommandController` / Quarkus `CommandResource`), each demonstrated with a sample command/handler.
 
 ## Process-manager timeouts (no zombies)
 
