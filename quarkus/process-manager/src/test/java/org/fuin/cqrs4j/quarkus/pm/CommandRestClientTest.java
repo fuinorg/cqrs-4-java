@@ -46,7 +46,7 @@ public class CommandRestClientTest {
         when(httpClient.<String>send(any(), any())).thenReturn(response);
 
         // TEST & VERIFY
-        assertThat(testee.cmd("MyCommand", "{}")).isEqualTo("result");
+        assertThat(testee.cmd("MyCommand", null, "{}")).isEqualTo("result");
     }
 
     @Test
@@ -58,7 +58,7 @@ public class CommandRestClientTest {
         when(httpClient.<String>send(any(), any())).thenReturn(response);
 
         // TEST & VERIFY
-        assertThatThrownBy(() -> testee.cmd("MyCommand", "{}"))
+        assertThatThrownBy(() -> testee.cmd("MyCommand", null, "{}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("500");
     }

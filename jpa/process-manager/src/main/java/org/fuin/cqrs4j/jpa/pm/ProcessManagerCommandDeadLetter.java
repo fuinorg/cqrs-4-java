@@ -29,6 +29,10 @@ public class ProcessManagerCommandDeadLetter {
     @NotNull
     private String type;
 
+    @Column(name = "CMD_VERSION", length = 100, updatable = false)
+    @Nullable
+    private String version;
+
     @Lob
     @Column(name = "CMD_JSON", nullable = false, updatable = false)
     @NotNull
@@ -63,14 +67,15 @@ public class ProcessManagerCommandDeadLetter {
      *
      * @param id        Unique command identifier (used as primary key).
      * @param type      Type name used as path variable when calling the command endpoint.
+     * @param version   Schema version the command is serialized at ({@literal null} if unversioned).
      * @param json      Serialized command (JSON).
      * @param createdTs Original creation timestamp of the outbox entry (epoch milliseconds).
      * @param failedTs  Timestamp the command was moved to the dead-letter table (epoch milliseconds).
      * @param retries   Number of delivery attempts that were made.
      * @param error     Error message of the last failed delivery attempt.
      */
-    public ProcessManagerCommandDeadLetter(@NotNull final String id, @NotNull final String type, @NotNull final String json,
-                                           @NotNull final Long createdTs, @NotNull final Long failedTs,
+    public ProcessManagerCommandDeadLetter(@NotNull final String id, @NotNull final String type, @Nullable final String version,
+                                           @NotNull final String json, @NotNull final Long createdTs, @NotNull final Long failedTs,
                                            @NotNull final Integer retries, @Nullable final String error) {
         super();
         Contract.requireArgNotNull("id", id);
@@ -81,6 +86,7 @@ public class ProcessManagerCommandDeadLetter {
         Contract.requireArgNotNull("retries", retries);
         this.id = id;
         this.type = type;
+        this.version = version;
         this.json = json;
         this.createdTs = createdTs;
         this.failedTs = failedTs;
@@ -98,8 +104,8 @@ public class ProcessManagerCommandDeadLetter {
     public static ProcessManagerCommandDeadLetter fromOutbox(@NotNull final ProcessManagerCommandOutbox outbox, @NotNull final Long failedTs) {
         Contract.requireArgNotNull("outbox", outbox);
         Contract.requireArgNotNull("failedTs", failedTs);
-        return new ProcessManagerCommandDeadLetter(outbox.getId(), outbox.getType(), outbox.getJson(), outbox.getCreatedTs(),
-                failedTs, outbox.getRetries(), outbox.getLastError());
+        return new ProcessManagerCommandDeadLetter(outbox.getId(), outbox.getType(), outbox.getVersion(), outbox.getJson(),
+                outbox.getCreatedTs(), failedTs, outbox.getRetries(), outbox.getLastError());
     }
 
     /**
@@ -120,6 +126,16 @@ public class ProcessManagerCommandDeadLetter {
     @NotNull
     public String getType() {
         return type;
+    }
+
+    /**
+     * Returns the schema version the command is serialized at.
+     *
+     * @return Command version, or {@literal null} if unversioned.
+     */
+    @Nullable
+    public String getVersion() {
+        return version;
     }
 
     /**

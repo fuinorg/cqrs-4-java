@@ -43,14 +43,14 @@ class QuarkusCommandQueueExecutorTest {
     @Test
     void testSuccessfulDeliveryIsDeleted() {
         // PREPARE
-        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", "{1}")));
-        when(commandRestClient.cmd("A", "{1}")).thenReturn("OK");
+        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", null, "{1}")));
+        when(commandRestClient.cmd("A", null, "{1}")).thenReturn("OK");
 
         // TEST
         testee.drain();
 
         // VERIFY
-        verify(commandRestClient).cmd("A", "{1}");
+        verify(commandRestClient).cmd("A", null, "{1}");
         verify(outboxService).delete("id-1");
         verify(outboxService, never()).recordFailure(anyString(), anyString(), anyInt());
     }
@@ -58,8 +58,8 @@ class QuarkusCommandQueueExecutorTest {
     @Test
     void testFailedDeliveryIsRecorded() {
         // PREPARE
-        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", "{1}")));
-        when(commandRestClient.cmd("A", "{1}")).thenThrow(new RuntimeException("boom"));
+        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", null, "{1}")));
+        when(commandRestClient.cmd("A", null, "{1}")).thenThrow(new RuntimeException("boom"));
 
         // TEST
         testee.drain();
@@ -73,10 +73,10 @@ class QuarkusCommandQueueExecutorTest {
     void testOneFailureDoesNotStopOthers() {
         // PREPARE
         when(outboxService.fetchBatch(100)).thenReturn(List.of(
-                new Entry("id-1", "A", "{1}"),
-                new Entry("id-2", "B", "{2}")));
-        when(commandRestClient.cmd("A", "{1}")).thenThrow(new RuntimeException("boom"));
-        when(commandRestClient.cmd("B", "{2}")).thenReturn("OK");
+                new Entry("id-1", "A", null, "{1}"),
+                new Entry("id-2", "B", null, "{2}")));
+        when(commandRestClient.cmd("A", null, "{1}")).thenThrow(new RuntimeException("boom"));
+        when(commandRestClient.cmd("B", null, "{2}")).thenReturn("OK");
 
         // TEST
         testee.drain();

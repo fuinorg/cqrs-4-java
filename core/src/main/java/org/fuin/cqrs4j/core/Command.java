@@ -19,6 +19,7 @@ package org.fuin.cqrs4j.core;
 
 import org.fuin.ddd4j.core.Event;
 import org.fuin.objects4j.common.ThreadSafe;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Common behavior shared by all commands.
@@ -27,5 +28,17 @@ import org.fuin.objects4j.common.ThreadSafe;
  */
 @ThreadSafe
 public interface Command extends Event {
+
+    /**
+     * Returns the schema version this command is serialized at. Travels alongside the type name so a receiver
+     * can deserialize by {@code (type, version)} and up-cast to its own latest representation (weak-schema across
+     * a rolling deploy), mirroring how events carry their version. The default {@literal null} means
+     * "unversioned" (treated as the base version); versioned commands override this.
+     *
+     * @return Command version, or {@literal null} if unversioned.
+     */
+    default @Nullable String getVersion() {
+        return null;
+    }
 
 }

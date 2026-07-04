@@ -11,9 +11,10 @@ class ProcessManagerCommandDeadLetterTest {
 
     @Test
     void testConstructorAndGetters() {
-        final ProcessManagerCommandDeadLetter dl = new ProcessManagerCommandDeadLetter("id-1", "MyCommand", "{}", 1L, 9L, 5, "boom");
+        final ProcessManagerCommandDeadLetter dl = new ProcessManagerCommandDeadLetter("id-1", "MyCommand", "3", "{}", 1L, 9L, 5, "boom");
         assertThat(dl.getId()).isEqualTo("id-1");
         assertThat(dl.getType()).isEqualTo("MyCommand");
+        assertThat(dl.getVersion()).isEqualTo("3");
         assertThat(dl.getJson()).isEqualTo("{}");
         assertThat(dl.getCreatedTs()).isEqualTo(1L);
         assertThat(dl.getFailedTs()).isEqualTo(9L);
@@ -23,13 +24,14 @@ class ProcessManagerCommandDeadLetterTest {
 
     @Test
     void testFromOutbox() {
-        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox("id-1", "MyCommand", "{}", 1L);
+        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox("id-1", "MyCommand", "2", "{}", 1L);
         outbox.recordFailure("boom");
 
         final ProcessManagerCommandDeadLetter dl = ProcessManagerCommandDeadLetter.fromOutbox(outbox, 9L);
 
         assertThat(dl.getId()).isEqualTo("id-1");
         assertThat(dl.getType()).isEqualTo("MyCommand");
+        assertThat(dl.getVersion()).isEqualTo("2");
         assertThat(dl.getJson()).isEqualTo("{}");
         assertThat(dl.getCreatedTs()).isEqualTo(1L);
         assertThat(dl.getFailedTs()).isEqualTo(9L);

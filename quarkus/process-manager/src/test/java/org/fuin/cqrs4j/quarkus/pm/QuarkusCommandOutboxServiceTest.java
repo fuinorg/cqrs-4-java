@@ -68,7 +68,7 @@ public class QuarkusCommandOutboxServiceTest {
     @Test
     public void testDeleteRemovesWhenPresent() {
         // PREPARE
-        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox(CMD_ID, "A", "{}", 1L);
+        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox(CMD_ID, "A", null, "{}", 1L);
         when(em.find(ProcessManagerCommandOutbox.class, CMD_ID)).thenReturn(outbox);
 
         // TEST
@@ -81,7 +81,7 @@ public class QuarkusCommandOutboxServiceTest {
     @Test
     public void testRecordFailureIncrementsBelowCap() {
         // PREPARE
-        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox(CMD_ID, "A", "{}", 1L);
+        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox(CMD_ID, "A", null, "{}", 1L);
         when(em.find(ProcessManagerCommandOutbox.class, CMD_ID)).thenReturn(outbox);
 
         // TEST
@@ -97,7 +97,7 @@ public class QuarkusCommandOutboxServiceTest {
     @Test
     public void testRecordFailureDeadLettersAtCap() {
         // PREPARE
-        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox(CMD_ID, "A", "{}", 1L);
+        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox(CMD_ID, "A", null, "{}", 1L);
         when(em.find(ProcessManagerCommandOutbox.class, CMD_ID)).thenReturn(outbox);
 
         // TEST: with a cap of 1, the first failure dead-letters

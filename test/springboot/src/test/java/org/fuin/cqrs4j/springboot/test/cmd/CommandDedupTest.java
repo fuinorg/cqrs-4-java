@@ -9,13 +9,21 @@ import org.fuin.cqrs4j.core.CommandAuthorizer;
 import org.fuin.cqrs4j.core.CommandExecutionContext;
 import org.fuin.cqrs4j.core.CommandHandlerRegistry;
 import org.fuin.cqrs4j.core.ProcessedCommandStore;
+import org.fuin.cqrs4j.esc.ConverterRegistration;
 import org.fuin.cqrs4j.springboot.command.core.CommandDispatcher;
 import org.fuin.cqrs4j.springboot.command.core.QryProcessedCommandStore;
 import org.fuin.ddd4j.core.EntityId;
 import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.jackson.Ddd4JacksonModule;
+import org.fuin.esc.api.ConverterRegistry;
+import org.fuin.esc.api.SerDeserializerRegistry;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
 import org.fuin.esc.api.SimpleSerializedDataTypeRegistry;
+import org.fuin.esc.api.SimpleSerializerDeserializerRegistry;
+import org.fuin.esc.api.UpcastingDeserializerRegistry;
+import org.fuin.esc.jackson.EscJacksonUtils;
+import org.fuin.esc.jackson.JacksonSerDeserializer;
+import org.fuin.objects4j.jackson.ImmutableObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
@@ -130,6 +138,26 @@ class CommandDedupTest {
         }
 
         @Bean
+        SerDeserializerRegistry serDeserializerRegistry(final ObjectMapper objectMapper,
+                                                        final SerializedDataTypeRegistry typeRegistry) {
+            final ImmutableObjectMapper.Provider provider =
+                    new ImmutableObjectMapper.Provider(new ImmutableObjectMapper.Builder(objectMapper));
+            final JacksonSerDeserializer jackson = new JacksonSerDeserializer.Builder()
+                    .withObjectMapper(provider)
+                    .withTypeRegistry(typeRegistry)
+                    .withEncoding(java.nio.charset.StandardCharsets.UTF_8)
+                    .build();
+            return new SimpleSerializerDeserializerRegistry.Builder(EscJacksonUtils.MIME_TYPE)
+                    .add(SampleGreetCommand.SER_TYPE, jackson)
+                    .build();
+        }
+
+        @Bean
+        ConverterRegistry converterRegistry() {
+            return ConverterRegistration.toRegistry(java.util.List.of());
+        }
+
+        @Bean
         CommandHandlerRegistry commandHandlerRegistry() {
             return cmdClass -> SampleGreetCommandHandler.class;
         }
@@ -146,14 +174,16 @@ class CommandDedupTest {
 
         @Bean
         CommandDispatcher commandDispatcher(final ObjectMapper objectMapper,
-                                            final SerializedDataTypeRegistry typeRegistry,
+                                            final SerDeserializerRegistry serDeserializerRegistry,
+                                            final ConverterRegistry converterRegistry,
                                             final CommandAuthorizer authorizer,
                                             final Validator validator,
                                             final CommandHandlerRegistry commandHandlerRegistry,
                                             final ApplicationContext context,
                                             final ProcessedCommandStore processedCommandStore) {
-            return new CommandDispatcher(objectMapper, typeRegistry, authorizer, validator,
-                    commandHandlerRegistry, context, processedCommandStore);
+            return new CommandDispatcher(objectMapper,
+                    new UpcastingDeserializerRegistry(serDeserializerRegistry, converterRegistry),
+                    authorizer, validator, commandHandlerRegistry, context, processedCommandStore);
         }
 
         @Bean

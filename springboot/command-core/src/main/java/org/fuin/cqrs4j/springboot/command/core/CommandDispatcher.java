@@ -24,8 +24,10 @@ import jakarta.validation.Validator;
 import org.fuin.cqrs4j.core.*;
 import org.fuin.ddd4j.core.SimpleRole;
 import org.fuin.ddd4j.core.UnauthorizedException;
+import org.fuin.esc.api.Deserializer;
+import org.fuin.esc.api.DeserializerRegistry;
+import org.fuin.esc.api.EnhancedMimeType;
 import org.fuin.esc.api.SerializedDataType;
-import org.fuin.esc.api.SerializedDataTypeRegistry;
 import org.fuin.objects4j.common.ConstraintViolationException;
 import org.fuin.objects4j.common.ThreadSafe;
 import org.jspecify.annotations.Nullable;
@@ -33,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -52,7 +55,7 @@ public class CommandDispatcher {
 
     private final ObjectMapper objectMapper;
 
-    private final SerializedDataTypeRegistry typeRegistry;
+    private final DeserializerRegistry deserializerRegistry;
 
     private final CommandAuthorizer authorizer;
 
@@ -68,20 +71,20 @@ public class CommandDispatcher {
     /**
      * Constructor with all mandatory collaborators (command deduplication disabled).
      *
-     * @param objectMapper           Maps the command JSON to/from objects.
-     * @param typeRegistry           Resolves a command type name to the concrete command class.
+     * @param objectMapper           Serializes the command-handler result to JSON.
+     * @param deserializerRegistry   Deserializes (and up-casts) the command JSON by {@code (type, version)}.
      * @param authorizer             Decides if the current user may execute a command.
      * @param validator              Validates the deserialized command.
      * @param commandHandlerRegistry Resolves the handler class for a given command class.
      * @param context                Spring context used to look up the command handler bean.
      */
     public CommandDispatcher(ObjectMapper objectMapper,
-                             SerializedDataTypeRegistry typeRegistry,
+                             DeserializerRegistry deserializerRegistry,
                              CommandAuthorizer authorizer,
                              Validator validator,
                              CommandHandlerRegistry commandHandlerRegistry,
                              ApplicationContext context) {
-        this(objectMapper, typeRegistry, authorizer, validator, commandHandlerRegistry, context, null);
+        this(objectMapper, deserializerRegistry, authorizer, validator, commandHandlerRegistry, context, null);
     }
 
     /**
@@ -90,8 +93,8 @@ public class CommandDispatcher {
      * successfully handled command's id is recorded afterwards (record-after-success). Passing {@literal null}
      * disables deduplication.
      *
-     * @param objectMapper           Maps the command JSON to/from objects.
-     * @param typeRegistry           Resolves a command type name to the concrete command class.
+     * @param objectMapper           Serializes the command-handler result to JSON.
+     * @param deserializerRegistry   Deserializes (and up-casts) the command JSON by {@code (type, version)}.
      * @param authorizer             Decides if the current user may execute a command.
      * @param validator              Validates the deserialized command.
      * @param commandHandlerRegistry Resolves the handler class for a given command class.
@@ -99,14 +102,14 @@ public class CommandDispatcher {
      * @param processedCommandStore  Optional dedup store; {@literal null} disables deduplication.
      */
     public CommandDispatcher(ObjectMapper objectMapper,
-                             SerializedDataTypeRegistry typeRegistry,
+                             DeserializerRegistry deserializerRegistry,
                              CommandAuthorizer authorizer,
                              Validator validator,
                              CommandHandlerRegistry commandHandlerRegistry,
                              ApplicationContext context,
                              @Nullable ProcessedCommandStore processedCommandStore) {
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper==null");
-        this.typeRegistry = Objects.requireNonNull(typeRegistry, "typeRegistry==null");
+        this.deserializerRegistry = Objects.requireNonNull(deserializerRegistry, "deserializerRegistry==null");
         this.authorizer = Objects.requireNonNull(authorizer, "authorizer==null");
         this.validator = Objects.requireNonNull(validator, "validator==null");
         this.commandHandlerRegistry = Objects.requireNonNull(commandHandlerRegistry, "commandHandlerRegistry==null");
@@ -118,6 +121,9 @@ public class CommandDispatcher {
      * Deserializes a command and forwards it to the appropriate command handler.
      *
      * @param cmdType          Unique type name of the command to deserialize.
+     * @param version          Schema version the command was serialized at ({@literal null} if unversioned); the
+     *                         command is deserialized by {@code (type, version)} and up-cast to the local latest
+     *                         representation, so a rolling deploy can accept older command versions.
      * @param cmdJson          Command JSON.
      * @param executionContext Context of the user executing the command (tenant and user information).
      * @param userRoles        Roles of the current user used by the security filter.
@@ -125,17 +131,10 @@ public class CommandDispatcher {
      * @throws CommandExecutionFailedException Something went wrong during command dispatching or execution.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public String dispatch(String cmdType, String cmdJson, CommandExecutionContext executionContext,
+    public String dispatch(String cmdType, @Nullable String version, String cmdJson, CommandExecutionContext executionContext,
                            List<SimpleRole> userRoles) throws CommandExecutionFailedException {
-        final Class<?> objClass = findType(cmdType);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("User '{}' posted {}: {}", executionContext.getUser().getUserName(),
-                    objClass.getSimpleName(), cmdJson);
-        } else {
-            LOG.debug("User '{}' posted: {}", executionContext.getUser().getUserId(),
-                    objClass.getSimpleName());
-        }
-        final Object obj = parseJson(cmdJson, objClass);
+        final Object obj = deserialize(cmdType, version, cmdJson);
+        LOG.debug("User '{}' posted: {}", executionContext.getUser().getUserId(), obj.getClass().getSimpleName());
         final Set<ConstraintViolation<Object>> violations = validator.validate(obj);
         if (!violations.isEmpty()) {
             final String message = "Object is not valid (" + cmdType + "): " + cmdJson;
@@ -143,7 +142,7 @@ public class CommandDispatcher {
             throw new ConstraintViolationException(message, violations);
         }
         if (obj instanceof Command cmd) {
-            final Class<? extends CommandHandler> commandHandlerClass = commandHandlerRegistry.findHandlerClass((Class<? extends Command>) objClass);
+            final Class<? extends CommandHandler> commandHandlerClass = commandHandlerRegistry.findHandlerClass(cmd.getClass());
             final CommandHandler commandHandler = context.getBean(commandHandlerClass);
             final CommandAuthorizer.Result authResult  = authorizer.authorized(cmd, userRoles);
             if (!authResult.success()) {
@@ -154,7 +153,7 @@ public class CommandDispatcher {
             if (processedCommandStore != null && processedCommandStore.processed(commandId)) {
                 // Effectively-once: a re-delivered command that was already handled is skipped. The original
                 // result is not retained, so a benign empty result is returned to acknowledge the delivery.
-                LOG.debug("Skipping already-processed command '{}' ({})", commandId, objClass.getSimpleName());
+                LOG.debug("Skipping already-processed command '{}' ({})", commandId, cmd.getClass().getSimpleName());
                 return DUPLICATE_RESULT_JSON;
             }
             final Object result = commandHandler.handle(executionContext, cmd);
@@ -172,11 +171,15 @@ public class CommandDispatcher {
         }
     }
 
-    private Object parseJson(String json, Class<?> objClass) {
+    private Object deserialize(String cmdType, @Nullable String version, String cmdJson) {
+        final SerializedDataType type = new SerializedDataType(cmdType);
+        final EnhancedMimeType mimeType = EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8, version);
         try {
-            return objectMapper.readValue(json, objClass);
-        } catch (JsonProcessingException ex) {
-            final String message = "Failed to parse JSON: " + json;
+            final Deserializer deserializer = deserializerRegistry.getDeserializer(type, mimeType);
+            return deserializer.unmarshal(cmdJson.getBytes(StandardCharsets.UTF_8), type, mimeType);
+        } catch (final RuntimeException ex) {
+            final String message = "Failed to deserialize command (" + cmdType
+                    + (version == null ? "" : ", version=" + version) + "): " + cmdJson;
             LOG.error(message, ex);
             throw new ConstraintViolationException(message);
         }
@@ -193,14 +196,6 @@ public class CommandDispatcher {
             return objectMapper.writer().writeValueAsString(obj);
         } catch (final JsonProcessingException ex) {
             throw new IllegalStateException("Failed to write JSON of: " + obj, ex);
-        }
-    }
-
-    private Class<?> findType(String typeName) {
-        try {
-            return typeRegistry.findClass(new SerializedDataType(typeName));
-        } catch (RuntimeException ex) {
-            throw new IllegalArgumentException("Could not find class for type: " + typeName, ex);
         }
     }
 

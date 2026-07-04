@@ -40,14 +40,14 @@ class CommandQueueExecutorTest {
     void testSuccessfulDeliveryIsDeleted() {
         // PREPARE
         final CommandQueueExecutor testee = newExecutor(5);
-        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", "{1}")));
-        when(commandRestClient.cmd("A", "{1}")).thenReturn("OK");
+        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", null, "{1}")));
+        when(commandRestClient.cmd("A", "application/json", "{1}")).thenReturn("OK");
 
         // TEST
         testee.drain();
 
         // VERIFY
-        verify(commandRestClient).cmd("A", "{1}");
+        verify(commandRestClient).cmd("A", "application/json", "{1}");
         verify(outboxService).delete("id-1");
         verify(outboxService, never()).recordFailure(anyString(), anyString(), anyInt());
     }
@@ -56,8 +56,8 @@ class CommandQueueExecutorTest {
     void testFailedDeliveryIsRecorded() {
         // PREPARE
         final CommandQueueExecutor testee = newExecutor(5);
-        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", "{1}")));
-        when(commandRestClient.cmd("A", "{1}")).thenThrow(new RuntimeException("boom"));
+        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", null, "{1}")));
+        when(commandRestClient.cmd("A", "application/json", "{1}")).thenThrow(new RuntimeException("boom"));
 
         // TEST
         testee.drain();
@@ -72,10 +72,10 @@ class CommandQueueExecutorTest {
         // PREPARE
         final CommandQueueExecutor testee = newExecutor(5);
         when(outboxService.fetchBatch(100)).thenReturn(List.of(
-                new Entry("id-1", "A", "{1}"),
-                new Entry("id-2", "B", "{2}")));
-        when(commandRestClient.cmd("A", "{1}")).thenThrow(new RuntimeException("boom"));
-        when(commandRestClient.cmd("B", "{2}")).thenReturn("OK");
+                new Entry("id-1", "A", null, "{1}"),
+                new Entry("id-2", "B", null, "{2}")));
+        when(commandRestClient.cmd("A", "application/json", "{1}")).thenThrow(new RuntimeException("boom"));
+        when(commandRestClient.cmd("B", "application/json", "{2}")).thenReturn("OK");
 
         // TEST
         testee.drain();

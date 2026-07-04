@@ -94,7 +94,9 @@ public class CommandQueueExecutor {
 
     private void deliver(final Entry entry) {
         try {
-            commandRestClient.cmd(entry.type(), entry.json());
+            final String contentType = entry.version() == null
+                    ? "application/json" : "application/json;version=" + entry.version();
+            commandRestClient.cmd(entry.type(), contentType, entry.json());
             requiresNewTransaction.executeWithoutResult(status -> outboxService.delete(entry.id()));
             LOG.debug("Delivered command '{}' ({})", entry.id(), entry.type());
         } catch (final RuntimeException ex) {

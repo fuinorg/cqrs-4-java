@@ -29,6 +29,10 @@ public class ProcessManagerCommandOutbox {
     @NotNull
     private String type;
 
+    @Column(name = "CMD_VERSION", length = 100, updatable = false)
+    @Nullable
+    private String version;
+
     @Lob
     @Column(name = "CMD_JSON", nullable = false, updatable = false)
     @NotNull
@@ -58,11 +62,12 @@ public class ProcessManagerCommandOutbox {
      *
      * @param id        Unique command identifier (used as primary key).
      * @param type      Type name used as path variable when calling the command endpoint.
+     * @param version   Schema version the command is serialized at ({@literal null} if unversioned).
      * @param json      Serialized command (JSON).
      * @param createdTs Creation timestamp (epoch milliseconds) used to drain the queue in order.
      */
-    public ProcessManagerCommandOutbox(@NotNull final String id, @NotNull final String type, @NotNull final String json,
-                                       @NotNull final Long createdTs) {
+    public ProcessManagerCommandOutbox(@NotNull final String id, @NotNull final String type, @Nullable final String version,
+                                       @NotNull final String json, @NotNull final Long createdTs) {
         super();
         Contract.requireArgNotNull("id", id);
         Contract.requireArgNotNull("type", type);
@@ -70,6 +75,7 @@ public class ProcessManagerCommandOutbox {
         Contract.requireArgNotNull("createdTs", createdTs);
         this.id = id;
         this.type = type;
+        this.version = version;
         this.json = json;
         this.createdTs = createdTs;
         this.retries = 0;
@@ -93,6 +99,16 @@ public class ProcessManagerCommandOutbox {
     @NotNull
     public String getType() {
         return type;
+    }
+
+    /**
+     * Returns the schema version the command is serialized at.
+     *
+     * @return Command version, or {@literal null} if unversioned.
+     */
+    @Nullable
+    public String getVersion() {
+        return version;
     }
 
     /**

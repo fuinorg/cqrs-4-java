@@ -67,7 +67,7 @@ public class QuarkusCommandQueueExecutor {
 
     private void deliver(final Entry entry) {
         try {
-            commandRestClient.cmd(entry.type(), entry.json());
+            commandRestClient.cmd(entry.type(), entry.version(), entry.json());
             outboxService.delete(entry.id());
             LOG.debug("Delivered command '{}' ({})", entry.id(), entry.type());
         } catch (final RuntimeException ex) {

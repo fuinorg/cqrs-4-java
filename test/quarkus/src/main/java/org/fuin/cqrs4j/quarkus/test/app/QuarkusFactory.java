@@ -151,8 +151,9 @@ public class QuarkusFactory {
      * {@link JsonbProvider} config before the command {@link jakarta.json.bind.Jsonb} is created.
      *
      * @param jsonbProvider          Configured JSON-B provider.
-     * @param serDeserializerRegistry Registers the JSON-B adapters onto the provider config (ordering only).
-     * @param typeRegistry           Resolves a command type name to the concrete command class.
+     * @param serDeserializerRegistry Command deserializer registry (also registers the JSON-B adapters onto the
+     *                               provider config as a side effect).
+     * @param converterRegistry      Up-caster registry decorating command deserialization.
      * @param authorizer             Decides if the current user may execute a command.
      * @param validator              Validates the deserialized command.
      * @param commandHandlerRegistry Resolves the handler class for a given command class.
@@ -164,14 +165,15 @@ public class QuarkusFactory {
     @Singleton
     public QuarkusCommandDispatcher commandDispatcher(final JsonbProvider jsonbProvider,
                                                       final SerDeserializerRegistry serDeserializerRegistry,
-                                                      final SerializedDataTypeRegistry typeRegistry,
+                                                      final ConverterRegistry converterRegistry,
                                                       final CommandAuthorizer authorizer,
                                                       final Validator validator,
                                                       final CommandHandlerRegistry commandHandlerRegistry,
                                                       @Any final Instance<CommandHandler> commandHandlers,
                                                       final ProcessedCommandStore processedCommandStore) {
-        return new QuarkusCommandDispatcher(jsonbProvider.jsonb(), typeRegistry, authorizer, validator,
-                commandHandlerRegistry, commandHandlers, processedCommandStore);
+        return new QuarkusCommandDispatcher(jsonbProvider.jsonb(),
+                new UpcastingDeserializerRegistry(serDeserializerRegistry, converterRegistry),
+                authorizer, validator, commandHandlerRegistry, commandHandlers, processedCommandStore);
     }
 
     @Produces

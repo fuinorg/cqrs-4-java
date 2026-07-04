@@ -78,19 +78,19 @@ class CommandOutboxServiceTest {
         when(em.createQuery(anyString(), eq(ProcessManagerCommandOutbox.class))).thenReturn(query);
         when(query.setMaxResults(50)).thenReturn(query);
         when(query.getResultList()).thenReturn(List.of(
-                new ProcessManagerCommandOutbox("id-1", "A", "{1}", 1L),
-                new ProcessManagerCommandOutbox("id-2", "B", "{2}", 2L)));
+                new ProcessManagerCommandOutbox("id-1", "A", null, "{1}", 1L),
+                new ProcessManagerCommandOutbox("id-2", "B", null, "{2}", 2L)));
 
         // TEST
         final List<Entry> result = testee.fetchBatch(50);
 
         // VERIFY
-        assertThat(result).containsExactly(new Entry("id-1", "A", "{1}"), new Entry("id-2", "B", "{2}"));
+        assertThat(result).containsExactly(new Entry("id-1", "A", null, "{1}"), new Entry("id-2", "B", null, "{2}"));
     }
 
     @Test
     void testDeleteExisting() {
-        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox("id-1", "A", "{}", 1L);
+        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox("id-1", "A", null, "{}", 1L);
         when(em.find(ProcessManagerCommandOutbox.class, "id-1")).thenReturn(outbox);
 
         testee.delete("id-1");
@@ -110,7 +110,7 @@ class CommandOutboxServiceTest {
     @Test
     void testRecordFailureRetry() {
         // PREPARE - retries 0, below max (3)
-        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox("id-1", "A", "{}", 1L);
+        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox("id-1", "A", null, "{}", 1L);
         when(em.find(ProcessManagerCommandOutbox.class, "id-1")).thenReturn(outbox);
 
         // TEST
@@ -126,7 +126,7 @@ class CommandOutboxServiceTest {
     @Test
     void testRecordFailureDeadLetter() {
         // PREPARE - already failed twice, max is 3 -> next failure dead-letters
-        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox("id-1", "A", "{}", 1L);
+        final ProcessManagerCommandOutbox outbox = new ProcessManagerCommandOutbox("id-1", "A", null, "{}", 1L);
         outbox.recordFailure("e1");
         outbox.recordFailure("e2");
         when(em.find(ProcessManagerCommandOutbox.class, "id-1")).thenReturn(outbox);

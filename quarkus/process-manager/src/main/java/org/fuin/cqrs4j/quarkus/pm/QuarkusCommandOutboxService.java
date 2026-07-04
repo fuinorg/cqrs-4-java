@@ -44,8 +44,9 @@ public class QuarkusCommandOutboxService implements CommandOutbox {
         Contract.requireArgNotNull("command", command);
         final String id = command.getEventId().asString();
         final String type = command.getEventType().asBaseType();
+        final String version = command.getVersion();
         final String json = jsonbProvider.jsonb().toJson(command);
-        em.persist(new ProcessManagerCommandOutbox(id, type, json, System.currentTimeMillis()));
+        em.persist(new ProcessManagerCommandOutbox(id, type, version, json, System.currentTimeMillis()));
     }
 
     /**
@@ -61,7 +62,7 @@ public class QuarkusCommandOutboxService implements CommandOutbox {
                 .setMaxResults(max)
                 .getResultList()
                 .stream()
-                .map(o -> new Entry(o.getId(), o.getType(), o.getJson()))
+                .map(o -> new Entry(o.getId(), o.getType(), o.getVersion(), o.getJson()))
                 .toList();
     }
 
@@ -127,11 +128,12 @@ public class QuarkusCommandOutboxService implements CommandOutbox {
      * Lightweight representation of a queued command, detached from the persistence context, so that the HTTP
      * delivery can happen outside the database transaction.
      *
-     * @param id   Unique command identifier.
-     * @param type Command type name (path variable for the command endpoint).
-     * @param json Serialized command (JSON).
+     * @param id      Unique command identifier.
+     * @param type    Command type name (path variable for the command endpoint).
+     * @param version Schema version the command is serialized at ({@literal null} if unversioned).
+     * @param json    Serialized command (JSON).
      */
-    public record Entry(String id, String type, String json) {
+    public record Entry(String id, String type, @Nullable String version, String json) {
     }
 
 }

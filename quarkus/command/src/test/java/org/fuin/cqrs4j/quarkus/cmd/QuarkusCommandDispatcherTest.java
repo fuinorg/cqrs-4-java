@@ -12,7 +12,8 @@ import org.fuin.cqrs4j.core.ProcessedCommandStore;
 import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.User;
-import org.fuin.esc.api.SerializedDataTypeRegistry;
+import org.fuin.esc.api.Deserializer;
+import org.fuin.esc.api.DeserializerRegistry;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,7 +37,7 @@ public class QuarkusCommandDispatcherTest {
 
     private Jsonb jsonb;
 
-    private SerializedDataTypeRegistry typeRegistry;
+    private DeserializerRegistry deserializerRegistry;
 
     private CommandAuthorizer authorizer;
 
@@ -58,7 +58,7 @@ public class QuarkusCommandDispatcherTest {
     @BeforeEach
     public void setup() throws Exception {
         jsonb = mock(Jsonb.class);
-        typeRegistry = mock(SerializedDataTypeRegistry.class);
+        deserializerRegistry = mock(DeserializerRegistry.class);
         authorizer = mock(CommandAuthorizer.class);
         validator = mock(Validator.class);
         commandHandlerRegistry = mock(CommandHandlerRegistry.class);
@@ -69,8 +69,9 @@ public class QuarkusCommandDispatcherTest {
         cmd = new MyCommand();
 
         when(executionContext.getUser()).thenReturn(mock(User.class));
-        when(typeRegistry.findClass(any())).thenReturn((Class) MyCommand.class);
-        when(jsonb.fromJson(any(String.class), eq(MyCommand.class))).thenReturn(cmd);
+        final Deserializer deserializer = mock(Deserializer.class);
+        when(deserializerRegistry.getDeserializer(any(), any())).thenReturn(deserializer);
+        when(deserializer.unmarshal(any(), any(), any())).thenReturn(cmd);
         when(validator.validate(any())).thenReturn(Collections.emptySet());
         when(commandHandlerRegistry.findHandlerClass(any())).thenReturn((Class) CommandHandler.class);
         final Instance<CommandHandler> selected = mock(Instance.class);
@@ -87,12 +88,12 @@ public class QuarkusCommandDispatcherTest {
 
         // PREPARE: dedup store reports "new" on the first delivery, "already processed" on the re-delivery
         when(store.processed(cmd.getEventId().asString())).thenReturn(false, true);
-        final QuarkusCommandDispatcher testee = new QuarkusCommandDispatcher(jsonb, typeRegistry, authorizer,
+        final QuarkusCommandDispatcher testee = new QuarkusCommandDispatcher(jsonb, deserializerRegistry, authorizer,
                 validator, commandHandlerRegistry, commandHandlers, store);
 
         // TEST: same command delivered twice
-        testee.dispatch("MyCommand", "{}", executionContext, List.of());
-        testee.dispatch("MyCommand", "{}", executionContext, List.of());
+        testee.dispatch("MyCommand", null, "{}", executionContext, List.of());
+        testee.dispatch("MyCommand", null, "{}", executionContext, List.of());
 
         // VERIFY: the handler ran exactly once and the id was recorded exactly once
         verify(commandHandler, times(1)).handle(any(), any());
@@ -104,12 +105,12 @@ public class QuarkusCommandDispatcherTest {
     public void testWithoutStoreHandlesEveryTime() throws Exception {
 
         // PREPARE: no dedup store
-        final QuarkusCommandDispatcher testee = new QuarkusCommandDispatcher(jsonb, typeRegistry, authorizer,
+        final QuarkusCommandDispatcher testee = new QuarkusCommandDispatcher(jsonb, deserializerRegistry, authorizer,
                 validator, commandHandlerRegistry, commandHandlers);
 
         // TEST
-        testee.dispatch("MyCommand", "{}", executionContext, List.of());
-        testee.dispatch("MyCommand", "{}", executionContext, List.of());
+        testee.dispatch("MyCommand", null, "{}", executionContext, List.of());
+        testee.dispatch("MyCommand", null, "{}", executionContext, List.of());
 
         // VERIFY: without a store every delivery is handled
         verify(commandHandler, times(2)).handle(any(), any());
