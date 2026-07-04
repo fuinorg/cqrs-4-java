@@ -21,10 +21,12 @@ import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.SerDeserializerRegistry;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
 import org.fuin.esc.api.SimpleSerializerDeserializerRegistry;
+import org.fuin.esc.api.SubscribableEventStoreAsync;
 import org.fuin.esc.api.TenantContext;
 import org.fuin.esc.api.UpcastingDeserializerRegistry;
 import org.fuin.esc.client.JandexSerializedDataTypeRegistry;
 import org.fuin.esc.esgrpc.ESGrpcEventStore;
+import org.fuin.esc.esgrpc.ESGrpcEventStoreAsync;
 import org.fuin.esc.esgrpc.GrpcProjectionAdminEventStore;
 import org.fuin.esc.esgrpc.IESGrpcEventStore;
 import org.fuin.esc.jsonb.BaseTypeFactory;
@@ -140,6 +142,30 @@ public class QuarkusFactory {
         eventstore.open();
         return eventstore;
 
+    }
+
+    /**
+     * Creates an asynchronous, subscribable GRPC event store used by the push-based projection mode. It reuses
+     * the shared {@link KurrentDBWrapper} client (owned externally, so this store's {@code open()}/{@code close()}
+     * are no-ops).
+     *
+     * @param kurrentDBWrapper  Shared client connection.
+     * @param registry          Serialization registry.
+     * @param converterRegistry Event up-caster registry decorating deserialization.
+     * @return Subscribable async event store.
+     */
+    @Produces
+    @Singleton
+    public SubscribableEventStoreAsync createEventStoreAsync(final KurrentDBWrapper kurrentDBWrapper,
+                                                             final SerDeserializerRegistry registry,
+                                                             final ConverterRegistry converterRegistry) {
+        return new ESGrpcEventStoreAsync.Builder()
+                .eventStore(kurrentDBWrapper.getClient())
+                .serRegistry(registry)
+                .desRegistry(new UpcastingDeserializerRegistry(registry, converterRegistry))
+                .baseTypeFactory(new BaseTypeFactory())
+                .targetContentType(EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8))
+                .build();
     }
 
     @Produces

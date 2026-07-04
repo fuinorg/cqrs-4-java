@@ -15,6 +15,7 @@ import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.ConverterRegistry;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
+import org.fuin.esc.api.SubscribableEventStoreAsync;
 import org.fuin.objects4j.common.ThreadSafe;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -82,14 +83,18 @@ public class Cqrs4jConfig {
                                          final ProjectionLeaseService leaseService,
                                          @Value("${org.fuin.cqrs4j.projection.ha.enabled:false}") boolean haEnabled,
                                          @Value("${org.fuin.cqrs4j.projection.ha.owner:}") String ownerProperty,
-                                         @Value("${org.fuin.cqrs4j.projection.ha.ttl:60000}") long leaseTtlMillis) {
+                                         @Value("${org.fuin.cqrs4j.projection.ha.ttl:60000}") long leaseTtlMillis,
+                                         final Optional<SubscribableEventStoreAsync> subscribableEventStore,
+                                         @Value("${org.fuin.cqrs4j.projection.mode:poll}") String projectionMode) {
 
         final String owner = ownerProperty.isBlank() ? UUID.randomUUID().toString() : ownerProperty;
+        final boolean pushEnabled = "push".equalsIgnoreCase(projectionMode);
         return new SpringViewManager(postProcessor, viewRegistry, eventstore, admin,
                 projectionService, transactionManager, beanFactory,
                 multitenancy, tenantContext.orElse(null),
                 tenantIdsSupplier.orElse(null),
-                leaseService, haEnabled, owner, leaseTtlMillis);
+                leaseService, haEnabled, owner, leaseTtlMillis,
+                subscribableEventStore.orElse(null), pushEnabled);
 
     }
 

@@ -8,12 +8,14 @@ import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.esc.ProjectionLeaseService;
 import org.fuin.cqrs4j.esc.ProjectionService;
+import org.fuin.cqrs4j.esc.ViewSubscriptions;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
+import org.fuin.esc.api.SubscribableEventStoreAsync;
 import org.fuin.esc.api.ProjectionId;
 import org.fuin.esc.api.ProjectionStreamId;
 import org.fuin.esc.api.StreamAlreadyExistsException;
@@ -40,6 +42,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -81,7 +85,22 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private final long leaseTtlMillis;
 
+    private final boolean multitenancyEnabled;
+
+    @Nullable
+    private final SubscribableEventStoreAsync subscribableEventStore;
+
+    private final boolean pushEnabled;
+
+    @Nullable
+    private ScheduledExecutorService resubscribeScheduler;
+
+    @Nullable
+    private ViewSubscriptions viewSubscriptions;
+
     private volatile List<ViewJob> viewJobs = Collections.emptyList();
+
+    private static final long RESUBSCRIBE_BACKOFF_MILLIS = 5000L;
 
     /**
      * Constructor with mandatory data.
@@ -100,6 +119,9 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
      * @param haEnabled           Determines if the distributed lease (multi-instance safe projections) is enabled.
      * @param owner               Identifier of this application instance (lease owner).
      * @param leaseTtlMillis      Time-to-live of an acquired lease in milliseconds.
+     * @param subscribableEventStore Subscribable event store used for the low-latency push mode (may be
+     *                            {@literal null} if the application does not provide one).
+     * @param pushEnabled         Determines if the low-latency push mode is requested.
      */
     public SpringViewManager(
             final ScheduledAnnotationBeanPostProcessor postProcessor,
@@ -115,7 +137,9 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             final ProjectionLeaseService leaseService,
             final boolean haEnabled,
             final String owner,
-            final long leaseTtlMillis) {
+            final long leaseTtlMillis,
+            @Nullable final SubscribableEventStoreAsync subscribableEventStore,
+            final boolean pushEnabled) {
         this.postProcessor = Objects.requireNonNull(postProcessor, "postProcessor==null");
         this.viewRegistry = Objects.requireNonNull(viewRegistry, "viewClassRegistry==null");
         this.eventstore = Objects.requireNonNull(eventstore, "eventstore==null");
@@ -132,6 +156,9 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         this.haEnabled = haEnabled;
         this.owner = Objects.requireNonNull(owner, "owner==null");
         this.leaseTtlMillis = leaseTtlMillis;
+        this.multitenancyEnabled = multitenancyEnabled;
+        this.subscribableEventStore = subscribableEventStore;
+        this.pushEnabled = pushEnabled;
     }
 
     @Override
@@ -158,6 +185,39 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
                 taskRegistrar.addCronTask(view.getCronTask());
             }
         }
+        startPushSubscriptions();
+    }
+
+    /**
+     * When the low-latency push mode is enabled (and available), opens a "wake-up" subscription per view: a new
+     * event triggers the same guarded catch-up pass the cron would, only sooner. The cron remains as a safety
+     * net. Push is only used single-tenant; with multitenancy enabled it falls back to the cron poll.
+     */
+    private void startPushSubscriptions() {
+        final SubscribableEventStoreAsync store = subscribableEventStore;
+        if (!pushEnabled) {
+            return;
+        }
+        if (store == null) {
+            LOG.warn("Projection push mode requested but no subscribable event store is available; using poll only.");
+            return;
+        }
+        if (multitenancyEnabled) {
+            LOG.warn("Projection push mode is not supported with multitenancy; using poll only.");
+            return;
+        }
+        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            final Thread thread = new Thread(runnable, "view-resubscribe");
+            thread.setDaemon(true);
+            return thread;
+        });
+        this.resubscribeScheduler = scheduler;
+        final ViewSubscriptions subscriptions = new ViewSubscriptions(store, scheduler, RESUBSCRIBE_BACKOFF_MILLIS);
+        this.viewSubscriptions = subscriptions;
+        for (final ViewJob view : viewJobs) {
+            subscriptions.subscribe(view.getProjectionStreamId(), () -> tryLocked(view, () -> readTenantsStreamEvents(view)));
+        }
+        LOG.info("Projection push mode enabled ({} subscription(s))", viewJobs.size());
     }
 
     private void shutdownViews() {
@@ -169,6 +229,14 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
                     .filter(scheduled -> scheduled.getTask() == viewJob.getCronTask())
                     .findFirst()
                     .ifPresent(ScheduledTask::cancel);
+        }
+        final ViewSubscriptions subscriptions = this.viewSubscriptions;
+        if (subscriptions != null) {
+            subscriptions.close();
+        }
+        final ScheduledExecutorService scheduler = this.resubscribeScheduler;
+        if (scheduler != null) {
+            scheduler.shutdownNow();
         }
     }
 

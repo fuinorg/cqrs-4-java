@@ -19,10 +19,12 @@ import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.SerDeserializerRegistry;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
 import org.fuin.esc.api.SimpleSerializerDeserializerRegistry;
+import org.fuin.esc.api.SubscribableEventStoreAsync;
 import org.fuin.esc.api.TenantContext;
 import org.fuin.esc.api.UpcastingDeserializerRegistry;
 import org.fuin.esc.client.JandexSerializedDataTypeRegistry;
 import org.fuin.esc.esgrpc.ESGrpcEventStore;
+import org.fuin.esc.esgrpc.ESGrpcEventStoreAsync;
 import org.fuin.esc.esgrpc.GrpcProjectionAdminEventStore;
 import org.fuin.esc.esgrpc.IESGrpcEventStore;
 import org.fuin.esc.jackson.BaseTypeFactory;
@@ -148,6 +150,29 @@ public class SpringBootConfig {
                 .targetContentType(EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8))
                 .build()
                 .open();
+    }
+
+    /**
+     * Creates an asynchronous, subscribable GRPC event store used by the push-based projection mode. It reuses
+     * the same {@link KurrentDBClient} as the synchronous store (the client is owned externally, so this store's
+     * {@code open()}/{@code close()} are no-ops).
+     *
+     * @param registry          Serializer/deserializer registry.
+     * @param converterRegistry Up-caster registry decorating deserialization.
+     * @param client            Shared KurrentDB client.
+     * @return New subscribable async event store instance.
+     */
+    @Bean
+    public SubscribableEventStoreAsync getESGrpcEventStoreAsync(final SerDeserializerRegistry registry,
+                                                               final ConverterRegistry converterRegistry,
+                                                               final KurrentDBClient client) {
+        return new ESGrpcEventStoreAsync.Builder()
+                .eventStore(client)
+                .serRegistry(registry)
+                .desRegistry(new UpcastingDeserializerRegistry(registry, converterRegistry))
+                .baseTypeFactory(new BaseTypeFactory())
+                .targetContentType(EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8))
+                .build();
     }
 
     /**

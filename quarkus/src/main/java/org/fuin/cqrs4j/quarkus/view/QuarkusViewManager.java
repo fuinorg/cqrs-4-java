@@ -18,6 +18,7 @@ import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.esc.ProjectionLeaseService;
 import org.fuin.cqrs4j.esc.ProjectionService;
+import org.fuin.cqrs4j.esc.ViewSubscriptions;
 import org.fuin.cqrs4j.quarkus.base.QuarkusUtils;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
@@ -31,6 +32,7 @@ import org.fuin.esc.api.ProjectionId;
 import org.fuin.esc.api.ProjectionStreamId;
 import org.fuin.esc.api.StreamAlreadyExistsException;
 import org.fuin.esc.api.StreamEventsSlice;
+import org.fuin.esc.api.SubscribableEventStoreAsync;
 import org.fuin.esc.api.TypeName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 
 import static org.fuin.utils4j.Utils4J.tryLocked;
@@ -88,15 +92,29 @@ public class QuarkusViewManager {
     @ConfigProperty(name = "org.fuin.cqrs4j.projection.ha.owner", defaultValue = "")
     String ownerProperty = "";
 
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.mode", defaultValue = "poll")
+    String projectionMode = "poll";
+
     @Inject
     Instance<WritableTenantContext> tenantContextInstance;
 
     @Inject
     Instance<TenantIdsSupplier> tenantIdsSupplierInstance;
 
+    @Inject
+    Instance<SubscribableEventStoreAsync> subscribableEventStoreInstance;
+
+    private static final long RESUBSCRIBE_BACKOFF_MILLIS = 5000L;
+
     private final String instanceId = UUID.randomUUID().toString();
 
     private volatile List<ViewExt> views = Collections.emptyList();
+
+    @Nullable
+    private ScheduledExecutorService resubscribeScheduler;
+
+    @Nullable
+    private ViewSubscriptions viewSubscriptions;
 
     private String owner() {
         return ownerProperty.isBlank() ? instanceId : ownerProperty;
@@ -119,6 +137,40 @@ public class QuarkusViewManager {
                         .schedule();
             }
         }
+        startPushSubscriptions();
+    }
+
+    /**
+     * Opens "wake-up" subscriptions when push mode is effective, so a new event triggers the catch-up pass
+     * immediately instead of waiting for the next cron tick. The cron poll stays active as a safety net. Push is
+     * effective only when the mode is {@code push}, a {@link SubscribableEventStoreAsync} is available, and
+     * multitenancy is off; otherwise a one-time warning is logged and the manager stays on the poll.
+     */
+    private void startPushSubscriptions() {
+        if (!"push".equalsIgnoreCase(projectionMode)) {
+            return;
+        }
+        if (subscribableEventStoreInstance.isUnsatisfied()) {
+            LOG.warn("Projection push mode requested but no subscribable event store is available; using poll only.");
+            return;
+        }
+        if (multitenancy) {
+            LOG.warn("Projection push mode is not supported with multitenancy; using poll only.");
+            return;
+        }
+        final SubscribableEventStoreAsync store = subscribableEventStoreInstance.get();
+        final ScheduledExecutorService schedulerService = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            final Thread thread = new Thread(runnable, "view-resubscribe");
+            thread.setDaemon(true);
+            return thread;
+        });
+        this.resubscribeScheduler = schedulerService;
+        final ViewSubscriptions subscriptions = new ViewSubscriptions(store, schedulerService, RESUBSCRIBE_BACKOFF_MILLIS);
+        this.viewSubscriptions = subscriptions;
+        for (final ViewExt view : views) {
+            subscriptions.subscribe(view.getProjectionStreamId(), () -> updateView(view));
+        }
+        LOG.info("Projection push mode enabled ({} subscription(s))", views.size());
     }
 
     @Shutdown
@@ -127,6 +179,14 @@ public class QuarkusViewManager {
         for (final ViewExt view : views) {
             LOG.info("Shutdown: {}", view.getEntry().viewClass().getSimpleName());
             scheduler.unscheduleJob(view.getEntry().beanName());
+        }
+        final ViewSubscriptions subscriptions = this.viewSubscriptions;
+        if (subscriptions != null) {
+            subscriptions.close();
+        }
+        final ScheduledExecutorService schedulerService = this.resubscribeScheduler;
+        if (schedulerService != null) {
+            schedulerService.shutdownNow();
         }
     }
 

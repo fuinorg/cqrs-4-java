@@ -8,10 +8,11 @@
   - ([View](core/src/main/java/org/fuin/cqrs4j/core/View.java))s now need to implement a `getBeanName()` method to make it more explicit what it is used for.
   - Added tenant handling to views
 - Added new [springboot-starter](springboot-starter) module for better autoconfiguration
-- Added new BOM
+- Use fuin.org BOM to align dependencies
 - Added [JSpecify](https://jspecify.dev/) and [NullAway](https://github.com/uber/nullaway)
-- Added projection lag metrics and outbox metrics using Micrometer
-- Added distributed HA projection lease with lease integration test (Testcontainers and MariaDB)
+- Projection lag metrics and outbox metrics using Micrometer
+- Distributed HA projection lease with lease integration test (Testcontainers and MariaDB)
+- View subscriptions as alternative to polling by using event storecommon subscriptions
 
 ## 0.6.0
 - Added new Jackson module
