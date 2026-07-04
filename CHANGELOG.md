@@ -11,7 +11,7 @@
 - Added new BOM
 - Added [JSpecify](https://jspecify.dev/) and [NullAway](https://github.com/uber/nullaway)
 - Added projection lag metrics and outbox metrics using Micrometer
-- Added distributed HA projection lease
+- Added distributed HA projection lease with lease integration test (Testcontainers and MariaDB)
 
 ## 0.6.0
 - Added new Jackson module

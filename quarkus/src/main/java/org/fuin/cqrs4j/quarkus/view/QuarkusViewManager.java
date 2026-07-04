@@ -23,6 +23,7 @@ import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.objects4j.common.ThreadSafe;
+import org.jspecify.annotations.Nullable;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
@@ -174,21 +175,41 @@ public class QuarkusViewManager {
     }
 
     private void readStreamEvents(@NotNull final ViewExt viewJob) {
+        final ProjectionStreamId projectionStreamId = viewJob.getProjectionStreamId();
+        final Long nextEventNumber = prepareRead(viewJob, projectionStreamId);
+        if (nextEventNumber == null) {
+            // Event store unreachable (already logged) - nothing to read this run.
+            return;
+        }
         try {
-
-            // Create an event store projection if it does not exist.
-            createProjection(viewJob);
-
-            // Read and dispatch events
-            final ProjectionStreamId projectionStreamId = viewJob.getProjectionStreamId();
-            final Long nextEventNumber = projectionService.readProjectionPosition(projectionStreamId);
+            // Read and dispatch events. A failure here is a real processing error (e.g. a view handler throwing).
             eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
                     currentSlice -> handleChunk(viewJob, currentSlice));
-
         } catch (final RuntimeException ex) {
             LOG.error("Error processing events for viewJob '" + viewJob.entry.beanName() + "'", ex);
         }
+    }
 
+    /**
+     * Reaches the event store to prepare a read (ensures the projection exists and reads the checkpoint).
+     * Returns the next event number, or {@literal null} if the event store could not be reached. A failure to
+     * reach the store is typically a transient connection drop (reconnect/shutdown) that self-heals on the next
+     * scheduled run, so it is logged at debug level rather than as an error.
+     *
+     * @param viewJob            View job to prepare.
+     * @param projectionStreamId Stream to read.
+     * @return Next event number, or {@literal null} if nothing should be read this run.
+     */
+    @Nullable
+    private Long prepareRead(final ViewExt viewJob, final ProjectionStreamId projectionStreamId) {
+        try {
+            createProjection(viewJob);
+            return projectionService.readProjectionPosition(projectionStreamId);
+        } catch (final RuntimeException ex) {
+            LOG.debug("Could not reach the event store for viewJob '{}' (will retry on the next run): {}",
+                    viewJob.entry.beanName(), ex.toString());
+            return null;
+        }
     }
 
     private void createProjection(@NotNull final ViewExt viewJob) {
