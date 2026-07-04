@@ -13,12 +13,14 @@ import org.fuin.cqrs4j.springboot.query.core.base.EventstoreConfig;
 import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.core.JandexEntityIdFactory;
 import org.fuin.ddd4j.jackson.Ddd4JacksonModule;
+import org.fuin.esc.api.ConverterRegistry;
 import org.fuin.esc.api.EnhancedMimeType;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.SerDeserializerRegistry;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
 import org.fuin.esc.api.SimpleSerializerDeserializerRegistry;
 import org.fuin.esc.api.TenantContext;
+import org.fuin.esc.api.UpcastingDeserializerRegistry;
 import org.fuin.esc.client.JandexSerializedDataTypeRegistry;
 import org.fuin.esc.esgrpc.ESGrpcEventStore;
 import org.fuin.esc.esgrpc.GrpcProjectionAdminEventStore;
@@ -136,10 +138,12 @@ public class SpringBootConfig {
     @SuppressWarnings("java:S2095") // Spring will correctly close it by calling "close()" on instance
     @Bean(destroyMethod = "close")
     public IESGrpcEventStore getESGrpcEventStore(final SerDeserializerRegistry registry,
+                                                 final ConverterRegistry converterRegistry,
                                                  final KurrentDBClient client) {
         return new ESGrpcEventStore.Builder()
                 .eventStore(client)
-                .serDesRegistry(registry)
+                .serRegistry(registry)
+                .desRegistry(new UpcastingDeserializerRegistry(registry, converterRegistry))
                 .baseTypeFactory(new BaseTypeFactory())
                 .targetContentType(EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8))
                 .build()

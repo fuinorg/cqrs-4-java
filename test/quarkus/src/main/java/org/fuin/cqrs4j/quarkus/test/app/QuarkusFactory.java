@@ -15,12 +15,14 @@ import org.fuin.cqrs4j.jsonb.JsonbRegistry;
 import org.fuin.cqrs4j.quarkus.base.EventstoreConfig;
 import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.core.JandexEntityIdFactory;
+import org.fuin.esc.api.ConverterRegistry;
 import org.fuin.esc.api.EnhancedMimeType;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.SerDeserializerRegistry;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
 import org.fuin.esc.api.SimpleSerializerDeserializerRegistry;
 import org.fuin.esc.api.TenantContext;
+import org.fuin.esc.api.UpcastingDeserializerRegistry;
 import org.fuin.esc.client.JandexSerializedDataTypeRegistry;
 import org.fuin.esc.esgrpc.ESGrpcEventStore;
 import org.fuin.esc.esgrpc.GrpcProjectionAdminEventStore;
@@ -118,16 +120,19 @@ public class QuarkusFactory {
      *
      * @param kurrentDBWrapper Shared client connection.
      * @param registry         Serialization registry.
+     * @param converterRegistry Event up-caster registry decorating deserialization.
      * @return Application scope event store.
      */
     @Produces
     @Dependent
     public IESGrpcEventStore createEventStore(final KurrentDBWrapper kurrentDBWrapper,
-                                              final SerDeserializerRegistry registry) {
+                                              final SerDeserializerRegistry registry,
+                                              final ConverterRegistry converterRegistry) {
 
         final IESGrpcEventStore eventstore = new ESGrpcEventStore.Builder()
                 .eventStore(kurrentDBWrapper.getClient())
-                .serDesRegistry(registry)
+                .serRegistry(registry)
+                .desRegistry(new UpcastingDeserializerRegistry(registry, converterRegistry))
                 .baseTypeFactory(new BaseTypeFactory())
                 .targetContentType(EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8))
                 .build();

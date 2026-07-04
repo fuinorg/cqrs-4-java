@@ -3,6 +3,7 @@ package org.fuin.cqrs4j.springboot.query.starter;
 import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
+import org.fuin.cqrs4j.esc.ConverterRegistration;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.fuin.cqrs4j.springboot.query.core.base.EventstoreConfig;
@@ -10,6 +11,7 @@ import org.fuin.cqrs4j.springboot.query.core.view.ProjectionLagMetrics;
 import org.fuin.cqrs4j.springboot.query.core.view.SpringViewManager;
 import org.fuin.cqrs4j.springboot.query.core.view.SpringViewRegistry;
 import org.fuin.ddd4j.core.WritableTenantContext;
+import org.fuin.esc.api.ConverterRegistry;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.objects4j.common.ThreadSafe;
@@ -47,6 +49,20 @@ public class Cqrs4jConfig {
     @ConditionalOnMissingBean
     public ViewRegistry viewRegistry(ConfigurableBeanFactory beanFactory, List<View> views) {
         return new SpringViewRegistry(beanFactory, views);
+    }
+
+    /**
+     * Collects the application-provided event up-caster registrations into a converter registry used to
+     * decorate the event store's deserialization (so projections and replay upcast old-version events). Empty
+     * when the application registers none, in which case events pass through unchanged.
+     *
+     * @param registrations Converter registrations contributed by the application (may be empty).
+     * @return Converter registry.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public ConverterRegistry converterRegistry(final List<ConverterRegistration> registrations) {
+        return ConverterRegistration.toRegistry(registrations);
     }
 
     @Bean
