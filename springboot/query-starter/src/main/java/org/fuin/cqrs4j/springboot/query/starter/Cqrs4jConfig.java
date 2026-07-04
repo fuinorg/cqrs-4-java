@@ -45,7 +45,7 @@ import java.util.UUID;
 @EnableJpaRepositories(basePackages = {"org.fuin.cqrs4j.springboot.query.core.view"})
 @EnableConfigurationProperties({EventstoreConfig.class})
 @ComponentScan("org.fuin.cqrs4j.springboot.query.core.view")
-@EntityScan("org.fuin.cqrs4j.springboot.query.core.view")
+@EntityScan("org.fuin.cqrs4j.jpa.query")
 public class Cqrs4jConfig {
 
     @Bean

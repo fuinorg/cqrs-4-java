@@ -1,4 +1,5 @@
 package org.fuin.cqrs4j.quarkus.pm;
+import org.fuin.cqrs4j.jpa.pm.*;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

@@ -96,7 +96,7 @@ class CommandDedupTest {
             WebMvcAutoConfiguration.class,
             HttpMessageConvertersAutoConfiguration.class
     })
-    @EntityScan("org.fuin.cqrs4j.springboot.command.core")
+    @EntityScan("org.fuin.cqrs4j.jpa.command")
     static class TestApp {
 
         @Bean

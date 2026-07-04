@@ -3,8 +3,8 @@ package org.fuin.cqrs4j.springboot.test.pm;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.fuin.cqrs4j.core.ProcessTimeoutHandler;
-import org.fuin.cqrs4j.springboot.pm.core.ProcessManagerTimeout;
-import org.fuin.cqrs4j.springboot.pm.core.ProcessManagerTimeoutDeadLetter;
+import org.fuin.cqrs4j.jpa.pm.ProcessManagerTimeout;
+import org.fuin.cqrs4j.jpa.pm.ProcessManagerTimeoutDeadLetter;
 import org.fuin.cqrs4j.springboot.pm.core.ProcessTimeoutConfig;
 import org.fuin.cqrs4j.springboot.pm.core.ProcessTimeoutRepository;
 import org.fuin.cqrs4j.springboot.pm.core.ProcessTimeoutSweeper;
@@ -156,7 +156,7 @@ class ProcessTimeoutSweeperSliceTest {
             TransactionAutoConfiguration.class,
             HibernateJpaAutoConfiguration.class
     })
-    @EntityScan("org.fuin.cqrs4j.springboot.pm.core")
+    @EntityScan("org.fuin.cqrs4j.jpa.pm")
     static class TestApp {
 
         @Bean

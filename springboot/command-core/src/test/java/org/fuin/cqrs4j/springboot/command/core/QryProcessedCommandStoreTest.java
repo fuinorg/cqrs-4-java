@@ -1,4 +1,5 @@
 package org.fuin.cqrs4j.springboot.command.core;
+import org.fuin.cqrs4j.jpa.command.*;
 
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;

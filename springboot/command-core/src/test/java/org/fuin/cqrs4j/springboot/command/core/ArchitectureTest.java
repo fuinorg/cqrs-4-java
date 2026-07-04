@@ -35,6 +35,7 @@ public class ArchitectureTest {
                     "jakarta.servlet..",
                     "jakarta.validation..",
                     "org.fuin.cqrs4j.core..",
+                    "org.fuin.cqrs4j.jpa.command..",
                     "org.fuin.cqrs4j.jackson..",
                     "org.fuin.ddd4j.core..",
                     "org.fuin.esc.api..",

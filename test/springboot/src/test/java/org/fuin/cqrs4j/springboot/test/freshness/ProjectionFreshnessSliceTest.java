@@ -101,7 +101,7 @@ class ProjectionFreshnessSliceTest {
             WebMvcAutoConfiguration.class,
             HttpMessageConvertersAutoConfiguration.class
     })
-    @EntityScan("org.fuin.cqrs4j.springboot.query.core.view")
+    @EntityScan("org.fuin.cqrs4j.jpa.query")
     static class TestApp {
 
         @Bean

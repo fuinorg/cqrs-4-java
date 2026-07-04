@@ -116,6 +116,23 @@
             <artifactId>cqrs-4-java-quarkus-keycloak</artifactId>
         </dependency>
 
+        <!-- JPA modules -->
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-jpa-command</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-jpa-query</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-jpa-process-manager</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -1,4 +1,5 @@
 package org.fuin.cqrs4j.springboot.pm.core;
+import org.fuin.cqrs4j.jpa.pm.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;

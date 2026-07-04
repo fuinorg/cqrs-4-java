@@ -38,6 +38,7 @@ public class ArchitectureTest {
                     "jakarta.validation.constraints..",
                     "org.eclipse.microprofile.config..",
                     "org.fuin.cqrs4j.core..",
+                    "org.fuin.cqrs4j.jpa.query..",
                     "org.fuin.cqrs4j.esc..",
                     "org.fuin.cqrs4j.quarkus.base..",
                     "org.fuin.ddd4j.core..",

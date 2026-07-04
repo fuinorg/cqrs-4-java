@@ -1,4 +1,5 @@
 package org.fuin.cqrs4j.springboot.query.core.view;
+import org.fuin.cqrs4j.jpa.query.*;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -137,7 +138,7 @@ class QryProjectionLeaseIT {
      */
     @SpringBootConfiguration
     @EnableAutoConfiguration
-    @EntityScan("org.fuin.cqrs4j.springboot.query.core.view")
+    @EntityScan("org.fuin.cqrs4j.jpa.query")
     static class TestApp {
 
         @Bean

@@ -36,6 +36,11 @@
 
         <dependency>
             <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-jpa-query</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
             <artifactId>cqrs-4-java-esc</artifactId>
         </dependency>
 

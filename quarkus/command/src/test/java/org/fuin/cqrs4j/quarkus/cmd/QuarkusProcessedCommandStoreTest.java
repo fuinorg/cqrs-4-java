@@ -1,4 +1,5 @@
 package org.fuin.cqrs4j.quarkus.cmd;
+import org.fuin.cqrs4j.jpa.command.*;
 
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,4 +1,5 @@
 package org.fuin.cqrs4j.springboot.pm.core;
+import org.fuin.cqrs4j.jpa.pm.*;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;

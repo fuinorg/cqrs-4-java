@@ -1,4 +1,5 @@
 package org.fuin.cqrs4j.quarkus.view;
+import org.fuin.cqrs4j.jpa.query.*;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;

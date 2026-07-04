@@ -36,6 +36,7 @@ public class ArchitectureTest {
                     "com.fasterxml.jackson.core..",
                     "com.fasterxml.jackson.databind..",
                     "org.fuin.cqrs4j.core..",
+                    "org.fuin.cqrs4j.jpa.pm..",
                     "org.fuin.ddd4j.core..",
                     "org.fuin.objects4j.common..",
                     "org.fuin.utils4j..",

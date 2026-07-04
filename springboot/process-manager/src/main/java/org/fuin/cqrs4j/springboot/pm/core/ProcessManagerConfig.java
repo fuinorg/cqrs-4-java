@@ -33,7 +33,7 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 @EnableScheduling
 @EnableConfigurationProperties({CommandQueueConfig.class, ProcessTimeoutConfig.class})
 @ComponentScan("org.fuin.cqrs4j.springboot.pm.core")
-@EntityScan("org.fuin.cqrs4j.springboot.pm.core")
+@EntityScan("org.fuin.cqrs4j.jpa.pm")
 public class ProcessManagerConfig {
 
     /**
