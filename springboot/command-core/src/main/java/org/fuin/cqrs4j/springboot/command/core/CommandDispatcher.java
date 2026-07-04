@@ -28,6 +28,7 @@ import org.fuin.esc.api.SerializedDataType;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
 import org.fuin.objects4j.common.ConstraintViolationException;
 import org.fuin.objects4j.common.ThreadSafe;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -46,6 +47,9 @@ public class CommandDispatcher {
 
     private static final Logger LOG = LoggerFactory.getLogger(CommandDispatcher.class);
 
+    /** Benign empty result returned when a duplicate (already-processed) command is skipped. */
+    private static final String DUPLICATE_RESULT_JSON = "{}";
+
     private final ObjectMapper objectMapper;
 
     private final SerializedDataTypeRegistry typeRegistry;
@@ -58,8 +62,11 @@ public class CommandDispatcher {
 
     private final ApplicationContext context;
 
+    @Nullable
+    private final ProcessedCommandStore processedCommandStore;
+
     /**
-     * Constructor with all mandatory collaborators.
+     * Constructor with all mandatory collaborators (command deduplication disabled).
      *
      * @param objectMapper           Maps the command JSON to/from objects.
      * @param typeRegistry           Resolves a command type name to the concrete command class.
@@ -74,12 +81,37 @@ public class CommandDispatcher {
                              Validator validator,
                              CommandHandlerRegistry commandHandlerRegistry,
                              ApplicationContext context) {
+        this(objectMapper, typeRegistry, authorizer, validator, commandHandlerRegistry, context, null);
+    }
+
+    /**
+     * Constructor with an optional processed-command store for effectively-once command receipt. When a store is
+     * supplied, a command whose id is already recorded is skipped instead of being handled again, and a
+     * successfully handled command's id is recorded afterwards (record-after-success). Passing {@literal null}
+     * disables deduplication.
+     *
+     * @param objectMapper           Maps the command JSON to/from objects.
+     * @param typeRegistry           Resolves a command type name to the concrete command class.
+     * @param authorizer             Decides if the current user may execute a command.
+     * @param validator              Validates the deserialized command.
+     * @param commandHandlerRegistry Resolves the handler class for a given command class.
+     * @param context                Spring context used to look up the command handler bean.
+     * @param processedCommandStore  Optional dedup store; {@literal null} disables deduplication.
+     */
+    public CommandDispatcher(ObjectMapper objectMapper,
+                             SerializedDataTypeRegistry typeRegistry,
+                             CommandAuthorizer authorizer,
+                             Validator validator,
+                             CommandHandlerRegistry commandHandlerRegistry,
+                             ApplicationContext context,
+                             @Nullable ProcessedCommandStore processedCommandStore) {
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper==null");
         this.typeRegistry = Objects.requireNonNull(typeRegistry, "typeRegistry==null");
         this.authorizer = Objects.requireNonNull(authorizer, "authorizer==null");
         this.validator = Objects.requireNonNull(validator, "validator==null");
         this.commandHandlerRegistry = Objects.requireNonNull(commandHandlerRegistry, "commandHandlerRegistry==null");
         this.context = Objects.requireNonNull(context, "context==null");
+        this.processedCommandStore = processedCommandStore;
     }
 
     /**
@@ -118,7 +150,18 @@ public class CommandDispatcher {
                 LOG.error("User '{}' not authorized! {}", executionContext.getUser().getUserId(), authResult.getMessage());
                 throw new UnauthorizedException();
             }
+            final String commandId = cmd.getEventId().asString();
+            if (processedCommandStore != null && processedCommandStore.processed(commandId)) {
+                // Effectively-once: a re-delivered command that was already handled is skipped. The original
+                // result is not retained, so a benign empty result is returned to acknowledge the delivery.
+                LOG.debug("Skipping already-processed command '{}' ({})", commandId, objClass.getSimpleName());
+                return DUPLICATE_RESULT_JSON;
+            }
             final Object result = commandHandler.handle(executionContext, cmd);
+            if (processedCommandStore != null) {
+                // Record-after-success: only mark once the handler completed without error.
+                processedCommandStore.markProcessed(commandId);
+            }
             final String json = writeJson(result);
             LOG.info("Result: {}", json);
             return json;

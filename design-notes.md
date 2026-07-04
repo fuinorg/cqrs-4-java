@@ -44,6 +44,20 @@ database-checkpoint, poll-based catch-up: simple, atomic, easy to monitor (head 
   lost mid-pass (e.g. a GC pause beyond the TTL) may reprocess the current chunk. Same idempotency assumption
   as above.
 
+## Command idempotency (effectively-once receipt)
+
+- The outbox delivers commands **at-least-once**, so an **optional** processed-command store makes receipt
+  **effectively-once**: `ProcessedCommandStore` (interface in `core`; Spring JPA impl `QryProcessedCommandStore`
+  over `SPRING_CMD_PROCESSED`) keyed by the command's `EventId`, which travels in the JSON body as `event-id`
+  (no header/outbox change). Tenant isolation comes from the routing datasource — **no tenant column**.
+- `CommandDispatcher` filters around the handler with **record-after-success** (skip if processed; else handle;
+  `markProcessed` on success), and is **opt-in** — active only when a store bean is supplied.
+- **Effectively-once, not exactly-once:** the handler's event-store append and the JPA dedup row are separate
+  resources (no shared transaction), so a crash *between* them can re-run a command — covered by the aggregate's
+  expected-version check. Each row records a `PROCESSED_TS` to support retention/cleanup.
+- **Spring-only** (the command receiver lives in `command-core`). Demonstrated in the reference app
+  (`CommandController` + sample command/handler) with a slice test.
+
 ## Observability (metrics)
 
 - Metrics are Micrometer `MeterBinder`s (auto-bound in both Spring and Quarkus). Micrometer is an **optional**

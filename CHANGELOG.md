@@ -13,6 +13,7 @@
 - Projection lag metrics and outbox metrics using Micrometer
 - Distributed HA projection lease with lease integration test (Testcontainers and MariaDB)
 - View subscriptions as alternative to polling by using event storecommon subscriptions
+- Command deduplication: Avoid handling the same command multiple times
 
 ## 0.6.0
 - Added new Jackson module

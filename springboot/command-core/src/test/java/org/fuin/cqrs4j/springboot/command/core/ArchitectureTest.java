@@ -31,6 +31,7 @@ public class ArchitectureTest {
             .onlyDependOnClassesThat()
             .resideInAnyPackage(THIS_PACKAGE, "java..",
                     "com.fasterxml.jackson..",
+                    "jakarta.persistence..",
                     "jakarta.servlet..",
                     "jakarta.validation..",
                     "org.fuin.cqrs4j.core..",
@@ -43,6 +44,8 @@ public class ArchitectureTest {
                     "org.springframework.context..",
                     "org.springframework.core..",
                     "org.springframework.http..",
+                    "org.springframework.stereotype..",
+                    "org.springframework.transaction..",
                     "org.springframework.web..");
 
 }
