@@ -31,7 +31,7 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 @ThreadSafe
 @Configuration
 @EnableScheduling
-@EnableConfigurationProperties(CommandQueueConfig.class)
+@EnableConfigurationProperties({CommandQueueConfig.class, ProcessTimeoutConfig.class})
 @ComponentScan("org.fuin.cqrs4j.springboot.pm.core")
 @EntityScan("org.fuin.cqrs4j.springboot.pm.core")
 public class ProcessManagerConfig {
@@ -86,6 +86,18 @@ public class ProcessManagerConfig {
         @ConditionalOnMissingBean
         public OutboxMetrics outboxMetrics(final CommandOutboxService outboxService) {
             return new OutboxMetrics(outboxService);
+        }
+
+        /**
+         * Binds the pending and overdue process-timeout gauges.
+         *
+         * @param repository Repository providing the counts.
+         * @return Meter binder registered with the application's meter registries.
+         */
+        @Bean
+        @ConditionalOnMissingBean
+        public ProcessTimeoutMetrics processTimeoutMetrics(final ProcessTimeoutRepository repository) {
+            return new ProcessTimeoutMetrics(repository);
         }
 
     }

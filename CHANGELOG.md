@@ -14,6 +14,7 @@
 - Distributed HA projection lease with lease integration test (Testcontainers and MariaDB)
 - View subscriptions as alternative to polling by using event storecommon subscriptions
 - Command deduplication: Avoid handling the same command multiple times
+- Process-manager lifecycle hardening (no zombies)
 
 ## 0.6.0
 - Added new Jackson module

@@ -58,12 +58,27 @@ database-checkpoint, poll-based catch-up: simple, atomic, easy to monitor (head 
 - **Spring-only** (the command receiver lives in `command-core`). Demonstrated in the reference app
   (`CommandController` + sample command/handler) with a slice test.
 
+## Process-manager timeouts (no zombies)
+
+- A **decoupled process-timeout registry** stops a PM that awaits a never-arriving reply from hanging:
+  `ProcessTimeoutService` (interface in `core`; Spring JPA impl `ProcessTimeoutRepository` over
+  `SPRING_PM_TIMEOUT`) with `arm(...)` / `cancel(processId)`, called **inside the view transaction** (like
+  `CommandOutbox.enqueue`) so they commit atomically with the state change. One pending timeout per `processId`.
+- `ProcessTimeoutSweeper` (mirrors `CommandQueueExecutor`: `@Scheduled`, `ReentrantLock`, per-item `REQUIRES_NEW`)
+  hands each due row to the app's `ProcessTimeoutHandler` SPI **and** deletes it in one transaction; repeated
+  failure → `SPRING_PM_TIMEOUT_DEAD_LETTER`. Inactive unless exactly one handler bean exists; handlers must be
+  idempotent. Gauges `cqrs4j.process.timeout.pending` / `.overdue` surface stuck processes.
+- **Process-version / takeover:** the version rides on each timeout → the handler, so a new version can ignore or
+  adopt stale timeouts. Takeover/hand-off is a documented pattern (end old instance, emit a takeover event on the
+  correlation id, resume in a new version) — not machinery. **Spring-only**; verified by a Docker-free slice test.
+
 ## Observability (metrics)
 
 - Metrics are Micrometer `MeterBinder`s (auto-bound in both Spring and Quarkus). Micrometer is an **optional**
   dependency and the beans are guarded (`@ConditionalOnClass`), so applications that don't use metrics are
   unaffected. Projection-lag gauge = head − checkpoint per view (via the neutral `ProjectionLag` helper);
-  outbox-depth / dead-letter gauges are **Spring-only** (the process-manager outbox exists only there).
+  outbox-depth / dead-letter and process-timeout pending/overdue gauges are **Spring-only** (the process-manager
+  lives only there).
 
 ## Cross-cutting conventions (apply to every change)
 
