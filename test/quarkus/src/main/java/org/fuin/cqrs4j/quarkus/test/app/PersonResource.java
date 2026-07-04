@@ -12,6 +12,8 @@ import jakarta.ws.rs.core.Response;
 import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.cqrs4j.quarkus.test.model.PersonEntity;
 import org.fuin.cqrs4j.quarkus.test.model.PersonId;
+import org.fuin.cqrs4j.quarkus.test.view.PersonsView;
+import org.fuin.cqrs4j.quarkus.view.QuarkusProjectionFreshnessService;
 
 /**
  * REST resource reading persons.
@@ -21,8 +23,14 @@ import org.fuin.cqrs4j.quarkus.test.model.PersonId;
 @Transactional
 public class PersonResource {
 
+    /** Response header advertising the projection position the read model is current as of. */
+    public static final String PROJECTION_POSITION_HEADER = "X-Projection-Position";
+
     @Inject
     EntityManager em;
+
+    @Inject
+    QuarkusProjectionFreshnessService freshnessService;
 
     @GET
     @Path("{id}")
@@ -32,7 +40,10 @@ public class PersonResource {
         if (person == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return Response.ok(person).build();
+        // Advertise how fresh this read model is: the projection position it has consumed up to.
+        return Response.ok(person)
+                .header(PROJECTION_POSITION_HEADER, freshnessService.position(PersonsView.NAME))
+                .build();
     }
 
 }

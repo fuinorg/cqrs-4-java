@@ -18,6 +18,17 @@ transaction that commits the view update and the checkpoint advance together**. 
 database-checkpoint, poll-based catch-up: simple, atomic, easy to monitor (head − checkpoint = lag), and
 **at-least-once** — a view may see a chunk again after a crash, so view handlers must be idempotent.
 
+## Read-model freshness
+
+- Clients can ask **how fresh a view is**: `ProjectionFreshnessService` (Spring) /
+  `QuarkusProjectionFreshnessService` (Quarkus) expose `position(view)` (the current checkpoint — a **cheap** read,
+  used as a per-request `X-Projection-Position` header) and `freshness(view)` → `{position, lag, caughtUp}` (lag
+  reads the event store forward via the neutral esc `ProjectionFreshness`/`ProjectionLag`, so it backs a dedicated
+  `GET /freshness/{view}` endpoint, not every read). Stream-id mapping is centralized in `ProjectionStreamIds.of`.
+- Reads run in the **ambient tenant context**; clients get read-your-writes by **polling** until `caughtUp`.
+- **Number-space note:** the position is the *projection-stream* checkpoint, not the *aggregate version* a write
+  returns — so a write→wait *token* isn't offered (would need the write path to return its position). Both runtimes.
+
 ## Event versioning consumption
 
 - Version up-casting itself lives in the event store; this library only **consumes** it. It provides

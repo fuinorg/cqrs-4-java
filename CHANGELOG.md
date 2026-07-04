@@ -15,6 +15,7 @@
 - View subscriptions as alternative to polling by using event storecommon subscriptions
 - Command deduplication: Avoid handling the same command multiple times
 - Process-manager lifecycle hardening (no zombies)
+- Surface read-model freshness to clients
 
 ## 0.6.0
 - Added new Jackson module

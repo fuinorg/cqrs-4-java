@@ -3,11 +3,11 @@ package org.fuin.cqrs4j.springboot.query.core.view;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import org.fuin.cqrs4j.core.CqrsUtils;
 import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.esc.ProjectionLag;
 import org.fuin.cqrs4j.esc.ProjectionService;
+import org.fuin.cqrs4j.esc.ProjectionStreamIds;
 import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionStreamId;
@@ -77,8 +77,7 @@ public class ProjectionLagMetrics implements MeterBinder {
     }
 
     private double lagFor(final ViewRegistry.Entry entry) {
-        final ProjectionStreamId streamId = new ProjectionStreamId(
-                entry.streamName() + "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes()));
+        final ProjectionStreamId streamId = ProjectionStreamIds.of(entry);
         final TenantIdsSupplier supplier = this.tenantIdsSupplier;
         final WritableTenantContext tc = this.tenantContext;
         if (supplier == null || tc == null) {
