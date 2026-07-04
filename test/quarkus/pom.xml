@@ -42,7 +42,22 @@
 
         <dependency>
             <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-quarkus</artifactId>
+            <artifactId>cqrs-4-java-quarkus-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-quarkus-query</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-quarkus-command</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-quarkus-process-manager</artifactId>
         </dependency>
 
         <dependency>
@@ -123,6 +138,11 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-scheduler</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-micrometer</artifactId>
         </dependency>
 
         <dependency>

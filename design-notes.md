@@ -85,15 +85,22 @@ database-checkpoint, poll-based catch-up: simple, atomic, easy to monitor (head 
   idempotent. Gauges `cqrs4j.process.timeout.pending` / `.overdue` surface stuck processes.
 - **Process-version / takeover:** the version rides on each timeout → the handler, so a new version can ignore or
   adopt stale timeouts. Takeover/hand-off is a documented pattern (end old instance, emit a takeover event on the
-  correlation id, resume in a new version) — not machinery. **Spring-only**; verified by a Docker-free slice test.
+  correlation id, resume in a new version) — not machinery.
+- **Both runtimes.** The whole process-manager (transactional **outbox** delivery + this timeout registry) runs on
+  Spring **and** Quarkus, sharing the neutral `core` SPIs (`CommandOutbox`, `ProcessTimeoutService`/`Handler`,
+  `CommandAuthProvider`). Quarkus glue: `@ApplicationScoped` services + `@Transactional(REQUIRES_NEW)` (the
+  sweeper opens the handle+delete tx via `QuarkusTransaction`), `io.quarkus.scheduler.@Scheduled` cron, a
+  `java.net.http.HttpClient` command client (pairs with the `HttpHeaders`-based `CommandAuthProvider`), configured
+  JSON-B via `JsonbProvider`, and `QUARKUS_PM_*` tables. Behaviour is covered by library unit tests (Spring adds
+  Docker-free slice tests; the live outbox→`/cmd` round-trip is IT territory).
 
 ## Observability (metrics)
 
 - Metrics are Micrometer `MeterBinder`s (auto-bound in both Spring and Quarkus). Micrometer is an **optional**
   dependency and the beans are guarded (`@ConditionalOnClass`), so applications that don't use metrics are
   unaffected. Projection-lag gauge = head − checkpoint per view (via the neutral `ProjectionLag` helper);
-  outbox-depth / dead-letter and process-timeout pending/overdue gauges are **Spring-only** (the process-manager
-  lives only there).
+  outbox-depth / dead-letter and process-timeout pending/overdue gauges are on **both runtimes** (Quarkus binds
+  the `MeterBinder` beans via quarkus-micrometer).
 
 ## Cross-cutting conventions (apply to every change)
 
