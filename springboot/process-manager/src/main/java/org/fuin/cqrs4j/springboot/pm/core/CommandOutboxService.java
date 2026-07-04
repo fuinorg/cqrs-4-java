@@ -10,6 +10,7 @@ import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ThreadSafe;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -105,6 +106,28 @@ public class CommandOutboxService implements CommandOutbox {
             em.persist(ProcessManagerCommandDeadLetter.fromOutbox(outbox, System.currentTimeMillis()));
             em.remove(outbox);
         }
+    }
+
+    /**
+     * Returns the number of commands currently waiting in the outbox (outbox depth). Runs in its own
+     * read-only transaction so it can be called from outside a transaction (e.g. a metrics gauge).
+     *
+     * @return Current outbox row count.
+     */
+    @Transactional(readOnly = true)
+    public long outboxDepth() {
+        return em.createQuery("SELECT COUNT(o) FROM ProcessManagerCommandOutbox o", Long.class).getSingleResult();
+    }
+
+    /**
+     * Returns the number of commands that exhausted their retries and were moved to the dead-letter table.
+     * Runs in its own read-only transaction so it can be called from outside a transaction.
+     *
+     * @return Current dead-letter row count.
+     */
+    @Transactional(readOnly = true)
+    public long deadLetterCount() {
+        return em.createQuery("SELECT COUNT(d) FROM ProcessManagerCommandDeadLetter d", Long.class).getSingleResult();
     }
 
     private String toJson(final Command command) {

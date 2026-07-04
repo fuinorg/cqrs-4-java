@@ -30,6 +30,7 @@ public class ArchitectureTest {
             .should()
             .onlyDependOnClassesThat()
             .resideInAnyPackage(THIS_PACKAGE, "java..",
+                    "io.micrometer..",
                     "org.fuin.cqrs4j.core..",
                     "org.fuin.cqrs4j.esc..",
                     "org.fuin.cqrs4j.springboot.query.core..",

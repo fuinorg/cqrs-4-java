@@ -30,6 +30,7 @@ public class ArchitectureTest {
             .should()
             .onlyDependOnClassesThat()
             .resideInAnyPackage(THIS_PACKAGE, "java..",
+                    "io.micrometer..",
                     "jakarta.persistence..",
                     "jakarta.validation..",
                     "com.fasterxml.jackson.core..",

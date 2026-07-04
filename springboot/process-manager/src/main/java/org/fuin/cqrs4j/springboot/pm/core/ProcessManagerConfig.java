@@ -1,9 +1,11 @@
 package org.fuin.cqrs4j.springboot.pm.core;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.fuin.cqrs4j.core.CommandAuthProvider;
 import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.utils4j.TestOmitted;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -63,6 +65,29 @@ public class ProcessManagerConfig {
                 .builderFor(RestClientAdapter.create(restClient))
                 .build();
         return factory.createClient(CommandRestClient.class);
+    }
+
+    /**
+     * Registers the outbox metrics binder, but only when Micrometer is on the classpath. Applications that
+     * do not use Micrometer are unaffected.
+     */
+    @ThreadSafe
+    @Configuration
+    @ConditionalOnClass(MeterRegistry.class)
+    public static class OutboxMetricsConfig {
+
+        /**
+         * Binds the outbox depth and dead-letter gauges.
+         *
+         * @param outboxService Service providing the counts.
+         * @return Meter binder registered with the application's meter registries.
+         */
+        @Bean
+        @ConditionalOnMissingBean
+        public OutboxMetrics outboxMetrics(final CommandOutboxService outboxService) {
+            return new OutboxMetrics(outboxService);
+        }
+
     }
 
 }

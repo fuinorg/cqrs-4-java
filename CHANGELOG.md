@@ -10,6 +10,7 @@
 - Added new [springboot-starter](springboot-starter) module for better autoconfiguration
 - Added new BOM
 - Added [JSpecify](https://jspecify.dev/) and [NullAway](https://github.com/uber/nullaway)
+- Added projection lag metrics and outbox metrics using Micrometer
 
 ## 0.6.0
 - Added new Jackson module

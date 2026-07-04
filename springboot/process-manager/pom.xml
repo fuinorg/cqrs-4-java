@@ -111,6 +111,13 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
+        <!-- Optional: only needed by applications that enable Micrometer metrics -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- test -->
 
         <dependency>
