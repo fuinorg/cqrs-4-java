@@ -6,6 +6,7 @@ import org.fuin.cqrs4j.core.CqrsUtils;
 import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
+import org.fuin.cqrs4j.esc.ProjectionLeaseService;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
@@ -72,6 +73,14 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     @Nullable
     private final TenantIdsSupplier tenantIdsSupplier;
 
+    private final ProjectionLeaseService leaseService;
+
+    private final boolean haEnabled;
+
+    private final String owner;
+
+    private final long leaseTtlMillis;
+
     private volatile List<ViewJob> viewJobs = Collections.emptyList();
 
     /**
@@ -87,6 +96,10 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
      * @param multitenancyEnabled Determines if multitenancy is enabled or nit.
      * @param tenantContext       Tenant context.
      * @param tenantIdsSupplier   Supplies the tenant identifiers know at the moment of the call. Required to be thread-safe!
+     * @param leaseService        Distributed projection lease service.
+     * @param haEnabled           Determines if the distributed lease (multi-instance safe projections) is enabled.
+     * @param owner               Identifier of this application instance (lease owner).
+     * @param leaseTtlMillis      Time-to-live of an acquired lease in milliseconds.
      */
     public SpringViewManager(
             final ScheduledAnnotationBeanPostProcessor postProcessor,
@@ -98,7 +111,11 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             final ConfigurableBeanFactory beanFactory,
             final boolean multitenancyEnabled,
             @Nullable final WritableTenantContext tenantContext,
-            @Nullable final TenantIdsSupplier tenantIdsSupplier) {
+            @Nullable final TenantIdsSupplier tenantIdsSupplier,
+            final ProjectionLeaseService leaseService,
+            final boolean haEnabled,
+            final String owner,
+            final long leaseTtlMillis) {
         this.postProcessor = Objects.requireNonNull(postProcessor, "postProcessor==null");
         this.viewRegistry = Objects.requireNonNull(viewRegistry, "viewClassRegistry==null");
         this.eventstore = Objects.requireNonNull(eventstore, "eventstore==null");
@@ -111,6 +128,10 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         this.beanFactory = Objects.requireNonNull(beanFactory, "beanFactory==null");
         this.tenantContext = multitenancyEnabled ? Objects.requireNonNull(tenantContext, "tenantContext==null") : null;
         this.tenantIdsSupplier = multitenancyEnabled ? Objects.requireNonNull(tenantIdsSupplier, "tenantIdsSupplier==null") : null;
+        this.leaseService = Objects.requireNonNull(leaseService, "leaseService==null");
+        this.haEnabled = haEnabled;
+        this.owner = Objects.requireNonNull(owner, "owner==null");
+        this.leaseTtlMillis = leaseTtlMillis;
     }
 
     @Override
@@ -157,16 +178,34 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         final WritableTenantContext tc = this.tenantContext;
         if (supplier == null || tc == null) {
             LOG.debug("No tenant supplier found...");
-            readStreamEvents(viewJob);
+            readStreamEventsLeased(viewJob);
         } else {
             supplier.getTenantIds().forEach(tenantId -> {
                 tc.setTenantId(tenantId);
                 try {
-                    readStreamEvents(viewJob);
+                    readStreamEventsLeased(viewJob);
                 } finally {
                     tc.clear();
                 }
             });
+        }
+    }
+
+    private void readStreamEventsLeased(@NotNull final ViewJob viewJob) {
+        if (!haEnabled) {
+            readStreamEvents(viewJob);
+            return;
+        }
+        // Multi-instance safe: only the instance holding the lease processes the projection.
+        final ProjectionStreamId projectionStreamId = viewJob.getProjectionStreamId();
+        if (leaseService.acquire(projectionStreamId, owner, leaseTtlMillis)) {
+            try {
+                readStreamEvents(viewJob);
+            } finally {
+                leaseService.release(projectionStreamId, owner);
+            }
+        } else {
+            LOG.trace("Projection lease held by another instance, skipping: {}", projectionStreamId);
         }
     }
 
@@ -216,6 +255,10 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
                 viewJob.handleEvents(beanFactory, asEvents(currentSlice.getEvents()));
                 LOG.atDebug().setMessage("Events handled: {}").addArgument(() -> asEventNames(currentSlice.getEvents())).log();
                 projectionService.updateProjectionPosition(viewJob.getProjectionStreamId(), currentSlice.getNextEventNumber());
+                if (haEnabled) {
+                    // Keep the lease alive during a long catch-up (commits with the checkpoint).
+                    leaseService.renew(viewJob.getProjectionStreamId(), owner, leaseTtlMillis);
+                }
                 LOG.debug("End transaction: {} (NextEventNumber={})", viewJob.getProjectionStreamId(), currentSlice.getNextEventNumber());
             }
         });

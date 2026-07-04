@@ -4,6 +4,7 @@ import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.esc.ConverterRegistration;
+import org.fuin.cqrs4j.esc.ProjectionLeaseService;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.fuin.cqrs4j.springboot.query.core.base.EventstoreConfig;
@@ -33,6 +34,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Configures the necessary beans.
@@ -76,12 +78,18 @@ public class Cqrs4jConfig {
                                          final ConfigurableBeanFactory beanFactory,
                                          @Value("${org.fuin.cqrs4j.multitenancy:false}") boolean multitenancy,
                                          final Optional<WritableTenantContext> tenantContext,
-                                         final Optional<TenantIdsSupplier> tenantIdsSupplier) {
+                                         final Optional<TenantIdsSupplier> tenantIdsSupplier,
+                                         final ProjectionLeaseService leaseService,
+                                         @Value("${org.fuin.cqrs4j.projection.ha.enabled:false}") boolean haEnabled,
+                                         @Value("${org.fuin.cqrs4j.projection.ha.owner:}") String ownerProperty,
+                                         @Value("${org.fuin.cqrs4j.projection.ha.ttl:60000}") long leaseTtlMillis) {
 
+        final String owner = ownerProperty.isBlank() ? UUID.randomUUID().toString() : ownerProperty;
         return new SpringViewManager(postProcessor, viewRegistry, eventstore, admin,
                 projectionService, transactionManager, beanFactory,
                 multitenancy, tenantContext.orElse(null),
-                tenantIdsSupplier.orElse(null));
+                tenantIdsSupplier.orElse(null),
+                leaseService, haEnabled, owner, leaseTtlMillis);
 
     }
 

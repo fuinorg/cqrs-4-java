@@ -35,6 +35,7 @@ public class ArchitectureTest {
                     "org.eclipse.microprofile.config..",
                     "jakarta.inject..",
                     "jakarta.persistence..",
+                    "jakarta.transaction..",
                     "jakarta.validation.constraints..",
                     "org.fuin.cqrs4j.core..",
                     "org.fuin.cqrs4j.esc..",

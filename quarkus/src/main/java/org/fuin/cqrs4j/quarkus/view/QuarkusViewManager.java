@@ -16,6 +16,7 @@ import org.fuin.cqrs4j.core.CqrsUtils;
 import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
+import org.fuin.cqrs4j.esc.ProjectionLeaseService;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.cqrs4j.quarkus.base.QuarkusUtils;
 import org.fuin.ddd4j.core.Event;
@@ -37,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
 import static org.fuin.utils4j.Utils4J.tryLocked;
@@ -68,10 +70,22 @@ public class QuarkusViewManager {
     ProjectionService projectionService;
 
     @Inject
+    ProjectionLeaseService leaseService;
+
+    @Inject
     BeanManager beanManager;
 
     @ConfigProperty(name = "org.fuin.cqrs4j.multitenancy")
     boolean multitenancy;
+
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.ha.enabled", defaultValue = "false")
+    boolean haEnabled;
+
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.ha.ttl", defaultValue = "60000")
+    long leaseTtlMillis;
+
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.ha.owner", defaultValue = "")
+    String ownerProperty = "";
 
     @Inject
     Instance<WritableTenantContext> tenantContextInstance;
@@ -79,7 +93,13 @@ public class QuarkusViewManager {
     @Inject
     Instance<TenantIdsSupplier> tenantIdsSupplierInstance;
 
+    private final String instanceId = UUID.randomUUID().toString();
+
     private volatile List<ViewExt> views = Collections.emptyList();
+
+    private String owner() {
+        return ownerProperty.isBlank() ? instanceId : ownerProperty;
+    }
 
     @Startup
     void createViews() {
@@ -124,13 +144,32 @@ public class QuarkusViewManager {
             tenantIdsSupplier.getTenantIds().forEach(tenantId -> {
                 tenantContext.setTenantId(tenantId);
                 try {
-                    readStreamEvents(viewJob);
+                    readStreamEventsLeased(viewJob);
                 } finally {
                     tenantContext.clear();
                 }
             });
         } else {
+            readStreamEventsLeased(viewJob);
+        }
+    }
+
+    private void readStreamEventsLeased(@NotNull final ViewExt viewJob) {
+        if (!haEnabled) {
             readStreamEvents(viewJob);
+            return;
+        }
+        // Multi-instance safe: only the instance holding the lease processes the projection.
+        final ProjectionStreamId projectionStreamId = viewJob.getProjectionStreamId();
+        final String owner = owner();
+        if (leaseService.acquire(projectionStreamId, owner, leaseTtlMillis)) {
+            try {
+                readStreamEvents(viewJob);
+            } finally {
+                leaseService.release(projectionStreamId, owner);
+            }
+        } else {
+            LOG.trace("Projection lease held by another instance, skipping: {}", projectionStreamId);
         }
     }
 
@@ -175,6 +214,10 @@ public class QuarkusViewManager {
                     LOG.debug("Handle chunk: {}", currentSlice);
                     viewExt.handleEvents(beanManager, asEvents(currentSlice.getEvents()));
                     projectionService.updateProjectionPosition(viewExt.getProjectionStreamId(), currentSlice.getNextEventNumber());
+                    if (haEnabled) {
+                        // Keep the lease alive during a long catch-up (commits with the checkpoint).
+                        leaseService.renew(viewExt.getProjectionStreamId(), owner(), leaseTtlMillis);
+                    }
                     return 0;
                 });
     }
