@@ -3,27 +3,32 @@ import org.fuin.cqrs4j.jpa.pm.*;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.fuin.cqrs4j.core.Command;
 import org.fuin.cqrs4j.core.CommandOutbox;
+import org.fuin.esc.api.EnhancedMimeType;
+import org.fuin.esc.api.Serializer;
+import org.fuin.esc.api.SerializedDataType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ThreadSafe;
-import org.fuin.objects4j.jsonb.JsonbProvider;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
  * Reads and writes the command outbox and dead-letter tables. Inserting a command ({@link #enqueue(Command)}) is
  * meant to happen inside the process manager view's transaction so that the command is persisted atomically with
  * the process manager state. Draining the queue ({@link #fetchBatch(int)}, {@link #delete(String)},
- * {@link #recordFailure(String, String, int)}) is driven by the {@link QuarkusCommandQueueExecutor}, and each of
+ * {@link #recordFailure(String, String, int)}) is driven by the {@link CommandQueueExecutor}, and each of
  * those runs in its own {@code REQUIRES_NEW} transaction so one failing command does not roll back its siblings.
  */
 @ThreadSafe
 @ApplicationScoped
-public class QuarkusCommandOutboxService implements CommandOutbox {
+public class CommandOutboxService implements CommandOutbox {
 
     private static final String ARG_ID = "id";
 
@@ -31,7 +36,8 @@ public class QuarkusCommandOutboxService implements CommandOutbox {
     EntityManager em;
 
     @Inject
-    JsonbProvider jsonbProvider;
+    @Named("commandSerializer")
+    Serializer commandSerializer;
 
     /**
      * Serializes a command and inserts it into the outbox table. Expected to be called within the surrounding
@@ -44,9 +50,10 @@ public class QuarkusCommandOutboxService implements CommandOutbox {
         Contract.requireArgNotNull("command", command);
         final String id = command.getEventId().asString();
         final String type = command.getEventType().asBaseType();
-        final String version = command.getVersion();
-        final String json = jsonbProvider.jsonb().toJson(command);
-        em.persist(new ProcessManagerCommandOutbox(id, type, version, json, System.currentTimeMillis()));
+        final EnhancedMimeType mimeType = commandSerializer.getMimeType();
+        final Charset encoding = mimeType.getEncoding() == null ? StandardCharsets.UTF_8 : mimeType.getEncoding();
+        final String json = new String(commandSerializer.marshal(command, new SerializedDataType(type)), encoding);
+        em.persist(new ProcessManagerCommandOutbox(id, type, mimeType.toString(), json, System.currentTimeMillis()));
     }
 
     /**
@@ -62,7 +69,7 @@ public class QuarkusCommandOutboxService implements CommandOutbox {
                 .setMaxResults(max)
                 .getResultList()
                 .stream()
-                .map(o -> new Entry(o.getId(), o.getType(), o.getVersion(), o.getJson()))
+                .map(o -> new Entry(o.getId(), o.getType(), o.getContentType(), o.getJson()))
                 .toList();
     }
 
@@ -128,12 +135,12 @@ public class QuarkusCommandOutboxService implements CommandOutbox {
      * Lightweight representation of a queued command, detached from the persistence context, so that the HTTP
      * delivery can happen outside the database transaction.
      *
-     * @param id      Unique command identifier.
-     * @param type    Command type name (path variable for the command endpoint).
-     * @param version Schema version the command is serialized at ({@literal null} if unversioned).
-     * @param json    Serialized command (JSON).
+     * @param id          Unique command identifier.
+     * @param type        Command type name (path variable for the command endpoint).
+     * @param contentType Full content type the command is serialized with (sent as the HTTP {@code Content-Type}).
+     * @param json        Serialized command.
      */
-    public record Entry(String id, String type, @Nullable String version, String json) {
+    public record Entry(String id, String type, String contentType, String json) {
     }
 
 }

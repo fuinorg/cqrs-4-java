@@ -22,6 +22,7 @@ import org.fuin.esc.api.SerializedDataType;
 import org.fuin.esc.api.SimpleConverterRegistry;
 import org.fuin.esc.api.SimpleSerializerDeserializerRegistry;
 import org.fuin.esc.api.UpcastingDeserializerRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationContext;
@@ -38,21 +39,59 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * CQRS-3 acceptance: a command posted at an <b>older</b> version is deserialized by {@code (type, version)} and
- * up-cast to the receiver's latest representation before it reaches the handler — the weak-schema behaviour a
- * rolling deploy relies on. Uses the real esc {@link UpcastingDeserializerRegistry} + {@link ConverterRegistry},
- * exactly like the event read path; only the surrounding collaborators are mocked.
+ * CQRS-3 acceptance for the format-agnostic command path. A command is deserialized purely by the media type of
+ * its {@code Content-Type} (base type, encoding and version) through the real esc
+ * {@link UpcastingDeserializerRegistry} + {@link ConverterRegistry} — the same seam the event read path uses —
+ * and up-cast to the receiver's latest representation. Neither the version nor the format (JSON, XML, …) is
+ * hardcoded.
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class CommandVersioningTest {
 
-    @Test
-    public void v1CommandIsUpcastToV2AtReceiver() throws Exception {
+    private static final SerializedDataType TYPE = new SerializedDataType("GreetCommand");
 
-        // PREPARE: a v1 deserializer (type=GreetCommand, version=1 -> GreetCommandV1) and a v1->v2 up-caster,
-        // wired into an UpcastingDeserializerRegistry (the same seam the event read path uses).
-        final SerializedDataType type = new SerializedDataType("GreetCommand");
-        final Deserializer v1Deserializer = new Deserializer() {
+    private ObjectMapper objectMapper;
+    private CommandAuthorizer authorizer;
+    private Validator validator;
+    private CommandHandlerRegistry handlerRegistry;
+    private CommandHandler handler;
+    private ApplicationContext context;
+    private CommandExecutionContext execCtx;
+
+    @BeforeEach
+    void setUp() {
+        objectMapper = mock(ObjectMapper.class);
+        final ObjectWriter writer = mock(ObjectWriter.class);
+        when(objectMapper.writer()).thenReturn(writer);
+        authorizer = mock(CommandAuthorizer.class);
+        when(authorizer.authorized(any(), any()))
+                .thenReturn(new CommandAuthorizer.Result(true, new GreetCommandV2("x"), null, List.of()));
+        validator = mock(Validator.class);
+        when(validator.validate(any())).thenReturn(Collections.emptySet());
+        handlerRegistry = mock(CommandHandlerRegistry.class);
+        when(handlerRegistry.findHandlerClass(any())).thenReturn((Class) CommandHandler.class);
+        handler = mock(CommandHandler.class);
+        context = mock(ApplicationContext.class);
+        when(context.getBean((Class) any(Class.class))).thenReturn(handler);
+        execCtx = mock(CommandExecutionContext.class);
+        when(execCtx.getUser()).thenReturn(mock(User.class));
+    }
+
+    private CommandDispatcher dispatcher(final DeserializerRegistry deserializerRegistry) {
+        return new CommandDispatcher(objectMapper, deserializerRegistry, authorizer, validator, handlerRegistry, context);
+    }
+
+    private Command handledCommand() throws Exception {
+        final ArgumentCaptor<Command> captor = ArgumentCaptor.forClass(Command.class);
+        verify(handler).handle(any(), captor.capture());
+        return captor.getValue();
+    }
+
+    @Test
+    public void v1CommandIsUpcastToV2() throws Exception {
+
+        // PREPARE: a v1 JSON deserializer + a v1->v2 up-caster, wired into an UpcastingDeserializerRegistry.
+        final Deserializer v1 = new Deserializer() {
             @Override
             public <T> T unmarshal(final Object data, final SerializedDataType t, final EnhancedMimeType m) {
                 return (T) new GreetCommandV1("World");
@@ -60,7 +99,7 @@ public class CommandVersioningTest {
         };
         final SerDeserializerRegistry serDe = new SimpleSerializerDeserializerRegistry.Builder(
                 EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8))
-                .add(type, v1Deserializer, EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8, "1"))
+                .add(TYPE, v1, EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8, "1"))
                 .build();
         final Converter<GreetCommandV1, GreetCommandV2> upcaster = new Converter<>() {
             @Override
@@ -76,38 +115,40 @@ public class CommandVersioningTest {
                 return new GreetCommandV2("Hello, " + source.getName());
             }
         };
-        final ConverterRegistry converters = new SimpleConverterRegistry.Builder()
-                .add(type, "1", "2", upcaster)
+        final ConverterRegistry converters = new SimpleConverterRegistry.Builder().add(TYPE, "1", "2", upcaster).build();
+
+        // TEST: deliver a v1 command
+        dispatcher(new UpcastingDeserializerRegistry(serDe, converters))
+                .dispatch("GreetCommand", "application/json;version=1", "{\"name\":\"World\"}", execCtx, List.of());
+
+        // VERIFY: the handler received the up-cast v2 representation
+        assertThat(handledCommand()).isInstanceOf(GreetCommandV2.class);
+        assertThat(((GreetCommandV2) handledCommand()).getGreeting()).isEqualTo("Hello, World");
+    }
+
+    @Test
+    public void nonJsonContentTypeSelectsItsOwnDeserializer() throws Exception {
+
+        // PREPARE: ONLY an application/xml deserializer is registered (no JSON one), so selection must be driven
+        // purely by the request's Content-Type base type — a hardcoded "application/json" would find nothing.
+        final Deserializer xml = new Deserializer() {
+            @Override
+            public <T> T unmarshal(final Object data, final SerializedDataType t, final EnhancedMimeType m) {
+                return (T) new GreetCommandV2("from-xml");
+            }
+        };
+        final SerDeserializerRegistry serDe = new SimpleSerializerDeserializerRegistry.Builder(
+                EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8))
+                .add(TYPE, xml, EnhancedMimeType.create("application", "xml", StandardCharsets.UTF_8, "1"))
                 .build();
-        final DeserializerRegistry deserializerRegistry = new UpcastingDeserializerRegistry(serDe, converters);
+        final ConverterRegistry converters = new SimpleConverterRegistry.Builder().build();
 
-        final ObjectMapper objectMapper = mock(ObjectMapper.class);
-        final ObjectWriter writer = mock(ObjectWriter.class);
-        when(objectMapper.writer()).thenReturn(writer);
-        final CommandAuthorizer authorizer = mock(CommandAuthorizer.class);
-        when(authorizer.authorized(any(), any()))
-                .thenReturn(new CommandAuthorizer.Result(true, new GreetCommandV2("x"), null, List.of()));
-        final Validator validator = mock(Validator.class);
-        when(validator.validate(any())).thenReturn(Collections.emptySet());
-        final CommandHandlerRegistry handlerRegistry = mock(CommandHandlerRegistry.class);
-        when(handlerRegistry.findHandlerClass(any())).thenReturn((Class) CommandHandler.class);
-        final CommandHandler handler = mock(CommandHandler.class);
-        final ApplicationContext context = mock(ApplicationContext.class);
-        when(context.getBean((Class) any(Class.class))).thenReturn(handler);
-        final CommandExecutionContext execCtx = mock(CommandExecutionContext.class);
-        when(execCtx.getUser()).thenReturn(mock(User.class));
+        // TEST: deliver an application/xml command
+        dispatcher(new UpcastingDeserializerRegistry(serDe, converters))
+                .dispatch("GreetCommand", "application/xml;version=1", "<greet/>", execCtx, List.of());
 
-        final CommandDispatcher testee = new CommandDispatcher(objectMapper, deserializerRegistry, authorizer,
-                validator, handlerRegistry, context);
-
-        // TEST: deliver a v1 command (Content-Type: application/json;version=1)
-        testee.dispatch("GreetCommand", "1", "{\"name\":\"World\"}", execCtx, List.of());
-
-        // VERIFY: the handler received the UP-CAST v2 representation, not the v1 one
-        final ArgumentCaptor<Command> captor = ArgumentCaptor.forClass(Command.class);
-        verify(handler).handle(any(), captor.capture());
-        assertThat(captor.getValue()).isInstanceOf(GreetCommandV2.class);
-        assertThat(((GreetCommandV2) captor.getValue()).getGreeting()).isEqualTo("Hello, World");
+        // VERIFY: the XML deserializer was selected from the content type
+        assertThat(((GreetCommandV2) handledCommand()).getGreeting()).isEqualTo("from-xml");
     }
 
     /**
@@ -118,7 +159,7 @@ public class CommandVersioningTest {
         @Serial
         private static final long serialVersionUID = 1L;
 
-        private static final EventType TYPE = new EventType("GreetCommand");
+        private static final EventType TYPE_V1 = new EventType("GreetCommand");
 
         private final String name;
 
@@ -132,13 +173,8 @@ public class CommandVersioningTest {
         }
 
         @Override
-        public String getVersion() {
-            return "1";
-        }
-
-        @Override
         public EventType getEventType() {
-            return TYPE;
+            return TYPE_V1;
         }
 
     }
@@ -151,7 +187,7 @@ public class CommandVersioningTest {
         @Serial
         private static final long serialVersionUID = 1L;
 
-        private static final EventType TYPE = new EventType("GreetCommand");
+        private static final EventType TYPE_V2 = new EventType("GreetCommand");
 
         private final String greeting;
 
@@ -166,7 +202,7 @@ public class CommandVersioningTest {
 
         @Override
         public EventType getEventType() {
-            return TYPE;
+            return TYPE_V2;
         }
 
     }

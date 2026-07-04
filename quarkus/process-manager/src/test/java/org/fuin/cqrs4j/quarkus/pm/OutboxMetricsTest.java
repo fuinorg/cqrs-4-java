@@ -16,7 +16,7 @@ public class OutboxMetricsTest {
     public void testGaugesReflectCounts() {
 
         // PREPARE
-        final QuarkusCommandOutboxService outboxService = mock(QuarkusCommandOutboxService.class);
+        final CommandOutboxService outboxService = mock(CommandOutboxService.class);
         when(outboxService.outboxDepth()).thenReturn(3L);
         when(outboxService.deadLetterCount()).thenReturn(1L);
         final SimpleMeterRegistry registry = new SimpleMeterRegistry();
@@ -34,7 +34,7 @@ public class OutboxMetricsTest {
     public void testGaugesTrackChanges() {
 
         // PREPARE
-        final QuarkusCommandOutboxService outboxService = mock(QuarkusCommandOutboxService.class);
+        final CommandOutboxService outboxService = mock(CommandOutboxService.class);
         when(outboxService.outboxDepth()).thenReturn(0L, 5L);
         when(outboxService.deadLetterCount()).thenReturn(0L);
         final SimpleMeterRegistry registry = new SimpleMeterRegistry();

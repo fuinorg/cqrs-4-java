@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
@@ -112,20 +113,21 @@ public class QuarkusCommandDispatcher {
      * Deserializes a command and forwards it to the appropriate command handler.
      *
      * @param cmdType          Unique type name of the command to deserialize.
-     * @param version          Schema version the command was serialized at ({@literal null} if unversioned); the
-     *                         command is deserialized by {@code (type, version)} and up-cast to the local latest
-     *                         representation, so a rolling deploy can accept older command versions.
-     * @param cmdJson          Command JSON.
+     * @param contentType      Content type the command was serialized with ({@literal null} falls back to the
+     *                         registry default); the command is deserialized by its media type (base type,
+     *                         encoding and version) and up-cast to the local latest representation, so a rolling
+     *                         deploy can accept older command versions and any registered format.
+     * @param cmdJson          Serialized command.
      * @param executionContext Context of the user executing the command (tenant and user information).
      * @param userRoles        Roles of the current user used by the security filter.
      * @return Result to return.
      * @throws CommandExecutionFailedException Something went wrong during command dispatching or execution.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public String dispatch(final String cmdType, @Nullable final String version, final String cmdJson,
+    public String dispatch(final String cmdType, @Nullable final String contentType, final String cmdJson,
                            final CommandExecutionContext executionContext,
                            final List<SimpleRole> userRoles) throws CommandExecutionFailedException {
-        final Object obj = deserialize(cmdType, version, cmdJson);
+        final Object obj = deserialize(cmdType, contentType, cmdJson);
         LOG.debug("User '{}' posted: {}", executionContext.getUser().getUserId(), obj.getClass().getSimpleName());
         final Set<ConstraintViolation<Object>> violations = validator.validate(obj);
         if (!violations.isEmpty()) {
@@ -163,18 +165,36 @@ public class QuarkusCommandDispatcher {
         }
     }
 
-    private Object deserialize(final String cmdType, @Nullable final String version, final String cmdJson) {
+    private Object deserialize(final String cmdType, @Nullable final String contentType, final String cmdJson) {
         final SerializedDataType type = new SerializedDataType(cmdType);
-        final EnhancedMimeType mimeType = EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8, version);
+        final EnhancedMimeType mimeType = mimeType(contentType);
+        final Charset encoding = mimeType.getEncoding() == null ? StandardCharsets.UTF_8 : mimeType.getEncoding();
         try {
             final Deserializer deserializer = deserializerRegistry.getDeserializer(type, mimeType);
-            return deserializer.unmarshal(cmdJson.getBytes(StandardCharsets.UTF_8), type, mimeType);
+            return deserializer.unmarshal(cmdJson.getBytes(encoding), type, mimeType);
         } catch (final RuntimeException ex) {
             final String message = "Failed to deserialize command (" + cmdType
-                    + (version == null ? "" : ", version=" + version) + "): " + cmdJson;
+                    + (contentType == null ? "" : ", contentType=" + contentType) + "): " + cmdJson;
             LOG.error(message, ex);
             throw new ConstraintViolationException(message);
         }
+    }
+
+    /**
+     * Derives the deserializer lookup mime type from the request's content type. The base type and version come
+     * from the caller (so the path is not JSON-locked); the encoding falls back to the registry default when the
+     * request omits it, and a {@literal null} content type falls back to the registry default mime type entirely.
+     */
+    private EnhancedMimeType mimeType(@Nullable final String contentType) {
+        final EnhancedMimeType defaultMimeType = Objects.requireNonNull(deserializerRegistry.getDefaultMimeType(),
+                "deserializerRegistry.getDefaultMimeType()");
+        if (contentType == null) {
+            return defaultMimeType;
+        }
+        final EnhancedMimeType requested = Objects.requireNonNull(EnhancedMimeType.create(contentType),
+                "EnhancedMimeType.create(contentType)");
+        final Charset encoding = requested.getEncoding() != null ? requested.getEncoding() : defaultMimeType.getEncoding();
+        return EnhancedMimeType.create(requested.getPrimaryType(), requested.getSubType(), encoding, requested.getVersion());
     }
 
 }

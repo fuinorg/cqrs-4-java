@@ -3,7 +3,7 @@ package org.fuin.cqrs4j.quarkus.pm;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.fuin.cqrs4j.quarkus.pm.QuarkusCommandOutboxService.Entry;
+import org.fuin.cqrs4j.quarkus.pm.CommandOutboxService.Entry;
 import org.fuin.objects4j.common.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +19,17 @@ import java.util.concurrent.locks.ReentrantLock;
  * {@link CommandQueueConfig#getMaxRetries()} attempts.
  * <p>
  * The HTTP call happens outside any database transaction; each resulting outbox mutation runs in its own
- * {@code REQUIRES_NEW} transaction (on {@link QuarkusCommandOutboxService}) so that one failing command does not
+ * {@code REQUIRES_NEW} transaction (on {@link CommandOutboxService}) so that one failing command does not
  * roll back the successful delivery of its siblings. A {@link ReentrantLock} guards against overlapping runs.
  */
 @ThreadSafe
 @ApplicationScoped
-public class QuarkusCommandQueueExecutor {
+public class CommandQueueExecutor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(QuarkusCommandQueueExecutor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CommandQueueExecutor.class);
 
     @Inject
-    QuarkusCommandOutboxService outboxService;
+    CommandOutboxService outboxService;
 
     @Inject
     CommandRestClient commandRestClient;
@@ -67,7 +67,7 @@ public class QuarkusCommandQueueExecutor {
 
     private void deliver(final Entry entry) {
         try {
-            commandRestClient.cmd(entry.type(), entry.version(), entry.json());
+            commandRestClient.cmd(entry.type(), entry.contentType(), entry.json());
             outboxService.delete(entry.id());
             LOG.debug("Delivered command '{}' ({})", entry.id(), entry.type());
         } catch (final RuntimeException ex) {

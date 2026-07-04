@@ -3,6 +3,7 @@ package org.fuin.cqrs4j.springboot.test.app;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.kurrent.dbclient.KurrentDBClient;
@@ -17,7 +18,9 @@ import org.fuin.esc.api.ConverterRegistry;
 import org.fuin.esc.api.EnhancedMimeType;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.SerDeserializerRegistry;
+import org.fuin.esc.api.SerializedDataType;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
+import org.fuin.esc.api.Serializer;
 import org.fuin.esc.api.SimpleSerializerDeserializerRegistry;
 import org.fuin.esc.api.SubscribableEventStoreAsync;
 import org.fuin.esc.api.TenantContext;
@@ -108,6 +111,34 @@ public class SpringBootConfig {
         final SerDeserializerRegistry registry = builder.build();
         mapperBuilder.registerModule(new EscJacksonModule(registry, registry));
         return registry;
+    }
+
+    /**
+     * Command serializer used by the outbox to marshal a command and stamp its content type. This app serializes
+     * commands as JSON via Jackson (no per-command registration needed); an XML application would supply an XML
+     * serializer here instead, and the content type would follow.
+     *
+     * @param objectMapper Jackson mapper.
+     * @return JSON command serializer.
+     */
+    @Bean
+    public Serializer commandSerializer(final ObjectMapper objectMapper) {
+        final EnhancedMimeType mimeType = EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8);
+        return new Serializer() {
+            @Override
+            public EnhancedMimeType getMimeType() {
+                return mimeType;
+            }
+
+            @Override
+            public <T> byte[] marshal(final T obj, final SerializedDataType type) {
+                try {
+                    return objectMapper.writeValueAsBytes(obj);
+                } catch (final JsonProcessingException ex) {
+                    throw new IllegalStateException("Failed to serialize command: " + type, ex);
+                }
+            }
+        };
     }
 
     @Bean(destroyMethod = "shutdown")

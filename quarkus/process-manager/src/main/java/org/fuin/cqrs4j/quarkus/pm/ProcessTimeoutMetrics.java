@@ -24,7 +24,7 @@ public class ProcessTimeoutMetrics implements MeterBinder {
     /** Gauge name for the number of overdue process timeouts (deadline reached, not yet handled). */
     public static final String OVERDUE = "cqrs4j.process.timeout.overdue";
 
-    private final QuarkusProcessTimeoutRepository repository;
+    private final ProcessTimeoutRepository repository;
 
     /**
      * Constructor with mandatory data.
@@ -32,7 +32,7 @@ public class ProcessTimeoutMetrics implements MeterBinder {
      * @param repository Repository providing the pending and overdue counts.
      */
     @Inject
-    public ProcessTimeoutMetrics(final QuarkusProcessTimeoutRepository repository) {
+    public ProcessTimeoutMetrics(final ProcessTimeoutRepository repository) {
         super();
         Contract.requireArgNotNull("repository", repository);
         this.repository = repository;
@@ -40,7 +40,7 @@ public class ProcessTimeoutMetrics implements MeterBinder {
 
     @Override
     public void bindTo(final MeterRegistry registry) {
-        Gauge.builder(PENDING, repository, QuarkusProcessTimeoutRepository::pendingCount)
+        Gauge.builder(PENDING, repository, ProcessTimeoutRepository::pendingCount)
                 .description("Number of pending process timeouts")
                 .register(registry);
         Gauge.builder(OVERDUE, repository, repo -> repo.overdueCount(System.currentTimeMillis()))

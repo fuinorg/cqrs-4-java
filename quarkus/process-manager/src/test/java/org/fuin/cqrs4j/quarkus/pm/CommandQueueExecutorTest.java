@@ -1,6 +1,6 @@
 package org.fuin.cqrs4j.quarkus.pm;
 
-import org.fuin.cqrs4j.quarkus.pm.QuarkusCommandOutboxService.Entry;
+import org.fuin.cqrs4j.quarkus.pm.CommandOutboxService.Entry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,26 +15,26 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Test for the {@link QuarkusCommandQueueExecutor} class.
+ * Test for the {@link CommandQueueExecutor} class.
  */
-class QuarkusCommandQueueExecutorTest {
+class CommandQueueExecutorTest {
 
-    private QuarkusCommandOutboxService outboxService;
+    private CommandOutboxService outboxService;
 
     private CommandRestClient commandRestClient;
 
     private CommandQueueConfig config;
 
-    private QuarkusCommandQueueExecutor testee;
+    private CommandQueueExecutor testee;
 
     @BeforeEach
     void setUp() {
-        outboxService = mock(QuarkusCommandOutboxService.class);
+        outboxService = mock(CommandOutboxService.class);
         commandRestClient = mock(CommandRestClient.class);
         config = mock(CommandQueueConfig.class);
         when(config.getBatchSize()).thenReturn(100);
         when(config.getMaxRetries()).thenReturn(5);
-        testee = new QuarkusCommandQueueExecutor();
+        testee = new CommandQueueExecutor();
         testee.outboxService = outboxService;
         testee.commandRestClient = commandRestClient;
         testee.config = config;
@@ -43,14 +43,14 @@ class QuarkusCommandQueueExecutorTest {
     @Test
     void testSuccessfulDeliveryIsDeleted() {
         // PREPARE
-        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", null, "{1}")));
-        when(commandRestClient.cmd("A", null, "{1}")).thenReturn("OK");
+        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", "application/json", "{1}")));
+        when(commandRestClient.cmd("A", "application/json", "{1}")).thenReturn("OK");
 
         // TEST
         testee.drain();
 
         // VERIFY
-        verify(commandRestClient).cmd("A", null, "{1}");
+        verify(commandRestClient).cmd("A", "application/json", "{1}");
         verify(outboxService).delete("id-1");
         verify(outboxService, never()).recordFailure(anyString(), anyString(), anyInt());
     }
@@ -58,8 +58,8 @@ class QuarkusCommandQueueExecutorTest {
     @Test
     void testFailedDeliveryIsRecorded() {
         // PREPARE
-        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", null, "{1}")));
-        when(commandRestClient.cmd("A", null, "{1}")).thenThrow(new RuntimeException("boom"));
+        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", "application/json", "{1}")));
+        when(commandRestClient.cmd("A", "application/json", "{1}")).thenThrow(new RuntimeException("boom"));
 
         // TEST
         testee.drain();
@@ -73,10 +73,10 @@ class QuarkusCommandQueueExecutorTest {
     void testOneFailureDoesNotStopOthers() {
         // PREPARE
         when(outboxService.fetchBatch(100)).thenReturn(List.of(
-                new Entry("id-1", "A", null, "{1}"),
-                new Entry("id-2", "B", null, "{2}")));
-        when(commandRestClient.cmd("A", null, "{1}")).thenThrow(new RuntimeException("boom"));
-        when(commandRestClient.cmd("B", null, "{2}")).thenReturn("OK");
+                new Entry("id-1", "A", "application/json", "{1}"),
+                new Entry("id-2", "B", "application/json", "{2}")));
+        when(commandRestClient.cmd("A", "application/json", "{1}")).thenThrow(new RuntimeException("boom"));
+        when(commandRestClient.cmd("B", "application/json", "{2}")).thenReturn("OK");
 
         // TEST
         testee.drain();

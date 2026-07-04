@@ -9,6 +9,9 @@ import org.fuin.cqrs4j.core.Command;
 import org.fuin.cqrs4j.core.CommandAuthProvider;
 import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.esc.api.EnhancedMimeType;
+import org.fuin.esc.api.SerializedDataType;
+import org.fuin.esc.api.Serializer;
 import org.fuin.utils4j.TestOmitted;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
@@ -196,6 +199,27 @@ class ProcessManagerOutboxIntegrationIT {
                 final Map<String, List<String>> map = new LinkedHashMap<>(headers.map());
                 map.put("X-Test-Auth", List.of("secret"));
                 return HttpHeaders.of(map, (name, value) -> true);
+            };
+        }
+
+        /**
+         * Command serializer the outbox uses to marshal the command and stamp its content type. Hand-renders the
+         * {@link TestCommand} as JSON, so the module keeps no Jackson dependency.
+         */
+        @Bean
+        Serializer commandSerializer() {
+            final EnhancedMimeType mimeType = EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8);
+            return new Serializer() {
+                @Override
+                public EnhancedMimeType getMimeType() {
+                    return mimeType;
+                }
+
+                @Override
+                public <T> byte[] marshal(final T obj, final SerializedDataType type) {
+                    final TestCommand cmd = (TestCommand) obj;
+                    return ("{\"payload\":\"" + cmd.getPayload() + "\"}").getBytes(StandardCharsets.UTF_8);
+                }
             };
         }
 

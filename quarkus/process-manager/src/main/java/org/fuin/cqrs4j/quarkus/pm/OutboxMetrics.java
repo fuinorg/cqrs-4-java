@@ -24,7 +24,7 @@ public class OutboxMetrics implements MeterBinder {
     /** Gauge name for the number of commands that were dead-lettered. */
     public static final String DEAD_LETTER_COUNT = "cqrs4j.process.outbox.deadletter.count";
 
-    private final QuarkusCommandOutboxService outboxService;
+    private final CommandOutboxService outboxService;
 
     /**
      * Constructor with mandatory data.
@@ -32,7 +32,7 @@ public class OutboxMetrics implements MeterBinder {
      * @param outboxService Service providing the outbox and dead-letter counts.
      */
     @Inject
-    public OutboxMetrics(final QuarkusCommandOutboxService outboxService) {
+    public OutboxMetrics(final CommandOutboxService outboxService) {
         super();
         Contract.requireArgNotNull("outboxService", outboxService);
         this.outboxService = outboxService;
@@ -40,10 +40,10 @@ public class OutboxMetrics implements MeterBinder {
 
     @Override
     public void bindTo(final MeterRegistry registry) {
-        Gauge.builder(OUTBOX_DEPTH, outboxService, QuarkusCommandOutboxService::outboxDepth)
+        Gauge.builder(OUTBOX_DEPTH, outboxService, CommandOutboxService::outboxDepth)
                 .description("Number of commands currently waiting in the process-manager outbox")
                 .register(registry);
-        Gauge.builder(DEAD_LETTER_COUNT, outboxService, QuarkusCommandOutboxService::deadLetterCount)
+        Gauge.builder(DEAD_LETTER_COUNT, outboxService, CommandOutboxService::deadLetterCount)
                 .description("Number of commands that exhausted their retries and were dead-lettered")
                 .register(registry);
     }

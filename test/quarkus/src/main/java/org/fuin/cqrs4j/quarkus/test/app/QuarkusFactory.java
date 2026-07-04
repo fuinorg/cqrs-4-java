@@ -6,6 +6,7 @@ import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.json.bind.JsonbConfig;
 import jakarta.json.bind.adapter.JsonbAdapter;
@@ -29,6 +30,8 @@ import org.fuin.ddd4j.core.EntityIdFactory;
 import org.fuin.ddd4j.core.JandexEntityIdFactory;
 import org.fuin.esc.api.ConverterRegistry;
 import org.fuin.esc.api.EnhancedMimeType;
+import org.fuin.esc.api.SerializedDataType;
+import org.fuin.esc.api.Serializer;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.SerDeserializerRegistry;
 import org.fuin.esc.api.SerializedDataTypeRegistry;
@@ -143,6 +146,32 @@ public class QuarkusFactory {
     @Singleton
     public CommandExecutionContext commandExecutionContext() {
         return new FixedCommandExecutionContext();
+    }
+
+    /**
+     * Command serializer used by the outbox to marshal a command and stamp its content type. This app serializes
+     * commands as JSON via JSON-B (no per-command registration needed); an XML application would supply an XML
+     * serializer here instead, and the content type would follow.
+     *
+     * @param jsonbProvider Configured JSON-B provider.
+     * @return JSON command serializer.
+     */
+    @Produces
+    @Singleton
+    @Named("commandSerializer")
+    public Serializer commandSerializer(final JsonbProvider jsonbProvider) {
+        final EnhancedMimeType mimeType = EnhancedMimeType.create("application", "json", StandardCharsets.UTF_8);
+        return new Serializer() {
+            @Override
+            public EnhancedMimeType getMimeType() {
+                return mimeType;
+            }
+
+            @Override
+            public <T> byte[] marshal(final T obj, final SerializedDataType type) {
+                return jsonbProvider.jsonb().toJson(obj).getBytes(StandardCharsets.UTF_8);
+            }
+        };
     }
 
     /**

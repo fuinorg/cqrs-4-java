@@ -30,12 +30,12 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @ThreadSafe
 @ApplicationScoped
-public class QuarkusProcessTimeoutSweeper {
+public class ProcessTimeoutSweeper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(QuarkusProcessTimeoutSweeper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProcessTimeoutSweeper.class);
 
     @Inject
-    QuarkusProcessTimeoutRepository repository;
+    ProcessTimeoutRepository repository;
 
     @Inject
     ProcessTimeoutConfig config;

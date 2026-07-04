@@ -19,12 +19,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Test for the {@link QuarkusProcessTimeoutSweeper} class (the transaction boundary is overridden to run inline).
+ * Test for the {@link ProcessTimeoutSweeper} class (the transaction boundary is overridden to run inline).
  */
 @SuppressWarnings("unchecked")
-public class QuarkusProcessTimeoutSweeperTest {
+public class ProcessTimeoutSweeperTest {
 
-    private QuarkusProcessTimeoutRepository repository;
+    private ProcessTimeoutRepository repository;
 
     private ProcessTimeoutConfig config;
 
@@ -32,17 +32,17 @@ public class QuarkusProcessTimeoutSweeperTest {
 
     private ProcessTimeoutHandler handler;
 
-    private QuarkusProcessTimeoutSweeper testee;
+    private ProcessTimeoutSweeper testee;
 
     @BeforeEach
     public void setUp() {
-        repository = mock(QuarkusProcessTimeoutRepository.class);
+        repository = mock(ProcessTimeoutRepository.class);
         config = mock(ProcessTimeoutConfig.class);
         handlers = mock(Instance.class);
         handler = mock(ProcessTimeoutHandler.class);
         when(config.getBatchSize()).thenReturn(100);
         when(config.getMaxRetries()).thenReturn(5);
-        testee = new QuarkusProcessTimeoutSweeper() {
+        testee = new ProcessTimeoutSweeper() {
             @Override
             protected void runInNewTransaction(final Runnable action) {
                 action.run();

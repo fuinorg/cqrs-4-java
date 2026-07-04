@@ -7,7 +7,7 @@ import jakarta.persistence.EntityManager;
 import org.fuin.cqrs4j.core.CommandOutbox;
 import org.fuin.cqrs4j.core.ProcessManagerView;
 import org.fuin.cqrs4j.core.View;
-import org.fuin.cqrs4j.quarkus.pm.QuarkusCommandOutboxService;
+import org.fuin.cqrs4j.quarkus.pm.CommandOutboxService;
 import org.fuin.cqrs4j.quarkus.test.cmd.SampleGreetCommand;
 import org.fuin.cqrs4j.quarkus.test.model.PersonCreatedEvent;
 import org.fuin.ddd4j.core.Event;
@@ -34,7 +34,7 @@ public class SampleProcessManagerView implements ProcessManagerView {
     /** Bean name. */
     public static final String BEAN_NAME = NAME + "View";
 
-    private final QuarkusCommandOutboxService outboxService;
+    private final CommandOutboxService outboxService;
 
     private final EntityManager em;
 
@@ -45,7 +45,7 @@ public class SampleProcessManagerView implements ProcessManagerView {
      * @param em            Entity manager used to persist the process manager state.
      */
     @Inject
-    public SampleProcessManagerView(final QuarkusCommandOutboxService outboxService, final EntityManager em) {
+    public SampleProcessManagerView(final CommandOutboxService outboxService, final EntityManager em) {
         this.outboxService = outboxService;
         this.em = em;
     }

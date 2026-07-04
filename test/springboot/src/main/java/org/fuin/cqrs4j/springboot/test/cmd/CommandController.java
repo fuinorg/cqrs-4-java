@@ -44,21 +44,20 @@ public class CommandController {
      * Receives a command and forwards it to the appropriate handler.
      *
      * @param type        Unique type name of the command (path variable).
-     * @param contentType {@code Content-Type} header; its {@code version} parameter (if any) selects the command
-     *                    schema version so the dispatcher can up-cast.
-     * @param cmdJson     Command JSON (request body).
+     * @param contentType {@code Content-Type} header, passed to the dispatcher as-is so it deserializes and
+     *                    up-casts by the exact media type (base type, encoding and version). Any media type is
+     *                    accepted, not just JSON.
+     * @param cmdJson     Serialized command (request body).
      * @return Handler result as JSON.
      * @throws CommandExecutionFailedException Something went wrong during dispatching or execution.
      */
     @PostMapping(path = "/cmd/{type}",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public String command(@PathVariable("type") final String type,
                           @RequestHeader(value = HttpHeaders.CONTENT_TYPE, required = false) final String contentType,
                           @RequestBody final String cmdJson)
             throws CommandExecutionFailedException {
-        final String version = contentType == null ? null : MediaType.parseMediaType(contentType).getParameter("version");
-        return dispatcher.dispatch(type, version, cmdJson, executionContext, List.of());
+        return dispatcher.dispatch(type, contentType, cmdJson, executionContext, List.of());
     }
 
 }

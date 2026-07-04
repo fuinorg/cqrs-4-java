@@ -6,7 +6,6 @@ import jakarta.inject.Inject;
 import org.fuin.cqrs4j.core.CommandAuthProvider;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ThreadSafe;
-import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -39,16 +38,17 @@ public class CommandRestClient {
     /**
      * Sends a command for execution.
      *
-     * @param type    Unique type name of the command (path variable).
-     * @param version Schema version the command is serialized at ({@literal null} if unversioned); sent as the
-     *                {@code version} parameter of the {@code Content-Type} header so the receiver can up-cast.
-     * @param cmdJson Serialized command (JSON request body).
-     * @return Result returned by the command endpoint (JSON).
+     * @param type        Unique type name of the command (path variable).
+     * @param contentType Full content type the command is serialized with (base type, encoding and version),
+     *                    sent verbatim as the {@code Content-Type} header so the receiver deserializes and
+     *                    up-casts by the exact media type.
+     * @param cmdJson     Serialized command (request body).
+     * @return Result returned by the command endpoint.
      */
-    public String cmd(final String type, @Nullable final String version, final String cmdJson) {
+    public String cmd(final String type, final String contentType, final String cmdJson) {
         Contract.requireArgNotNull("type", type);
+        Contract.requireArgNotNull("contentType", contentType);
         Contract.requireArgNotNull("cmdJson", cmdJson);
-        final String contentType = version == null ? "application/json" : "application/json;version=" + version;
         final HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(config.getUrl() + "/cmd/" + type))
                 .header("Content-Type", contentType)
                 .POST(HttpRequest.BodyPublishers.ofString(cmdJson));

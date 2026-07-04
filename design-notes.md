@@ -38,13 +38,14 @@ database-checkpoint, poll-based catch-up: simple, atomic, easy to monitor (head 
 - The application wraps the **deserializer side** of its `EventStore` with that registry, so projections and
   aggregate replay upcast automatically — with **no view-manager changes**, because they already read the
   already-deserialized `commonEvent.getData()`. Writes keep serializing at the latest version.
-- **The command path is symmetric with events.** The command's version rides the `Content-Type` parameter
-  (`application/json;version=N`, mirroring esc `EnhancedMimeType.VERSION`); the receiver deserializes by
-  `(type, version)` through the **same** `UpcastingDeserializerRegistry` + `ConverterRegistry` and up-casts to
-  its local latest class (the dispatchers hold a `DeserializerRegistry` instead of binding raw JSON). The
-  process-manager outbox persists `CMD_VERSION` (from `Command.getVersion()`) and stamps it on delivery. Both
-  runtimes; the sender writes at the latest version, so a rolling deploy accepts an older command (up-cast) or a
-  newer one (additive-safe).
+- **The command path is symmetric with events and format-agnostic.** The command is serialized by the esc
+  `Serializer` whose `EnhancedMimeType` (base type + encoding + version) is carried end to end as the HTTP
+  `Content-Type` (e.g. `application/xml;version=2`, not just JSON). The receiver deserializes by that media type
+  through the **same** `UpcastingDeserializerRegistry` + `ConverterRegistry` and up-casts to its local latest
+  class (the dispatchers hold a `DeserializerRegistry` instead of binding raw JSON; base type and version come
+  from the request, encoding falls back to the registry default). The process-manager outbox persists the full
+  `CMD_CONTENT_TYPE` (from the serializer's mime) and stamps it on delivery. Both runtimes; the sender writes at
+  the latest version, so a rolling deploy accepts an older command (up-cast) or a newer one (additive-safe).
 
 ## HA projections (distributed lease)
 

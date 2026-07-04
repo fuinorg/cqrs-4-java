@@ -29,9 +29,9 @@ public class ProcessManagerCommandDeadLetter {
     @NotNull
     private String type;
 
-    @Column(name = "CMD_VERSION", length = 100, updatable = false)
-    @Nullable
-    private String version;
+    @Column(name = "CMD_CONTENT_TYPE", nullable = false, length = 200, updatable = false)
+    @NotNull
+    private String contentType;
 
     @Lob
     @Column(name = "CMD_JSON", nullable = false, updatable = false)
@@ -65,28 +65,29 @@ public class ProcessManagerCommandDeadLetter {
     /**
      * Constructor with mandatory data.
      *
-     * @param id        Unique command identifier (used as primary key).
-     * @param type      Type name used as path variable when calling the command endpoint.
-     * @param version   Schema version the command is serialized at ({@literal null} if unversioned).
-     * @param json      Serialized command (JSON).
-     * @param createdTs Original creation timestamp of the outbox entry (epoch milliseconds).
-     * @param failedTs  Timestamp the command was moved to the dead-letter table (epoch milliseconds).
-     * @param retries   Number of delivery attempts that were made.
-     * @param error     Error message of the last failed delivery attempt.
+     * @param id          Unique command identifier (used as primary key).
+     * @param type        Type name used as path variable when calling the command endpoint.
+     * @param contentType Full content type the command is serialized with (base type, encoding and version).
+     * @param json        Serialized command.
+     * @param createdTs   Original creation timestamp of the outbox entry (epoch milliseconds).
+     * @param failedTs    Timestamp the command was moved to the dead-letter table (epoch milliseconds).
+     * @param retries     Number of delivery attempts that were made.
+     * @param error       Error message of the last failed delivery attempt.
      */
-    public ProcessManagerCommandDeadLetter(@NotNull final String id, @NotNull final String type, @Nullable final String version,
+    public ProcessManagerCommandDeadLetter(@NotNull final String id, @NotNull final String type, @NotNull final String contentType,
                                            @NotNull final String json, @NotNull final Long createdTs, @NotNull final Long failedTs,
                                            @NotNull final Integer retries, @Nullable final String error) {
         super();
         Contract.requireArgNotNull("id", id);
         Contract.requireArgNotNull("type", type);
+        Contract.requireArgNotNull("contentType", contentType);
         Contract.requireArgNotNull("json", json);
         Contract.requireArgNotNull("createdTs", createdTs);
         Contract.requireArgNotNull("failedTs", failedTs);
         Contract.requireArgNotNull("retries", retries);
         this.id = id;
         this.type = type;
-        this.version = version;
+        this.contentType = contentType;
         this.json = json;
         this.createdTs = createdTs;
         this.failedTs = failedTs;
@@ -104,7 +105,7 @@ public class ProcessManagerCommandDeadLetter {
     public static ProcessManagerCommandDeadLetter fromOutbox(@NotNull final ProcessManagerCommandOutbox outbox, @NotNull final Long failedTs) {
         Contract.requireArgNotNull("outbox", outbox);
         Contract.requireArgNotNull("failedTs", failedTs);
-        return new ProcessManagerCommandDeadLetter(outbox.getId(), outbox.getType(), outbox.getVersion(), outbox.getJson(),
+        return new ProcessManagerCommandDeadLetter(outbox.getId(), outbox.getType(), outbox.getContentType(), outbox.getJson(),
                 outbox.getCreatedTs(), failedTs, outbox.getRetries(), outbox.getLastError());
     }
 
@@ -129,13 +130,13 @@ public class ProcessManagerCommandDeadLetter {
     }
 
     /**
-     * Returns the schema version the command is serialized at.
+     * Returns the full content type the command is serialized with (base type, encoding and version).
      *
-     * @return Command version, or {@literal null} if unversioned.
+     * @return Content type.
      */
-    @Nullable
-    public String getVersion() {
-        return version;
+    @NotNull
+    public String getContentType() {
+        return contentType;
     }
 
     /**

@@ -42,6 +42,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.fuin.esc</groupId>
+            <artifactId>esc-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.fuin.cqrs4j</groupId>
             <artifactId>cqrs-4-java-jpa-process-manager</artifactId>
         </dependency>
@@ -59,16 +64,6 @@
         <dependency>
             <groupId>org.fuin</groupId>
             <artifactId>utils4j</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
         </dependency>
 
         <dependency>

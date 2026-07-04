@@ -7,7 +7,7 @@ import org.fuin.objects4j.common.ThreadSafe;
 
 /**
  * Configuration for the process-timeout sweeper that detects and repairs stuck process instances. The cron
- * expression is read directly on the {@link QuarkusProcessTimeoutSweeper}'s {@code @Scheduled} annotation; this
+ * expression is read directly on the {@link ProcessTimeoutSweeper}'s {@code @Scheduled} annotation; this
  * class holds the remaining values.
  */
 @ThreadSafe

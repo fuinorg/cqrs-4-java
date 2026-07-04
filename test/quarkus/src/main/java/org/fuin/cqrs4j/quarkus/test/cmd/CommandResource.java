@@ -36,21 +36,21 @@ public class CommandResource {
      * Receives a command and forwards it to the appropriate handler.
      *
      * @param type    Unique type name of the command (path variable).
-     * @param headers Request headers; the {@code version} parameter of {@code Content-Type} (if any) selects the
-     *                command schema version so the dispatcher can up-cast.
-     * @param cmdJson Command JSON (request body).
+     * @param headers Request headers; the {@code Content-Type} is passed to the dispatcher as-is so it
+     *                deserializes and up-casts by the exact media type (base type, encoding and version). Any
+     *                media type is accepted, not just JSON.
+     * @param cmdJson Serialized command (request body).
      * @return Handler result as JSON.
      * @throws CommandExecutionFailedException Something went wrong during dispatching or execution.
      */
     @POST
     @Path("{type}")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.APPLICATION_JSON)
     public String command(@PathParam("type") final String type, @Context final HttpHeaders headers, final String cmdJson)
             throws CommandExecutionFailedException {
-        final MediaType mediaType = headers.getMediaType();
-        final String version = mediaType == null ? null : mediaType.getParameters().get("version");
-        return dispatcher.dispatch(type, version, cmdJson, executionContext, List.of());
+        final String contentType = headers.getHeaderString(HttpHeaders.CONTENT_TYPE);
+        return dispatcher.dispatch(type, contentType, cmdJson, executionContext, List.of());
     }
 
 }

@@ -8,7 +8,7 @@ import org.fuin.objects4j.common.ThreadSafe;
 
 /**
  * Configuration for the command queue executor that drains the outbox. The cron expression is read directly on
- * the {@link QuarkusCommandQueueExecutor}'s {@code @Scheduled} annotation; this class holds the remaining values.
+ * the {@link CommandQueueExecutor}'s {@code @Scheduled} annotation; this class holds the remaining values.
  */
 @ThreadSafe
 @ApplicationScoped

@@ -13,18 +13,18 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Test for the {@link QuarkusProcessTimeoutRepository} class (decision logic against a mocked entity manager).
+ * Test for the {@link ProcessTimeoutRepository} class (decision logic against a mocked entity manager).
  */
-public class QuarkusProcessTimeoutRepositoryTest {
+public class ProcessTimeoutRepositoryTest {
 
     private EntityManager em;
 
-    private QuarkusProcessTimeoutRepository testee;
+    private ProcessTimeoutRepository testee;
 
     @BeforeEach
     public void setUp() {
         em = mock(EntityManager.class);
-        testee = new QuarkusProcessTimeoutRepository();
+        testee = new ProcessTimeoutRepository();
         testee.em = em;
     }
 

@@ -17,7 +17,7 @@ public class ProcessTimeoutMetricsTest {
     public void testGaugesReflectCounts() {
 
         // PREPARE
-        final QuarkusProcessTimeoutRepository repository = mock(QuarkusProcessTimeoutRepository.class);
+        final ProcessTimeoutRepository repository = mock(ProcessTimeoutRepository.class);
         when(repository.pendingCount()).thenReturn(4L);
         when(repository.overdueCount(anyLong())).thenReturn(2L);
         final SimpleMeterRegistry registry = new SimpleMeterRegistry();

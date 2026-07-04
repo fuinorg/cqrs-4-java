@@ -40,7 +40,7 @@ class CommandQueueExecutorTest {
     void testSuccessfulDeliveryIsDeleted() {
         // PREPARE
         final CommandQueueExecutor testee = newExecutor(5);
-        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", null, "{1}")));
+        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", "application/json", "{1}")));
         when(commandRestClient.cmd("A", "application/json", "{1}")).thenReturn("OK");
 
         // TEST
@@ -56,7 +56,7 @@ class CommandQueueExecutorTest {
     void testFailedDeliveryIsRecorded() {
         // PREPARE
         final CommandQueueExecutor testee = newExecutor(5);
-        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", null, "{1}")));
+        when(outboxService.fetchBatch(100)).thenReturn(List.of(new Entry("id-1", "A", "application/json", "{1}")));
         when(commandRestClient.cmd("A", "application/json", "{1}")).thenThrow(new RuntimeException("boom"));
 
         // TEST
@@ -72,8 +72,8 @@ class CommandQueueExecutorTest {
         // PREPARE
         final CommandQueueExecutor testee = newExecutor(5);
         when(outboxService.fetchBatch(100)).thenReturn(List.of(
-                new Entry("id-1", "A", null, "{1}"),
-                new Entry("id-2", "B", null, "{2}")));
+                new Entry("id-1", "A", "application/json", "{1}"),
+                new Entry("id-2", "B", "application/json", "{2}")));
         when(commandRestClient.cmd("A", "application/json", "{1}")).thenThrow(new RuntimeException("boom"));
         when(commandRestClient.cmd("B", "application/json", "{2}")).thenReturn("OK");
 

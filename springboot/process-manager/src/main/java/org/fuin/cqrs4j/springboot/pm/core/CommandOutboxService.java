@@ -1,18 +1,21 @@
 package org.fuin.cqrs4j.springboot.pm.core;
 import org.fuin.cqrs4j.jpa.pm.*;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.fuin.cqrs4j.core.Command;
 import org.fuin.cqrs4j.core.CommandOutbox;
+import org.fuin.esc.api.EnhancedMimeType;
+import org.fuin.esc.api.Serializer;
+import org.fuin.esc.api.SerializedDataType;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ThreadSafe;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -31,17 +34,18 @@ public class CommandOutboxService implements CommandOutbox {
     @PersistenceContext
     private EntityManager em;
 
-    private final ObjectMapper objectMapper;
+    private final Serializer commandSerializer;
 
     /**
      * Constructor with mandatory data.
      *
-     * @param objectMapper Mapper used to serialize commands to JSON.
+     * @param commandSerializer Serializes commands and provides the content type stamped on delivery. The
+     *                          application decides the format (JSON, XML, …) by which serializer it supplies.
      */
-    public CommandOutboxService(final ObjectMapper objectMapper) {
+    public CommandOutboxService(final Serializer commandSerializer) {
         super();
-        Contract.requireArgNotNull("objectMapper", objectMapper);
-        this.objectMapper = objectMapper;
+        Contract.requireArgNotNull("commandSerializer", commandSerializer);
+        this.commandSerializer = commandSerializer;
     }
 
     /**
@@ -55,9 +59,10 @@ public class CommandOutboxService implements CommandOutbox {
         Contract.requireArgNotNull("command", command);
         final String id = command.getEventId().asString();
         final String type = command.getEventType().asBaseType();
-        final String version = command.getVersion();
-        final String json = toJson(command);
-        em.persist(new ProcessManagerCommandOutbox(id, type, version, json, System.currentTimeMillis()));
+        final EnhancedMimeType mimeType = commandSerializer.getMimeType();
+        final Charset encoding = mimeType.getEncoding() == null ? StandardCharsets.UTF_8 : mimeType.getEncoding();
+        final String json = new String(commandSerializer.marshal(command, new SerializedDataType(type)), encoding);
+        em.persist(new ProcessManagerCommandOutbox(id, type, mimeType.toString(), json, System.currentTimeMillis()));
     }
 
     /**
@@ -72,7 +77,7 @@ public class CommandOutboxService implements CommandOutbox {
                 .setMaxResults(max)
                 .getResultList()
                 .stream()
-                .map(o -> new Entry(o.getId(), o.getType(), o.getVersion(), o.getJson()))
+                .map(o -> new Entry(o.getId(), o.getType(), o.getContentType(), o.getJson()))
                 .toList();
     }
 
@@ -132,24 +137,16 @@ public class CommandOutboxService implements CommandOutbox {
         return em.createQuery("SELECT COUNT(d) FROM ProcessManagerCommandDeadLetter d", Long.class).getSingleResult();
     }
 
-    private String toJson(final Command command) {
-        try {
-            return objectMapper.writeValueAsString(command);
-        } catch (final JsonProcessingException ex) {
-            throw new IllegalStateException("Failed to serialize command: " + command.getEventType().asBaseType(), ex);
-        }
-    }
-
     /**
      * Lightweight representation of a queued command, detached from the persistence context, so that
      * the HTTP delivery can happen outside the database transaction.
      *
-     * @param id      Unique command identifier.
-     * @param type    Command type name (path variable for the command endpoint).
-     * @param version Schema version the command is serialized at ({@literal null} if unversioned).
-     * @param json    Serialized command (JSON).
+     * @param id          Unique command identifier.
+     * @param type        Command type name (path variable for the command endpoint).
+     * @param contentType Full content type the command is serialized with (sent as the HTTP {@code Content-Type}).
+     * @param json        Serialized command.
      */
-    public record Entry(String id, String type, @Nullable String version, String json) {
+    public record Entry(String id, String type, String contentType, String json) {
     }
 
 }

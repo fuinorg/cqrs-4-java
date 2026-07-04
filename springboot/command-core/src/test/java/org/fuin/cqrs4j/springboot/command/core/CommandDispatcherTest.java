@@ -14,6 +14,7 @@ import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.User;
 import org.fuin.esc.api.Deserializer;
 import org.fuin.esc.api.DeserializerRegistry;
+import org.fuin.esc.api.EnhancedMimeType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
@@ -74,6 +75,8 @@ public class CommandDispatcherTest {
 
         when(executionContext.getUser()).thenReturn(mock(User.class));
         final Deserializer deserializer = mock(Deserializer.class);
+        when(deserializerRegistry.getDefaultMimeType())
+                .thenReturn(EnhancedMimeType.create("application", "json", java.nio.charset.StandardCharsets.UTF_8));
         when(deserializerRegistry.getDeserializer(any(), any())).thenReturn(deserializer);
         when(deserializer.unmarshal(any(), any(), any())).thenReturn(cmd);
         when(validator.validate(any())).thenReturn(Collections.emptySet());

@@ -4,14 +4,17 @@ import jakarta.enterprise.inject.Instance;
 import org.fuin.cqrs4j.core.CommandAuthProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -38,15 +41,20 @@ public class CommandRestClientTest {
     }
 
     @Test
-    public void testSuccessfulPostReturnsBody() throws Exception {
+    public void testSuccessfulPostSendsContentTypeVerbatim() throws Exception {
         // PREPARE
         final HttpResponse<String> response = mock(HttpResponse.class);
         when(response.statusCode()).thenReturn(200);
         when(response.body()).thenReturn("result");
         when(httpClient.<String>send(any(), any())).thenReturn(response);
 
-        // TEST & VERIFY
-        assertThat(testee.cmd("MyCommand", null, "{}")).isEqualTo("result");
+        // TEST: a non-JSON content type must reach the endpoint unchanged (no "application/json" assumption)
+        assertThat(testee.cmd("MyCommand", "application/xml;version=1", "<cmd/>")).isEqualTo("result");
+
+        // VERIFY: the Content-Type header equals what was passed
+        final ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(httpClient).send(captor.capture(), any());
+        assertThat(captor.getValue().headers().firstValue("Content-Type")).contains("application/xml;version=1");
     }
 
     @Test
@@ -58,7 +66,7 @@ public class CommandRestClientTest {
         when(httpClient.<String>send(any(), any())).thenReturn(response);
 
         // TEST & VERIFY
-        assertThatThrownBy(() -> testee.cmd("MyCommand", null, "{}"))
+        assertThatThrownBy(() -> testee.cmd("MyCommand", "application/json", "{}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("500");
     }

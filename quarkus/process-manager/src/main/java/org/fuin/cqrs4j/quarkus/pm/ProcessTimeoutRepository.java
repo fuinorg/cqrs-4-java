@@ -18,12 +18,12 @@ import java.util.List;
  * Reads and writes the process-timeout and timeout dead-letter tables. Arming/cancelling a timeout
  * ({@link #arm(String, String, int, long, String)} / {@link #cancel(String)}) is meant to happen inside the
  * process manager view's transaction so it commits atomically with the process manager state. {@link #delete(String)}
- * and {@link #recordFailure(String, String, int)} run inside the transaction the {@link QuarkusProcessTimeoutSweeper}
+ * and {@link #recordFailure(String, String, int)} run inside the transaction the {@link ProcessTimeoutSweeper}
  * opens (so handling and removal commit together); {@link #fetchDue(long, int)} and the count methods open their own.
  */
 @ThreadSafe
 @ApplicationScoped
-public class QuarkusProcessTimeoutRepository implements ProcessTimeoutService {
+public class ProcessTimeoutRepository implements ProcessTimeoutService {
 
     private static final String ARG_PROCESS_ID = "processId";
 
