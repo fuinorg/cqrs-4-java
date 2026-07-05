@@ -313,10 +313,44 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             }
             return projectionService.readProjectionPosition(projectionStreamId);
         } catch (final RuntimeException ex) {
-            LOG.debug("Could not reach the event store for viewJob '{}' (will retry on the next run): {}",
-                    viewJob.entry.beanName(), ex.toString());
+            if (isTransientInfrastructureFailure(ex)) {
+                // Expected during an event store / database reconnect or shutdown; self-heals next run.
+                LOG.debug("Could not reach the event store for viewJob '{}' (will retry on the next run): {}",
+                        viewJob.entry.beanName(), ex.toString());
+            } else {
+                // Unexpected (e.g. a transaction, configuration or programming error). Still retry, but make
+                // it visible instead of hiding it behind a "cannot reach the store" debug line.
+                LOG.error("Unexpected error preparing the projection read for viewJob '{}' (will retry on the next run)",
+                        viewJob.entry.beanName(), ex);
+            }
             return null;
         }
+    }
+
+    /**
+     * Determines if the given error looks like a transient event store / infrastructure connectivity failure
+     * (gRPC transport error, socket/IO error, or a JDBC/JPA connection problem) that is expected to self-heal,
+     * as opposed to an unexpected programming/configuration error that should be surfaced. Walks the whole
+     * cause chain.
+     *
+     * @param error Error to classify.
+     * @return {@literal true} if the error is a transient infrastructure failure.
+     */
+    private static boolean isTransientInfrastructureFailure(final Throwable error) {
+        for (Throwable t = error; t != null; t = t.getCause()) {
+            if (t instanceof java.io.IOException) {
+                return true;
+            }
+            final String type = t.getClass().getName();
+            if (type.startsWith("io.grpc.")                       // gRPC transport / StatusRuntimeException
+                    || type.startsWith("java.net.")               // ConnectException, SocketException, ...
+                    || type.startsWith("java.sql.")               // SQLException / transient DB errors
+                    || type.startsWith("jakarta.persistence.")    // JPA persistence exceptions on a DB hiccup
+                    || type.startsWith("org.springframework.dao.")) { // Spring's DataAccessException hierarchy
+                return true;
+            }
+        }
+        return false;
     }
 
     private void createProjection(@NotNull final ViewJob viewJob) {
