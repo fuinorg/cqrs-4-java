@@ -28,15 +28,15 @@ public final class TestHelper {
      */
     @SuppressWarnings({"java:S2095"})
     public static GenericContainer<?> createEventstoreContainer(String version) {
-        return new GenericContainer<>("eventstore/eventstore:" + version)
+        return new GenericContainer<>("kurrentplatform/kurrentdb:" + version)
                 .withCreateContainerCmdModifier(cmd ->
                         cmd.withUser(new UnixSystem().getUid() + ":" + new UnixSystem().getGid()))
                 .withNetworkMode("bridge")
                 .withExposedPorts(2113)
-                .withEnv(Map.of("EVENTSTORE_MEM_DB", "TRUE",
-                        "EVENTSTORE_RUN_PROJECTIONS", "All",
-                        "EVENTSTORE_INSECURE", "true",
-                        "EVENTSTORE_LOG", "/tmp/log-eventstore"))
+                .withEnv(Map.of("KURRENTDB_MEM_DB", "TRUE",
+                        "KURRENTDB_RUN_PROJECTIONS", "All",
+                        "KURRENTDB_INSECURE", "true",
+                        "KURRENTDB_LOG", "/tmp/log-kurrentdb"))
                 .waitingFor(new HttpWaitStrategy().withMethod("GET")
                         .forPath("/web/index.html#/")
                         .withReadTimeout(Duration.of(20, ChronoUnit.SECONDS)));
