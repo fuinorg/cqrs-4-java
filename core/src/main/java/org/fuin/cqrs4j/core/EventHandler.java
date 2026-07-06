@@ -21,9 +21,12 @@ import jakarta.persistence.EntityManager;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.objects4j.common.ThreadSafe;
+import org.jspecify.annotations.Nullable;
 
 /**
- * Event handler that maps an event to JPA entities.
+ * Event handler that maps an event to JPA entities. A handler declares which events it operates on either by
+ * exact event type ({@link #getEventType()}) or by category - a marker interface the events implement
+ * ({@link #getEventCategory()}); a category handler receives every event implementing that interface.
  * All implementations are expected to be thread safe.
  *
  * @param <TYPE> Event type.
@@ -32,11 +35,27 @@ import org.fuin.objects4j.common.ThreadSafe;
 public interface EventHandler<TYPE extends Event> {
 
     /**
-     * Returns the type of event this handler operates on.
+     * Returns the exact type of event this handler operates on, or {@literal null} if the handler selects by
+     * category instead (see {@link #getEventCategory()}).
      *
-     * @return Unique event type.
+     * @return Unique event type, or {@literal null} for a category handler.
      */
-    public EventType getEventType();
+    @Nullable
+    default EventType getEventType() {
+        return null;
+    }
+
+    /**
+     * Returns the event category (a marker interface the events implement) this handler operates on, or
+     * {@literal null} if the handler selects by exact type instead (see {@link #getEventType()}). When set,
+     * the handler is invoked for every event that is an instance of the returned interface.
+     *
+     * @return Marker interface class, or {@literal null} for an exact-type handler.
+     */
+    @Nullable
+    default Class<?> getEventCategory() {
+        return null;
+    }
 
     /**
      * Modifies the view using the given event.

@@ -320,8 +320,9 @@ public class QuarkusViewManager {
     private void createProjection(@NotNull final ViewExt viewJob) {
         if (!admin.projectionExists(viewJob.getProjectionId())) {
             final List<TypeName> typeNames = asTypeNames(viewJob.getEntry().eventTypes());
+            final List<String> categoryNames = List.copyOf(viewJob.getEntry().eventCategories());
             try {
-                admin.createProjection(viewJob.getProjectionId(), viewJob.getProjectionStreamId(), true, typeNames);
+                admin.createProjection(viewJob.getProjectionId(), viewJob.getProjectionStreamId(), true, typeNames, categoryNames);
             } catch (StreamAlreadyExistsException ex) {
                 LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
             }
@@ -367,7 +368,7 @@ public class QuarkusViewManager {
 
         public ViewExt(final ViewRegistry.Entry entry) {
             this.entry = Objects.requireNonNull(entry, "entry==null");
-            final String checksumPostfix = "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes());
+            final String checksumPostfix = "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes(), entry.eventCategories());
             projectionId = new ProjectionId(entry.projectionName() + checksumPostfix);
             projectionStreamId = new ProjectionStreamId(entry.streamName() + checksumPostfix);
             this.lock = new Semaphore(1);

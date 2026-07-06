@@ -63,6 +63,19 @@ public interface View {
      */
     Set<EventType> getEventTypes();
 
+    /**
+     * Returns the event categories the view is interested in - marker interfaces the events implement (e.g.
+     * {@code GenesisEvent.class}). Unlike {@link #getEventTypes()} this selects events by category, so the
+     * view picks up any event carrying one of these categories without knowing its concrete type. The
+     * projection selects an event if its type is in {@link #getEventTypes()} <em>or</em> it belongs to one of
+     * these categories.
+     *
+     * @return Set of marker interface classes (empty by default).
+     */
+    default Set<Class<?>> getEventCategories() {
+        return Set.of();
+    }
+
 
     /**
      * Returns the CRON expression defining how often the view should be updated.

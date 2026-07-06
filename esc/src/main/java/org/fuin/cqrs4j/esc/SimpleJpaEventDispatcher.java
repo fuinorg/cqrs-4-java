@@ -29,6 +29,7 @@ import org.fuin.objects4j.common.ThreadSafe;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,10 @@ public final class SimpleJpaEventDispatcher implements JpaEventDispatcher {
 
     @SuppressWarnings("rawtypes")
     private final Map<EventType, List<EventHandler>> eventHandlers;
+
+    /** Handlers registered by category (marker interface the events implement). */
+    @SuppressWarnings("rawtypes")
+    private final Map<Class<?>, List<EventHandler>> categoryHandlers;
 
     /**
      * Constructor with array of event handlers.
@@ -67,13 +72,20 @@ public final class SimpleJpaEventDispatcher implements JpaEventDispatcher {
             throw new IllegalArgumentException("The argument 'eventHandlers' cannot be an empty list");
         }
         this.eventHandlers = new HashMap<>();
+        this.categoryHandlers = new HashMap<>();
         for (final EventHandler eventHandler : eventHandlers) {
-            List<EventHandler> handlers = this.eventHandlers.get(eventHandler.getEventType());
-            if (handlers == null) {
-                handlers = new ArrayList<>();
-                this.eventHandlers.put(eventHandler.getEventType(), handlers);
+            final EventType eventType = eventHandler.getEventType();
+            final Class<?> eventCategory = eventHandler.getEventCategory();
+            if (eventType == null && eventCategory == null) {
+                throw new IllegalArgumentException(
+                        "Event handler declares neither an event type nor a category: " + eventHandler.getClass().getName());
             }
-            handlers.add(eventHandler);
+            if (eventType != null) {
+                this.eventHandlers.computeIfAbsent(eventType, k -> new ArrayList<>()).add(eventHandler);
+            }
+            if (eventCategory != null) {
+                this.categoryHandlers.computeIfAbsent(eventCategory, k -> new ArrayList<>()).add(eventHandler);
+            }
         }
     }
 
@@ -110,11 +122,21 @@ public final class SimpleJpaEventDispatcher implements JpaEventDispatcher {
 
         Contract.requireArgNotNull("event", event);
 
-        final List<EventHandler> handlers = eventHandlers.get(event.getEventType());
-        if (handlers != null) {
-            for (final EventHandler handler : handlers) {
-                handler.handle(em, event);
+        // Route to exact-type handlers and to category handlers whose marker interface the event implements.
+        // A LinkedHashSet keeps a stable order (type handlers first) and invokes a handler registered under
+        // both a type and a matching category only once.
+        final Set<EventHandler> toInvoke = new LinkedHashSet<>();
+        final List<EventHandler> typeMatched = eventHandlers.get(event.getEventType());
+        if (typeMatched != null) {
+            toInvoke.addAll(typeMatched);
+        }
+        for (final Map.Entry<Class<?>, List<EventHandler>> entry : categoryHandlers.entrySet()) {
+            if (entry.getKey().isInstance(event)) {
+                toInvoke.addAll(entry.getValue());
             }
+        }
+        for (final EventHandler handler : toInvoke) {
+            handler.handle(em, event);
         }
     }
 

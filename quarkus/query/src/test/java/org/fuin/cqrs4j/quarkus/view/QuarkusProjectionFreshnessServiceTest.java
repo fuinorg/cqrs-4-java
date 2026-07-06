@@ -44,7 +44,7 @@ public class QuarkusProjectionFreshnessServiceTest {
         projectionService = mock(ProjectionService.class);
         final ViewRegistry.Entry entry = new ViewRegistry.Entry(View.class, VIEW, "PersonsViewBean",
                 "PersonsProjection", "PersonsStream", "* * * * * *", 100,
-                Set.of(new EventType("PersonCreatedEvent")));
+                Set.of(new EventType("PersonCreatedEvent")), Set.of());
         streamId = ProjectionStreamIds.of(entry);
         when(viewRegistry.getViews()).thenReturn(List.of(entry));
         testee = new QuarkusProjectionFreshnessService();

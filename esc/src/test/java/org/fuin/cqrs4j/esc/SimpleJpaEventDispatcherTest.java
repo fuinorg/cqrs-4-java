@@ -21,6 +21,7 @@ import jakarta.persistence.EntityManager;
 import org.fuin.cqrs4j.core.EventHandler;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.ddd4j.core.GenesisEvent;
 import org.fuin.ddd4j.jsonb.AbstractEvent;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventId;
@@ -153,13 +154,36 @@ public final class SimpleJpaEventDispatcherTest {
 
     }
 
+    @Test
+    public final void testDispatchByCategory() {
+
+        // PREPARE - a handler that selects by category (GenesisEvent, which EventA implements) and a
+        // handler that selects EventB by exact type.
+        final CollectingCategoryEventHandler handlerGenesis = new CollectingCategoryEventHandler(GenesisEvent.class);
+        final CollectingEventHandler<EventB> handlerB = new CollectingEventHandler<>(EVENT_TYPE_B);
+        final JpaEventDispatcher testee = new SimpleJpaEventDispatcher(handlerGenesis, handlerB);
+
+        final EventA a1 = new EventA();
+        final EventB b1 = new EventB();
+        final EntityManager em = Mockito.mock(EntityManager.class);
+
+        // TEST
+        testee.dispatchEvents(em, List.of(a1, b1));
+
+        // VERIFY - the category handler received the GenesisEvent (EventA) but not EventB; the exact-type
+        // handler received EventB.
+        assertThat(handlerGenesis.getEvents()).containsExactly(a1);
+        assertThat(handlerB.getEvents()).containsExactly(b1);
+
+    }
+
     private static CommonEvent asCommonEvent(final Event event) {
         final EventId eventId = new EventId(event.getEventId().asBaseType());
         final TypeName typeName = new TypeName(event.getEventType().asBaseType());
         return new SimpleCommonEvent(eventId, typeName, event, null);
     }
 
-    private static class EventA extends AbstractEvent {
+    private static class EventA extends AbstractEvent implements GenesisEvent {
 
         @Serial
         private static final long serialVersionUID = 1L;
@@ -203,6 +227,33 @@ public final class SimpleJpaEventDispatcherTest {
 
         @Override
         public void handle(EntityManager em, TYPE event) {
+            events.add(event);
+        }
+
+        public List<Event> getEvents() {
+            return events;
+        }
+
+    }
+
+    @SuppressWarnings({"unused"})
+    private static class CollectingCategoryEventHandler implements EventHandler<Event> {
+
+        private final Class<?> category;
+
+        private final List<Event> events = new ArrayList<>();
+
+        CollectingCategoryEventHandler(final Class<?> category) {
+            this.category = category;
+        }
+
+        @Override
+        public Class<?> getEventCategory() {
+            return category;
+        }
+
+        @Override
+        public void handle(final EntityManager em, final Event event) {
             events.add(event);
         }
 

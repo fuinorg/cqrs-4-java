@@ -44,7 +44,8 @@ public final class ProjectionStreamIds {
      */
     public static ProjectionStreamId of(final ViewRegistry.Entry entry) {
         Contract.requireArgNotNull("entry", entry);
-        return new ProjectionStreamId(entry.streamName() + "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes()));
+        return new ProjectionStreamId(entry.streamName() + "-"
+                + CqrsUtils.calculateAdler32Checksum(entry.eventTypes(), entry.eventCategories()));
     }
 
 }

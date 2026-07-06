@@ -45,6 +45,7 @@ public interface ViewRegistry {
      * @param cron        CRON expression defining how often the view should be updated.
      * @param chunkSize   Number of events (defaults to 100).
      * @param eventTypes  Type of events the view is interested in.
+     * @param eventCategories Category names (simple names of marker interfaces) the view is interested in.
      */
     record Entry(Class<View> viewClass,
                  String name,
@@ -53,7 +54,8 @@ public interface ViewRegistry {
                  String streamName,
                  String cron,
                  int chunkSize,
-                 Set<EventType> eventTypes) {
+                 Set<EventType> eventTypes,
+                 Set<String> eventCategories) {
     }
 
 }

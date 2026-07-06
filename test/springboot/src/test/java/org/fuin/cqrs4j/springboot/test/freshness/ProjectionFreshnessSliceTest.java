@@ -60,7 +60,7 @@ class ProjectionFreshnessSliceTest {
 
     private static final ViewRegistry.Entry ENTRY = new ViewRegistry.Entry(View.class, VIEW, "PersonsView",
             "PersonsProjection", "PersonsProjection", "* * * * * *", 100,
-            Set.of(new EventType("PersonCreatedEvent")));
+            Set.of(new EventType("PersonCreatedEvent")), Set.of());
 
     private static final ProjectionStreamId STREAM_ID = ProjectionStreamIds.of(ENTRY);
 

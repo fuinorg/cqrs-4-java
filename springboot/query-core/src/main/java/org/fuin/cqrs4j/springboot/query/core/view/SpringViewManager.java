@@ -358,9 +358,10 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             LOG.trace("Projection already exists: {}", viewJob.getProjectionId());
         } else {
             final List<TypeName> typeNames = asTypeNames(viewJob.getEntry().eventTypes());
-            LOG.debug("Creating projection: {} ({})", viewJob.getProjectionId(), typeNames);
+            final List<String> categoryNames = List.copyOf(viewJob.getEntry().eventCategories());
+            LOG.debug("Creating projection: {} (types={}, categories={})", viewJob.getProjectionId(), typeNames, categoryNames);
             try {
-                admin.createProjection(viewJob.getProjectionId(), viewJob.getProjectionStreamId(), true, typeNames);
+                admin.createProjection(viewJob.getProjectionId(), viewJob.getProjectionStreamId(), true, typeNames, categoryNames);
             } catch (StreamAlreadyExistsException ex) {
                 LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
             }
@@ -435,7 +436,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
         public ViewJob(final ViewRegistry.Entry entry) {
             this.entry = Objects.requireNonNull(entry, "entry==null");
-            final String checksumPostfix = "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes());
+            final String checksumPostfix = "-" + CqrsUtils.calculateAdler32Checksum(entry.eventTypes(), entry.eventCategories());
             projectionId = new ProjectionId(entry.projectionName() + checksumPostfix);
             projectionStreamId = new ProjectionStreamId(entry.streamName() + checksumPostfix);
             this.lock = new ReentrantLock(true);

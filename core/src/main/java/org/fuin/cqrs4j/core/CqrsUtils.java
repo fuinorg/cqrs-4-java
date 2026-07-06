@@ -40,4 +40,44 @@ public final class CqrsUtils {
         return checksum.getValue();
     }
 
+    /**
+     * Calculates an Adler32 checksum over a view's selection (event types <em>and</em> categories) so that
+     * two views with a different selection get distinct projection stream identities. Either set may be empty
+     * but not both.
+     *
+     * @param eventTypes Event types the view selects (may be empty).
+     * @param categories Category names the view selects (may be empty).
+     *
+     * @return Checksum.
+     */
+    public static long calculateAdler32Checksum(final Collection<EventType> eventTypes,
+                                                final Collection<String> categories) {
+        final boolean noTypes = eventTypes == null || eventTypes.isEmpty();
+        final boolean noCategories = categories == null || categories.isEmpty();
+        if (noTypes && noCategories) {
+            throw new IllegalArgumentException("eventTypes and categories cannot both be null or empty");
+        }
+        final Adler32 checksum = new Adler32();
+        if (!noTypes) {
+            final List<String> sortedTypes = new ArrayList<>();
+            for (final EventType eventType : eventTypes) {
+                sortedTypes.add(eventType.asBaseType());
+            }
+            Collections.sort(sortedTypes);
+            for (final String type : sortedTypes) {
+                checksum.update(type.getBytes(StandardCharsets.US_ASCII));
+            }
+        }
+        // Separator so that {types=[A], categories=[]} and {types=[], categories=[A]} differ.
+        checksum.update('|');
+        if (!noCategories) {
+            final List<String> sortedCategories = new ArrayList<>(categories);
+            Collections.sort(sortedCategories);
+            for (final String category : sortedCategories) {
+                checksum.update(category.getBytes(StandardCharsets.US_ASCII));
+            }
+        }
+        return checksum.getValue();
+    }
+
 }

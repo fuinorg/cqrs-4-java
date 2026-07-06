@@ -3,6 +3,7 @@ package org.fuin.cqrs4j.core;
 import org.fuin.objects4j.common.ThreadSafe;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Registry that copies information from the view instances.
@@ -28,7 +29,9 @@ public class SimpleViewRegistry implements ViewRegistry {
                         v.getStreamName(),
                         v.getCron(),
                         v.getChunkSize(),
-                        v.getEventTypes()))
+                        v.getEventTypes(),
+                        v.getEventCategories().stream().map(Class::getSimpleName)
+                                .collect(Collectors.toUnmodifiableSet())))
                 .toList();
     }
 

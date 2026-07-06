@@ -30,7 +30,7 @@ public class ProjectionLagMetricsTest {
 
         // PREPARE
         final ViewRegistry.Entry entry = new ViewRegistry.Entry(View.class, "MyView", "myViewBean",
-                "MyProjection", "MyStream", "*/5 * * * * *", 100, Set.of(new EventType("MyEvent")));
+                "MyProjection", "MyStream", "*/5 * * * * *", 100, Set.of(new EventType("MyEvent")), Set.of());
         final ViewRegistry viewRegistry = mock(ViewRegistry.class);
         when(viewRegistry.getViews()).thenReturn(List.of(entry));
 
@@ -58,7 +58,7 @@ public class ProjectionLagMetricsTest {
 
         // PREPARE
         final ViewRegistry.Entry entry = new ViewRegistry.Entry(View.class, "MyView", "myViewBean",
-                "MyProjection", "MyStream", "*/5 * * * * *", 100, Set.of(new EventType("MyEvent")));
+                "MyProjection", "MyStream", "*/5 * * * * *", 100, Set.of(new EventType("MyEvent")), Set.of());
         final ViewRegistry viewRegistry = mock(ViewRegistry.class);
         when(viewRegistry.getViews()).thenReturn(List.of(entry));
 

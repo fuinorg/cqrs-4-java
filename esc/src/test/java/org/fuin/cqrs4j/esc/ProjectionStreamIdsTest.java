@@ -38,8 +38,8 @@ public class ProjectionStreamIdsTest {
         // PREPARE
         final Set<EventType> eventTypes = Set.of(new EventType("PersonCreatedEvent"));
         final ViewRegistry.Entry entry = new ViewRegistry.Entry(View.class, "PersonsView", "PersonsViewBean",
-                "PersonsProjection", "PersonsStream", "* * * * * *", 100, eventTypes);
-        final long checksum = CqrsUtils.calculateAdler32Checksum(eventTypes);
+                "PersonsProjection", "PersonsStream", "* * * * * *", 100, eventTypes, Set.of());
+        final long checksum = CqrsUtils.calculateAdler32Checksum(eventTypes, Set.of());
 
         // TEST & VERIFY
         assertThat(ProjectionStreamIds.of(entry).asString()).isEqualTo("PersonsStream-" + checksum);

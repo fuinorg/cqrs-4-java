@@ -16,7 +16,8 @@
 - Command deduplication: Avoid handling the same command multiple times
 - Process-manager lifecycle hardening (no zombies)
 - Surface read-model freshness to clients
-- Aligned Quarkus with Spring Boot implemenation
+- Aligned Quarkus with Spring Boot implementation
+- Allow views listening to a category of events (like "an entity was created") instead of a list of dedicated event
 
 ## 0.6.0
 - Added new Jackson module
