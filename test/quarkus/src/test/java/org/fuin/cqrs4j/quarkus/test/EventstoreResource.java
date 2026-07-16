@@ -10,7 +10,7 @@ import static org.fuin.cqrs4j.test.helper.TestHelper.createEventstoreContainer;
 
 public class EventstoreResource implements QuarkusTestResourceLifecycleManager {
 
-    static GenericContainer es = createEventstoreContainer("26.1.0");
+    static GenericContainer es = createEventstoreContainer("26.1");
 
     @Override
     public Map<String, String> start() {

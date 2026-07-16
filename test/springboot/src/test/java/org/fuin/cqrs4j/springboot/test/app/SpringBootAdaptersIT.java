@@ -56,7 +56,7 @@ class SpringBootAdaptersIT {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootAdaptersIT.class);
 
-    static GenericContainer<?> es = createEventstoreContainer("26.1.0");
+    static GenericContainer<?> es = createEventstoreContainer("26.1");
 
     static MariaDBContainer<?> db = createMariaDBContainer("11");
 
