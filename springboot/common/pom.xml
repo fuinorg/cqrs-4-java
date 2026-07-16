@@ -46,6 +46,18 @@
             <artifactId>spring-web</artifactId>
         </dependency>
 
+        <!-- Optional: only needed by servlet web applications that register the KeyValueEL cleanup interceptor -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
@@ -69,6 +81,11 @@
         <dependency>
             <groupId>org.fuin.objects4j</groupId>
             <artifactId>objects4j-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.fuin.objects4j</groupId>
+            <artifactId>objects4j-core</artifactId>
         </dependency>
 
         <!-- test -->

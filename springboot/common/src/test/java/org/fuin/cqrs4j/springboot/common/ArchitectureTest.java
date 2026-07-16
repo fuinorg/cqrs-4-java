@@ -33,7 +33,10 @@ public class ArchitectureTest {
                     "jakarta.servlet..",
                     "org.fuin.ddd4j.core..",
                     "org.fuin.objects4j.common..",
+                    "org.fuin.objects4j.core..",
                     "org.jspecify.annotations..",
-                    "org.springframework.web..");
+                    "org.springframework.web..",
+                    "org.springframework.boot..",
+                    "org.springframework.context..");
 
 }

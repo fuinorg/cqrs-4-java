@@ -62,6 +62,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-springboot-common</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.fuin.objects4j</groupId>
             <artifactId>objects4j-common</artifactId>
         </dependency>
@@ -185,6 +190,8 @@
                 <configuration>
                     <ignoredUnusedDeclaredDependencies>
                         <ignoredUnusedDeclaredDependency>com.tngtech.archunit:archunit-junit5</ignoredUnusedDeclaredDependency>
+                        <!-- Runtime-only: activated via AutoConfiguration.imports (KeyValueELCleanupAutoConfiguration), no compile-time reference -->
+                        <ignoredUnusedDeclaredDependency>org.fuin.cqrs4j:cqrs-4-java-springboot-common</ignoredUnusedDeclaredDependency>
                     </ignoredUnusedDeclaredDependencies>
                     <ignoredUsedUndeclaredDependencies>
                         <ignoredUsedUndeclaredDependency>com.tngtech.archunit:archunit-junit5-api</ignoredUsedUndeclaredDependency>

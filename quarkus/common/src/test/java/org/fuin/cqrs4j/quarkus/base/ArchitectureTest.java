@@ -33,8 +33,10 @@ public class ArchitectureTest {
                     "jakarta.enterprise.context..",
                     "jakarta.enterprise.inject..",
                     "jakarta.validation.constraints..",
+                    "jakarta.ws.rs..",
                     "org.eclipse.microprofile.config..",
                     "org.fuin.objects4j.common..",
+                    "org.fuin.objects4j.core..",
                     "org.jspecify.annotations.."
                     );
 

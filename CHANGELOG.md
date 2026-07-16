@@ -18,6 +18,7 @@
 - Surface read-model freshness to clients
 - Aligned Quarkus with Spring Boot implementation
 - Allow views listening to a category of events (like "an entity was created") instead of a list of dedicated event
+- Added KeyValueEL thread local cleanup for Quarkus and Spring Boot.
 
 ## 0.6.0
 - Added new Jackson module
