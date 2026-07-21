@@ -27,8 +27,9 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Registers a {@link KeyValueELCleanupInterceptor} in servlet web applications so the per-thread
- * {@link org.fuin.objects4j.core.KeyValueEL} processor is cleared after every request.
+ * Registers a {@link ThreadLocalCleanupInterceptor} in servlet web applications so the state objects4j binds to the
+ * current thread (the {@link org.fuin.objects4j.core.KeyValueEL} processor and the
+ * {@link org.fuin.objects4j.core.Validators} validator) is cleared after every request.
  * <p>
  * This auto-configuration is activated via the {@code AutoConfiguration.imports} file of the command and query
  * starters. Only active in a servlet web application and when Spring MVC ({@link WebMvcConfigurer}) is on the
@@ -38,16 +39,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @AutoConfiguration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(WebMvcConfigurer.class)
-public class KeyValueELCleanupAutoConfiguration {
+public class ThreadLocalCleanupAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public KeyValueELCleanupInterceptor keyValueELCleanupInterceptor() {
-        return new KeyValueELCleanupInterceptor();
+    public ThreadLocalCleanupInterceptor threadLocalCleanupInterceptor() {
+        return new ThreadLocalCleanupInterceptor();
     }
 
     @Bean
-    public WebMvcConfigurer keyValueELCleanupWebMvcConfigurer(final KeyValueELCleanupInterceptor interceptor) {
+    public WebMvcConfigurer threadLocalCleanupWebMvcConfigurer(final ThreadLocalCleanupInterceptor interceptor) {
         return new WebMvcConfigurer() {
             @Override
             public void addInterceptors(final InterceptorRegistry registry) {

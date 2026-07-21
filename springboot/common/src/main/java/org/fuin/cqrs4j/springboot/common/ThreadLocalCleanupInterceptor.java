@@ -21,21 +21,24 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.fuin.objects4j.common.ThreadSafe;
 import org.fuin.objects4j.core.KeyValueEL;
+import org.fuin.objects4j.core.Validators;
 import org.jspecify.annotations.Nullable;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Removes the thread-bound {@link KeyValueEL} {@code ELProcessor} after every request. Because request threads are
- * pooled, the per-thread processor would otherwise retain the beans of the last request and leak memory (and bleed
- * into a subsequent request handled by the same thread).
+ * Removes the state objects4j binds to the current thread after every request: the {@link KeyValueEL}
+ * {@code ELProcessor} and the {@link Validators} {@code Validator}. Because request threads are pooled, they would
+ * otherwise be retained after the last request and leak memory (and in case of the {@code ELProcessor} its beans would
+ * bleed into a subsequent request handled by the same thread).
  */
 @ThreadSafe
-public class KeyValueELCleanupInterceptor implements HandlerInterceptor {
+public class ThreadLocalCleanupInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(final HttpServletRequest request, final HttpServletResponse response,
                                 final Object handler, @Nullable final Exception ex) {
         KeyValueEL.clear();
+        Validators.clear();
     }
 
 }

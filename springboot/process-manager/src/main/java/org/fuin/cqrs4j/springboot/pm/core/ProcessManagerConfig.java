@@ -10,7 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -32,7 +32,11 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 @Configuration
 @EnableScheduling
 @EnableConfigurationProperties({CommandQueueConfig.class, ProcessTimeoutConfig.class})
-@ComponentScan("org.fuin.cqrs4j.springboot.pm.core")
+// The four annotated classes of that package are registered explicitly instead of being
+// discovered: they are all injected by type, so their bean names are irrelevant, and an
+// application no longer has to have this package inside its own component scan.
+@Import({CommandOutboxService.class, ProcessTimeoutRepository.class, CommandQueueExecutor.class,
+        ProcessTimeoutSweeper.class})
 @EntityScan("org.fuin.cqrs4j.jpa.pm")
 public class ProcessManagerConfig {
 

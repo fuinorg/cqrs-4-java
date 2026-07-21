@@ -8,8 +8,11 @@ import org.fuin.cqrs4j.esc.ProjectionLeaseService;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.fuin.cqrs4j.springboot.query.core.base.EventstoreConfig;
+import org.fuin.cqrs4j.springboot.query.core.view.ProjectionFreshnessService;
 import org.fuin.cqrs4j.springboot.query.core.view.ProjectionLagMetrics;
 import org.fuin.cqrs4j.springboot.query.core.view.SpringViewManager;
+import org.fuin.cqrs4j.springboot.query.core.view.QryProjectionLeaseService;
+import org.fuin.cqrs4j.springboot.query.core.view.QryProjectionService;
 import org.fuin.cqrs4j.springboot.query.core.view.SpringViewRegistry;
 import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.ConverterRegistry;
@@ -27,7 +30,7 @@ import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfig
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor;
@@ -44,7 +47,10 @@ import java.util.UUID;
 @AutoConfigureBefore(JpaRepositoriesAutoConfiguration.class)
 @EnableJpaRepositories(basePackages = {"org.fuin.cqrs4j.springboot.query.core.view"})
 @EnableConfigurationProperties({EventstoreConfig.class})
-@ComponentScan("org.fuin.cqrs4j.springboot.query.core.view")
+// The three annotated classes of that package are registered explicitly instead of being
+// discovered: they are all injected by type, so their bean names are irrelevant, and an
+// application no longer has to have this package inside its own component scan.
+@Import({ProjectionFreshnessService.class, QryProjectionService.class, QryProjectionLeaseService.class})
 @EntityScan("org.fuin.cqrs4j.jpa.query")
 public class Cqrs4jConfig {
 

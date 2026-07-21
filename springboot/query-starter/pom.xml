@@ -190,7 +190,7 @@
                 <configuration>
                     <ignoredUnusedDeclaredDependencies>
                         <ignoredUnusedDeclaredDependency>com.tngtech.archunit:archunit-junit5</ignoredUnusedDeclaredDependency>
-                        <!-- Runtime-only: activated via AutoConfiguration.imports (KeyValueELCleanupAutoConfiguration), no compile-time reference -->
+                        <!-- Runtime-only: activated via AutoConfiguration.imports (ThreadLocalCleanupAutoConfiguration), no compile-time reference -->
                         <ignoredUnusedDeclaredDependency>org.fuin.cqrs4j:cqrs-4-java-springboot-common</ignoredUnusedDeclaredDependency>
                     </ignoredUnusedDeclaredDependencies>
                     <ignoredUsedUndeclaredDependencies>

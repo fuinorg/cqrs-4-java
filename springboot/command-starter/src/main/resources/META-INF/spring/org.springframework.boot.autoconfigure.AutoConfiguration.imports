@@ -1,1 +1,1 @@
-org.fuin.cqrs4j.springboot.common.KeyValueELCleanupAutoConfiguration
+org.fuin.cqrs4j.springboot.common.ThreadLocalCleanupAutoConfiguration
