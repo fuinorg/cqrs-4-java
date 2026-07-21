@@ -43,7 +43,6 @@ import static org.fuin.cqrs4j.quarkus.test.QuarkusTestHelper.personCreatedEvent;
  * <a href="https://github.com/rest-assured/rest-assured/issues/1651">rest-assured issue #1651</a>
  * java.lang.NoClassDefFoundError: javax/json/bind/Jsonb
  */
-@Disabled("Find out why connection to Eventstore hangs (See TODO below)...")
 @QuarkusTest
 @QuarkusTestResource(MariaDbResource.class)
 @QuarkusTestResource(EventstoreResource.class)

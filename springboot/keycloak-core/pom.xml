@@ -49,6 +49,11 @@
         <!-- com.nimbusds:nimbus-jose-jwt is provided transitively by spring-security-oauth2-jose -->
 
         <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-springboot-command-core</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
         </dependency>

@@ -32,6 +32,8 @@ public class ArchitectureTest {
             .resideInAnyPackage(THIS_PACKAGE, "java..",
                     "com.nimbusds..",
                     "org.fuin.cqrs4j.springboot.keycloak.core..",
+                    // Registers the Keycloak implementation of the command execution context provider.
+                    "org.fuin.cqrs4j.springboot.command.core..",
                     "org.fuin.ddd4j.core..",
                     "org.fuin.objects4j.common..",
                     "org.jspecify.annotations..",

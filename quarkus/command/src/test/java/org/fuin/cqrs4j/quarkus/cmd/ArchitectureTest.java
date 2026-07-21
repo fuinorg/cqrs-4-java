@@ -37,6 +37,8 @@ public class ArchitectureTest {
                     "jakarta.persistence..",
                     "jakarta.transaction..",
                     "jakarta.validation..",
+                    // The module now provides the generic command REST endpoint.
+                    "jakarta.ws.rs..",
                     "org.fuin.cqrs4j.core..",
                     "org.fuin.cqrs4j.jpa.command..",
                     "org.fuin.ddd4j.core..",

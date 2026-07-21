@@ -31,6 +31,13 @@ public class ArchitectureTest {
             .onlyDependOnClassesThat()
             .resideInAnyPackage(THIS_PACKAGE, "java..",
                     "org.fuin.objects4j.common..",
-                    "org.jspecify.annotations..");
+                    "org.jspecify.annotations..",
+                    // The starter now contributes the generic command endpoint, so it wires the
+                    // controller and its execution context provider from the command core.
+                    "org.fuin.cqrs4j.springboot.command.core..",
+                    "org.fuin.ddd4j.core..",
+                    "org.springframework.beans..",
+                    "org.springframework.boot..",
+                    "org.springframework.context..");
 
 }

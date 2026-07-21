@@ -45,6 +45,9 @@ public class ArchitectureTest {
                     "org.springframework.context..",
                     "org.springframework.core..",
                     "org.springframework.http..",
+                    // The module provides the generic command endpoint, which reads the caller
+                    // from the security context.
+                    "org.springframework.security..",
                     "org.springframework.stereotype..",
                     "org.springframework.transaction..",
                     "org.springframework.web..");

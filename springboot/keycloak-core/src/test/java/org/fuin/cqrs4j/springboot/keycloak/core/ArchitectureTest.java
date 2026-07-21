@@ -39,6 +39,8 @@ public class ArchitectureTest {
                     "org.springframework.context..",
                     "org.springframework.core..",
                     "org.springframework.http..",
+                    // Implements the command execution context provider of the command core.
+                    "org.fuin.cqrs4j.springboot.command.core..",
                     "org.springframework.security..",
                     "org.springframework.util..",
                     "org.springframework.web.."

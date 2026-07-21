@@ -96,6 +96,14 @@
             <artifactId>spring-web</artifactId>
         </dependency>
 
+        <!-- Only needed by SecurityContextCommandExecutionContextProvider; optional so an
+             application without Spring Security is unaffected. -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>

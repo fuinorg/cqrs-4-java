@@ -26,6 +26,8 @@ import org.fuin.cqrs4j.springboot.keycloak.core.JwtTenantIssuerValidator;
 import org.fuin.cqrs4j.springboot.keycloak.core.JwtTenantKeySelector;
 import org.fuin.cqrs4j.springboot.keycloak.core.JwtTenantRepository;
 import org.fuin.cqrs4j.springboot.keycloak.core.KeycloakJwtAuthenticationConverter;
+import org.fuin.cqrs4j.springboot.command.core.CommandExecutionContextProvider;
+import org.fuin.cqrs4j.springboot.keycloak.core.KeycloakCommandExecutionContextProvider;
 import org.fuin.cqrs4j.springboot.keycloak.core.KeycloakTenantRepository;
 import org.fuin.ddd4j.core.TenantId;
 import org.fuin.ddd4j.core.WritableTenantContext;
@@ -158,6 +160,20 @@ public class KeycloakSecurityAutoConfiguration {
             throw new IllegalArgumentException("Failed to extract realm from 'iss': " + iss);
         }
         return iss.substring(p + 1);
+    }
+
+
+    /**
+     * Creates the provider that derives the command execution context from the Keycloak token of the
+     * current request. It supersedes the default provider of the command starter, which only knows
+     * the authenticated name and no realm/tenant.
+     *
+     * @return Execution context provider.
+     */
+    @Bean
+    @ConditionalOnMissingBean(CommandExecutionContextProvider.class)
+    public CommandExecutionContextProvider keycloakCommandExecutionContextProvider() {
+        return new KeycloakCommandExecutionContextProvider();
     }
 
 }
