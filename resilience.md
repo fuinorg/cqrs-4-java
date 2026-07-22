@@ -14,7 +14,7 @@ Three layers now bound that, from innermost to outermost.
 
 Every call of the gRPC event store client waits with a timeout instead of forever. If the client never
 completes the call — the connection was never established, or the work item is queued behind a broken
-connection — the call fails with `EventStoreCallTimeoutException` after **30 seconds** instead of blocking
+connection — the call fails with `EventStoreCallTimeoutException` after **5 seconds** instead of blocking
 the calling thread indefinitely.
 
 A timeout is deliberately *not* reported as an `ExecutionException`, because the callers interpret that as

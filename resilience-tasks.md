@@ -106,7 +106,7 @@ Files: `quarkus/query/.../QuarkusViewManager.java`, `springboot/query-core/.../S
       **[Q]** fixed open-state delay (SmallRye FT supports no more), **[S]** exponential 5s -> x2 -> max 5min.
       A transient failure during the read is now logged at DEBUG instead of ERROR on every tick; a view
       handler throwing is still an ERROR.
-- [ ] No `@Timeout` layer: the operation bound comes from the esc call timeout (30s default) instead.
+- [ ] No `@Timeout` layer: the operation bound comes from the esc call timeout (5s default) instead.
 - [ ] Breakers expose no metrics yet; **[Q]** logs state changes at INFO, **[S]** logs nothing.
 - [ ] Push-mode reconnect: `esc` `ViewSubscriptions` re-subscribes at a fixed `RESUBSCRIBE_BACKOFF_MILLIS
       = 5000`. Generalize to **exponential backoff + jitter + max-attempts** (coordinate with
