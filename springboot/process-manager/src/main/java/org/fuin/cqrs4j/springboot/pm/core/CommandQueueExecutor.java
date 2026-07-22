@@ -2,7 +2,13 @@ package org.fuin.cqrs4j.springboot.pm.core;
 
 import org.fuin.cqrs4j.springboot.pm.core.CommandOutboxService.Entry;
 import org.fuin.objects4j.common.Contract;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.core.IntervalFunction;
+import org.fuin.cqrs4j.core.CqrsUtils;
 import org.fuin.objects4j.common.ThreadSafe;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -41,6 +47,15 @@ public class CommandQueueExecutor {
     private final TransactionTemplate requiresNewTransaction;
 
     private final Lock lock = new ReentrantLock();
+
+    /**
+     * Guards the delivery of a queued command. Without it a command endpoint that is down is contacted once
+     * per queued command on every tick, and - worse - every failed attempt consumes the retry budget, so a
+     * short outage dead-letters commands that were perfectly deliverable. Package visible so a test can
+     * inject one.
+     */
+    @Nullable
+    volatile CircuitBreaker deliveryBreaker;
 
     /**
      * Constructor with mandatory data.
@@ -83,7 +98,11 @@ public class CommandQueueExecutor {
             }
             LOG.debug("Draining {} queued command(s)", batch.size());
             for (final Entry entry : batch) {
-                deliver(entry);
+                if (!deliver(entry)) {
+                    // Endpoint is known to be down: stop the run and leave the rest of the batch queued.
+                    LOG.debug("Command endpoint unavailable - deferring the rest of the batch");
+                    break;
+                }
             }
         } catch (final RuntimeException ex) { // NOSONAR - a failing run must not kill the scheduler
             LOG.error("Error draining the command outbox", ex);
@@ -92,16 +111,62 @@ public class CommandQueueExecutor {
         }
     }
 
-    private void deliver(final Entry entry) {
+    /**
+     * Delivers a single queued command.
+     *
+     * @param entry Command to deliver.
+     * @return {@literal false} if the endpoint is known to be unavailable and the rest of the batch should be
+     *         deferred, {@literal true} otherwise (delivered, or failed in a way that was recorded).
+     */
+    private boolean deliver(final Entry entry) {
         try {
-            commandRestClient.cmd(entry.type(), entry.contentType(), entry.json());
+            circuitBreaker().executeCallable(() -> {
+                commandRestClient.cmd(entry.type(), entry.contentType(), entry.json());
+                return null;
+            });
             requiresNewTransaction.executeWithoutResult(status -> outboxService.delete(entry.id()));
             LOG.debug("Delivered command '{}' ({})", entry.id(), entry.type());
-        } catch (final RuntimeException ex) {
+            return true;
+        } catch (final CallNotPermittedException ex) {
+            // Deliberately NO recordFailure: the command was never sent, so this must not count towards
+            // the dead-letter budget. It stays queued and is tried again once the breaker half-opens.
+            return false;
+        } catch (final Exception ex) { // NOSONAR - the guarded call declares Exception
             LOG.warn("Failed to deliver command '{}' ({}): {}", entry.id(), entry.type(), ex.getMessage());
             requiresNewTransaction.executeWithoutResult(
                     status -> outboxService.recordFailure(entry.id(), ex.getMessage(), config.getMaxRetries()));
+            return true;
         }
+    }
+
+    /**
+     * Returns the delivery circuit breaker, created lazily because the configuration is injected after
+     * construction.
+     *
+     * @return Breaker shared by all deliveries - it is the endpoint that is down, not a single command.
+     */
+    CircuitBreaker circuitBreaker() {
+        CircuitBreaker result = deliveryBreaker;
+        if (result == null) {
+            synchronized (this) {
+                result = deliveryBreaker;
+                if (result == null) {
+                    result = CircuitBreaker.of("cqrs4j-command-delivery", CircuitBreakerConfig.custom()
+                            .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                            .slidingWindowSize(config.getBreakerWindowSize())
+                            .minimumNumberOfCalls(config.getBreakerWindowSize())
+                            .failureRateThreshold(config.getBreakerFailureRatePercent())
+                            .waitIntervalFunctionInOpenState(IntervalFunction.ofExponentialBackoff(
+                                    config.getBreakerInitialWait(), 2.0, config.getBreakerMaxWait()))
+                            // A rejected command (unknown type, validation error) is not an outage and
+                            // must never open the breaker for all the other commands.
+                            .recordException(CqrsUtils::isTransientInfrastructureFailure)
+                            .build());
+                    deliveryBreaker = result;
+                }
+            }
+        }
+        return result;
     }
 
 }

@@ -32,7 +32,8 @@ class CommandQueueExecutorTest {
     private PlatformTransactionManager transactionManager;
 
     private CommandQueueExecutor newExecutor(final int maxRetries) {
-        final CommandQueueConfig config = new CommandQueueConfig("http://localhost", "*/5 * * * * *", 100, maxRetries);
+        final CommandQueueConfig config = new CommandQueueConfig("http://localhost", "*/5 * * * * *", 100, maxRetries,
+                null, null, null, null, null, null);
         return new CommandQueueExecutor(outboxService, commandRestClient, config, transactionManager);
     }
 
@@ -95,6 +96,30 @@ class CommandQueueExecutorTest {
         testee.drain();
 
         // VERIFY
+        verify(outboxService, never()).delete(anyString());
+        verify(outboxService, never()).recordFailure(anyString(), anyString(), anyInt());
+    }
+
+
+    @Test
+    void testOpenBreakerDefersWithoutConsumingRetries() {
+        // PREPARE: the endpoint is known to be down, so the breaker rejects without calling it.
+        final CommandQueueExecutor testee = newExecutor(5);
+        final io.github.resilience4j.circuitbreaker.CircuitBreaker openBreaker =
+                io.github.resilience4j.circuitbreaker.CircuitBreaker.of("test",
+                        io.github.resilience4j.circuitbreaker.CircuitBreakerConfig.custom().build());
+        openBreaker.transitionToOpenState();
+        testee.deliveryBreaker = openBreaker;
+        when(outboxService.fetchBatch(anyInt())).thenReturn(List.of(
+                new CommandOutboxService.Entry("id-1", "A", "application/json", "{1}"),
+                new CommandOutboxService.Entry("id-2", "B", "application/json", "{2}")));
+
+        // TEST
+        testee.drain();
+
+        // VERIFY: nothing sent, nothing deleted, and no failure recorded - a short outage must not burn
+        // the retry budget and dead-letter valid commands.
+        verify(commandRestClient, never()).cmd(anyString(), anyString(), anyString());
         verify(outboxService, never()).delete(anyString());
         verify(outboxService, never()).recordFailure(anyString(), anyString(), anyInt());
     }

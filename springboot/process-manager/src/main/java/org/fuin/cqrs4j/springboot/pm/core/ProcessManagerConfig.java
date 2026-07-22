@@ -12,7 +12,15 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Configuration;
+import org.fuin.cqrs4j.core.CommandDeliveryException;
+import org.fuin.cqrs4j.core.TransientCommandDeliveryException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestClient;
@@ -61,14 +69,45 @@ public class ProcessManagerConfig {
             updated.map().forEach(springHeaders::put);
             return execution.execute(request, body);
         };
+        // Without timeouts a delivery to an unreachable or wedged endpoint blocks the drain thread
+        // indefinitely; the outbox then makes no progress at all.
+        final SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(config.getConnectTimeout());
+        requestFactory.setReadTimeout(config.getRequestTimeout());
         final RestClient restClient = RestClient.builder()
                 .baseUrl(config.getUrl())
+                .requestFactory(requestFactory)
                 .requestInterceptor(authInterceptor)
+                // Distinguish "the endpoint cannot handle this right now" from "the command itself is
+                // rejected". Without it every status collapses into one exception and the delivery cannot
+                // tell an outage (retry) from a rejection (dead-letter).
+                .defaultStatusHandler(HttpStatusCode::is5xxServerError, (request, response) ->
+                        throwDeliveryFailure(response, true))
+                .defaultStatusHandler(HttpStatusCode::is4xxClientError, (request, response) ->
+                        throwDeliveryFailure(response, false))
                 .build();
         final HttpServiceProxyFactory factory = HttpServiceProxyFactory
                 .builderFor(RestClientAdapter.create(restClient))
                 .build();
         return factory.createClient(CommandRestClient.class);
+    }
+
+    /**
+     * Translates an error response into the matching typed delivery exception.
+     *
+     * @param response         Response received from the command endpoint.
+     * @param transientFailure {@literal true} if delivering the command again may succeed.
+     * @throws IOException Reading the response body failed.
+     */
+    private static void throwDeliveryFailure(final ClientHttpResponse response, final boolean transientFailure)
+            throws IOException {
+        final int status = response.getStatusCode().value();
+        final String body = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
+        final String message = "Command delivery failed: " + status + " " + body;
+        if (transientFailure) {
+            throw new TransientCommandDeliveryException(message, status, null);
+        }
+        throw new CommandDeliveryException(message, status, null);
     }
 
     /**

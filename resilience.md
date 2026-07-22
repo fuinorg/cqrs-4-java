@@ -2,6 +2,12 @@
 
 How this library behaves when the event store or the database is unreachable, and what you can configure.
 
+Two subsystems talk to something that can be down: the **projection catch-up** reads from the event store
+and the database, and the **command outbox** delivers queued commands to the command endpoint over HTTP.
+Both run on a schedule, and both are covered here.
+
+# Projection catch-up
+
 ## The problem this solves
 
 The projection catch-up runs on a schedule. When the event store is unreachable, every single tick used to
@@ -112,9 +118,57 @@ Resilience4j supports an **exponentially growing** wait between probes, so a lon
 less often. SmallRye Fault Tolerance only supports a **fixed** delay, so the Quarkus side re-probes on a
 constant interval. Both stop hammering an unreachable store; only the Spring side backs off progressively.
 
+# Command outbox delivery
+
+The process manager queues commands in an outbox and a scheduled drain delivers them over HTTP. The outbox
+already gives durable redelivery and a dead-letter queue after `maxRetries` attempts (default 5).
+
+## The problem this solved
+
+Every failure looked the same. A connection error, a `503` from an overloaded endpoint and a `400` for a
+malformed command all ended up as one generic exception, so the drain could not tell "try again later" from
+"this will never work". Combined with a tick every 5 seconds and no timeouts, that meant:
+
+- an unreachable endpoint blocked the drain thread until the operating system gave up, and
+- **a 25 second outage permanently dead-lettered valid commands**, because every failed tick consumed one of
+  the five attempts.
+
+## What is in place
+
+**Typed failures.** `TransientCommandDeliveryException` (endpoint unreachable, timed out, or answered 5xx)
+and `CommandDeliveryException` (the endpoint answered and the command itself is the problem, typically 4xx).
+The permanent case is checked first, so an answered 4xx stays permanent even if there is an `IOException`
+somewhere in its cause chain.
+
+**Timeouts.** Connect and request/read timeouts on both clients, 5 seconds each by default.
+
+**Circuit breaker.** Trips only on transient failures, so a single rejected command never stops delivery for
+all the others. While it is open **the batch is deferred untouched: nothing is recorded**, so an outage does
+not consume the retry budget and cannot dead-letter commands that were never even sent. A rejected command
+still records a failure and is still dead-lettered at `maxRetries`.
+
+| Property (`org.fuin.cqrs4j.pm.cmdqueue.*`) | Default | Meaning |
+|---|---|---|
+| `connectTimeout` | `5s` | Time to wait for a connection |
+| `requestTimeout` | `5s` | Time to wait for a response |
+| `breaker.delay` *(Quarkus)* | `30s` | How long the breaker stays open |
+| `breaker.requestVolumeThreshold` *(Quarkus)* | `4` | Deliveries judged before it may open |
+| `breaker.failureRatio` *(Quarkus)* | `0.5` | Share of failures that opens it |
+| `breaker.windowSize` *(Spring)* | `4` | Deliveries judged before it may open |
+| `breaker.failureRatePercent` *(Spring)* | `50` | Share of failures that opens it |
+| `breaker.initialWait` *(Spring)* | `5s` | Wait before the first probe |
+| `breaker.maxWait` *(Spring)* | `5m` | Upper bound for the wait between probes |
+
+On Quarkus the values are milliseconds; on Spring they are durations (`5s`, `1m`). As with the projection
+catch-up, the Spring side backs off exponentially while the Quarkus side re-probes on a fixed interval.
+
+**Quarkus applications must add `io.quarkus:quarkus-smallrye-fault-tolerance`** here too.
+
 ## Current limits
 
-- There are **no retries, bulkheads or rate limits**, and the breakers expose no metrics.
+- There are **no per-call retries, bulkheads or rate limits**, and the breakers expose no metrics. For the
+  outbox that is deliberate: the outbox itself is the retry mechanism, and retrying inside a delivery would
+  multiply the time a wedged endpoint holds the drain thread.
 - **Push mode** re-subscribes on a fixed interval rather than backing off progressively.
 - Build timeouts (surefire/failsafe per-test and per-fork, and the GitHub job timeout) are a build concern
   rather than a runtime one; they live in the root `pom.xml` and `.github/workflows/maven.yml`.

@@ -43,7 +43,9 @@ public class ArchitectureTest {
                     "org.fuin.utils4j..",
                     "org.jspecify.annotations..",
                     "org.slf4j..",
-                    "org.springframework.."
+                    "org.springframework..",
+                    // Fault tolerance for the outbox delivery (circuit breaker).
+                    "io.github.resilience4j.."
             );
 
 }

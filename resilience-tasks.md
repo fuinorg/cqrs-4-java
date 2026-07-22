@@ -94,13 +94,27 @@ Files: `quarkus/process-manager/.../CommandRestClient.java` (JDK `HttpClient`, *
 Files: `springboot/process-manager/.../CommandRestClient.java` (`@PostExchange`),
 `.../ProcessManagerConfig.java` (`commandRestClient` bean — `RestClient` with **no timeout**),
 `.../CommandQueueExecutor.java` (`deliver`, `@Scheduled drain`), `.../CommandQueueConfig.java`.
-- [ ] Configure connect/read **timeouts** on the `RestClient` (set a `ClientHttpRequestFactory` with a
-      `Duration` in `ProcessManagerConfig.commandRestClient`).
-- [ ] Annotate `deliver(...)`/`cmd(...)` with Resilience4j `@TimeLimiter` (or rely on client timeout),
-      `@Retry` (backoff+jitter, `retryExceptions` transient, `ignoreExceptions` business/4xx),
-      `@CircuitBreaker`, `@Bulkhead`. Fallback method records-and-defers (same DLQ-at-maxRetries semantics
-      as O1).
-- [ ] `resilience4j.*` instance config in the module + example `application.yaml`.
+- [x] Connect + read timeouts on the `RestClient` via a `SimpleClientHttpRequestFactory` in
+      `ProcessManagerConfig.commandRestClient` (default 5s each, configurable).
+- [x] Status mapping at the client seam: `defaultStatusHandler` turns 5xx into
+      `TransientCommandDeliveryException` and 4xx into `CommandDeliveryException`, so the typed
+      distinction exists before anything reaches the executor. IO failures need no mapping - Spring's
+      `ResourceAccessException` wraps `IOException`, which `CqrsUtils` already walks to.
+- [x] Resilience4j `CircuitBreaker`, applied **programmatically** for the same reason as O1/V1 (Spring AOP
+      does not intercept self-invocation or private methods). **Exponential open-state**
+      (5s -> x2 -> max 5min) - unlike SmallRye FT on the Quarkus side, which only supports a fixed delay.
+- [x] Same **DEVIATION** as O1: on breaker-open nothing is recorded and the rest of the batch is deferred
+      untouched, instead of recording the failure. Pinned by a test.
+- [x] Config under `org.fuin.cqrs4j.pm.cmdqueue.*`: `connectTimeout`, `requestTimeout`,
+      `breaker.windowSize`, `breaker.failureRatePercent`, `breaker.initialWait`, `breaker.maxWait`.
+      No startup trap here - Spring's `@ConfigurationProperties` constructor binding passes `null` for
+      missing values and the constructor defaults them.
+- [ ] No `@TimeLimiter` (it requires a `CompletableFuture` return type; the client timeout bounds the call
+      instead), no `@Retry` and no `@Bulkhead` - the outbox itself is the retry mechanism and `tryLock`
+      already prevents overlapping runs.
+- [ ] No `resilience4j.*` instance config namespace: the breaker is configured through the
+      `org.fuin.cqrs4j.pm.cmdqueue.breaker.*` keys instead, so there is one place to look regardless of
+      framework. Adding `resilience4j-spring-boot3` would be needed for actuator health/metrics.
 
 ### O3. Example — command→query call (`cqrs-keycloak-example`, Spring) — **[S] S4**
 Files: `query/api/.../roles/RemoteEntityRoleService.java` (`getEntityRoles/findById/findByKey`,
