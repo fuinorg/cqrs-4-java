@@ -13,7 +13,9 @@ import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
+import io.smallrye.faulttolerance.api.Guard;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.faulttolerance.exceptions.CircuitBreakerOpenException;
 import org.fuin.cqrs4j.core.CqrsUtils;
 import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.View;
@@ -43,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -97,6 +100,15 @@ public class QuarkusViewManager {
     @ConfigProperty(name = "org.fuin.cqrs4j.projection.mode", defaultValue = "poll")
     String projectionMode = "poll";
 
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.breaker.delay", defaultValue = "30000")
+    long breakerDelayMillis;
+
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.breaker.requestVolumeThreshold", defaultValue = "4")
+    int breakerRequestVolumeThreshold;
+
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.breaker.failureRatio", defaultValue = "0.5")
+    double breakerFailureRatio;
+
     @Inject
     Instance<WritableTenantContext> tenantContextInstance;
 
@@ -109,6 +121,15 @@ public class QuarkusViewManager {
     private static final long RESUBSCRIBE_BACKOFF_MILLIS = 5000L;
 
     private final String instanceId = UUID.randomUUID().toString();
+
+    /**
+     * Guards the event store / database access of the scheduled catch-up. Without it a wedged store is
+     * hit again on every single tick, and each attempt blocks a thread until it times out. Once the
+     * breaker opens, the attempts fail immediately until the delay elapsed and the store is probed again.
+     * Only transient infrastructure failures count as a failure, so a broken view handler does not open it.
+     */
+    @Nullable
+    private volatile Guard catchUpGuard;
 
     private volatile List<ViewExt> views = Collections.emptyList();
 
@@ -253,11 +274,25 @@ public class QuarkusViewManager {
             return;
         }
         try {
-            // Read and dispatch events. A failure here is a real processing error (e.g. a view handler throwing).
-            eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
-                    currentSlice -> handleChunk(viewJob, currentSlice));
-        } catch (final RuntimeException ex) {
-            LOG.error("Error processing events for viewJob '" + viewJob.entry.beanName() + "'", ex);
+            // Read and dispatch events. Shares the guard with prepareRead: it is the same store and the same
+            // database, so a failure in either place counts towards the same breaker.
+            guard().call(() -> {
+                eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
+                        currentSlice -> handleChunk(viewJob, currentSlice));
+                return null;
+            }, Void.class);
+        } catch (final CircuitBreakerOpenException ex) {
+            LOG.debug("Circuit breaker is open, skipping the event read for viewJob '{}'",
+                    viewJob.entry.beanName());
+        } catch (final Exception ex) { // NOSONAR - the guarded call declares Exception
+            if (CqrsUtils.isTransientInfrastructureFailure(ex)) {
+                // The store or database went away mid-read; the next run continues from the last checkpoint.
+                LOG.debug("Could not read events for viewJob '{}' (will retry on the next run): {}",
+                        viewJob.entry.beanName(), ex.toString());
+            } else {
+                // A real processing error, e.g. a view handler throwing.
+                LOG.error("Error processing events for viewJob '" + viewJob.entry.beanName() + "'", ex);
+            }
         }
     }
 
@@ -274,10 +309,18 @@ public class QuarkusViewManager {
     @Nullable
     private Long prepareRead(final ViewExt viewJob, final ProjectionStreamId projectionStreamId) {
         try {
-            createProjection(viewJob);
-            return projectionService.readProjectionPosition(projectionStreamId);
-        } catch (final RuntimeException ex) {
-            if (isTransientInfrastructureFailure(ex)) {
+            return guard().call(() -> {
+                createProjection(viewJob);
+                return projectionService.readProjectionPosition(projectionStreamId);
+            }, Long.class);
+        } catch (final CircuitBreakerOpenException ex) {
+            // The store is known to be unreachable: fail immediately instead of blocking a thread on every
+            // tick. The breaker probes it again once the delay elapsed.
+            LOG.debug("Circuit breaker is open, skipping the projection read for viewJob '{}'",
+                    viewJob.entry.beanName());
+            return null;
+        } catch (final Exception ex) { // NOSONAR - the guarded call declares Exception
+            if (CqrsUtils.isTransientInfrastructureFailure(ex)) {
                 // Expected during an event store / database reconnect or shutdown; self-heals next run.
                 LOG.debug("Could not reach the event store for viewJob '{}' (will retry on the next run): {}",
                         viewJob.entry.beanName(), ex.toString());
@@ -292,30 +335,37 @@ public class QuarkusViewManager {
     }
 
     /**
-     * Determines if the given error looks like a transient event store / infrastructure connectivity failure
-     * (gRPC transport error, socket/IO error, or a JDBC/JPA connection problem) that is expected to self-heal,
-     * as opposed to an unexpected programming/configuration error that should be surfaced (e.g. a missing CDI
-     * context). Walks the whole cause chain.
+     * Returns the guard for the catch-up, created lazily because the configuration is injected after
+     * construction.
      *
-     * @param error Error to classify.
-     * @return {@literal true} if the error is a transient infrastructure failure.
+     * @return Guard shared by all views - it is the event store / database that is unavailable, not a
+     *         single view.
      */
-    private static boolean isTransientInfrastructureFailure(final Throwable error) {
-        for (Throwable t = error; t != null; t = t.getCause()) {
-            if (t instanceof java.io.IOException) {
-                return true;
-            }
-            final String type = t.getClass().getName();
-            if (type.startsWith("io.grpc.")                       // gRPC transport / StatusRuntimeException
-                    || type.startsWith("java.net.")               // ConnectException, SocketException, ...
-                    || type.startsWith("java.sql.")               // SQLException / transient DB errors
-                    || type.startsWith("jakarta.persistence.")    // JPA persistence exceptions on a DB hiccup
-                    || type.startsWith("org.springframework.dao.")) { // Spring's DataAccessException hierarchy
-                return true;
+    private Guard guard() {
+        Guard result = catchUpGuard;
+        if (result == null) {
+            synchronized (this) {
+                result = catchUpGuard;
+                if (result == null) {
+                    result = Guard.create()
+                            .withDescription("cqrs4j-projection-catch-up")
+                            .withCircuitBreaker()
+                            // A failing view handler or a configuration error must not open the breaker,
+                            // only a store/database that cannot be reached.
+                            .when(CqrsUtils::isTransientInfrastructureFailure)
+                            .requestVolumeThreshold(breakerRequestVolumeThreshold)
+                            .failureRatio(breakerFailureRatio)
+                            .delay(breakerDelayMillis, ChronoUnit.MILLIS)
+                            .onStateChange(state -> LOG.info("Projection catch-up circuit breaker is now {}", state))
+                            .done()
+                            .build();
+                    catchUpGuard = result;
+                }
             }
         }
-        return false;
+        return result;
     }
+
 
     private void createProjection(@NotNull final ViewExt viewJob) {
         if (!admin.projectionExists(viewJob.getProjectionId())) {

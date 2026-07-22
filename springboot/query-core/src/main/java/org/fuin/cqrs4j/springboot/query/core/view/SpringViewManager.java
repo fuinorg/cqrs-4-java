@@ -1,5 +1,9 @@
 package org.fuin.cqrs4j.springboot.query.core.view;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.core.IntervalFunction;
 import jakarta.validation.constraints.NotNull;
 import org.jspecify.annotations.Nullable;
 import org.fuin.cqrs4j.core.CqrsUtils;
@@ -39,6 +43,7 @@ import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Collections;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -56,6 +61,21 @@ import java.util.concurrent.locks.ReentrantLock;
 public class SpringViewManager implements ApplicationListener<ContextClosedEvent>, SchedulingConfigurer {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpringViewManager.class);
+
+    /** Number of catch-up attempts the circuit breaker judges before it may open. */
+    private static final int BREAKER_WINDOW_SIZE = 4;
+
+    /** Percentage of failed attempts within the window that opens the circuit breaker. */
+    private static final float BREAKER_FAILURE_RATE_PERCENT = 50.0f;
+
+    /** Wait before the first probe after the circuit breaker opened. */
+    private static final Duration BREAKER_INITIAL_WAIT = Duration.ofSeconds(5);
+
+    /** Factor the wait between probes grows by while the store stays unreachable. */
+    private static final double BREAKER_BACKOFF_MULTIPLIER = 2.0;
+
+    /** Upper bound for the wait between probes, so the view still recovers after a long outage. */
+    private static final Duration BREAKER_MAX_WAIT = Duration.ofMinutes(5);
 
     private final ScheduledAnnotationBeanPostProcessor postProcessor;
 
@@ -84,6 +104,24 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     private final String owner;
 
     private final long leaseTtlMillis;
+
+    /**
+     * Guards the event store / database access of the scheduled catch-up. Without it a wedged store is hit
+     * again on every single tick, and each attempt blocks a thread until it times out. Once the breaker
+     * opens the attempts fail immediately, and the wait before the next probe grows exponentially so a
+     * longer outage is not hammered. Only transient infrastructure failures count as a failure, so a broken
+     * view handler does not open it.
+     */
+    private final CircuitBreaker circuitBreaker = CircuitBreaker.of("cqrs4j-projection-catch-up",
+            CircuitBreakerConfig.custom()
+                    .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                    .slidingWindowSize(BREAKER_WINDOW_SIZE)
+                    .minimumNumberOfCalls(BREAKER_WINDOW_SIZE)
+                    .failureRateThreshold(BREAKER_FAILURE_RATE_PERCENT)
+                    .waitIntervalFunctionInOpenState(IntervalFunction.ofExponentialBackoff(
+                            BREAKER_INITIAL_WAIT, BREAKER_BACKOFF_MULTIPLIER, BREAKER_MAX_WAIT))
+                    .recordException(CqrsUtils::isTransientInfrastructureFailure)
+                    .build());
 
     private final boolean multitenancyEnabled;
 
@@ -285,11 +323,25 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             return;
         }
         try {
-            // Read and dispatch events. A failure here is a real processing error (e.g. a view handler throwing).
-            eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
-                    currentSlice -> handleChunk(viewJob, currentSlice));
-        } catch (final RuntimeException ex) {
-            LOG.error("Error processing events for viewJob '" + viewJob.entry.beanName() + "'", ex);
+            // Read and dispatch events. Shares the breaker with prepareRead: it is the same store and the
+            // same database, so a failure in either place counts towards the same breaker.
+            circuitBreaker.executeCallable(() -> {
+                eventstore.readAllEventsForward(projectionStreamId, nextEventNumber, viewJob.getEntry().chunkSize(),
+                        currentSlice -> handleChunk(viewJob, currentSlice));
+                return null;
+            });
+        } catch (final CallNotPermittedException ex) {
+            LOG.debug("Circuit breaker is open, skipping the event read for viewJob '{}'",
+                    viewJob.entry.beanName());
+        } catch (final Exception ex) { // NOSONAR - the guarded call declares Exception
+            if (CqrsUtils.isTransientInfrastructureFailure(ex)) {
+                // The store or database went away mid-read; the next run continues from the last checkpoint.
+                LOG.debug("Could not read events for viewJob '{}' (will retry on the next run): {}",
+                        viewJob.entry.beanName(), ex.toString());
+            } else {
+                // A real processing error, e.g. a view handler throwing.
+                LOG.error("Error processing events for viewJob '" + viewJob.entry.beanName() + "'", ex);
+            }
         }
     }
 
@@ -307,13 +359,21 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
     @Nullable
     private Long prepareRead(final ViewJob viewJob, final ProjectionStreamId projectionStreamId) {
         try {
-            createProjection(viewJob);
-            if (!eventstore.streamExists(projectionStreamId)) { // May not exist if no events have been projected
-                return null;
-            }
-            return projectionService.readProjectionPosition(projectionStreamId);
-        } catch (final RuntimeException ex) {
-            if (isTransientInfrastructureFailure(ex)) {
+            return circuitBreaker.executeCallable(() -> {
+                createProjection(viewJob);
+                if (!eventstore.streamExists(projectionStreamId)) { // May not exist if no events have been projected
+                    return null;
+                }
+                return projectionService.readProjectionPosition(projectionStreamId);
+            });
+        } catch (final CallNotPermittedException ex) {
+            // The store is known to be unreachable: fail immediately instead of blocking a thread on every
+            // tick. The wait between probes grows with every failed attempt.
+            LOG.debug("Circuit breaker is open, skipping the projection read for viewJob '{}'",
+                    viewJob.entry.beanName());
+            return null;
+        } catch (final Exception ex) { // NOSONAR - the guarded call declares Exception
+            if (CqrsUtils.isTransientInfrastructureFailure(ex)) {
                 // Expected during an event store / database reconnect or shutdown; self-heals next run.
                 LOG.debug("Could not reach the event store for viewJob '{}' (will retry on the next run): {}",
                         viewJob.entry.beanName(), ex.toString());
@@ -327,31 +387,6 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
         }
     }
 
-    /**
-     * Determines if the given error looks like a transient event store / infrastructure connectivity failure
-     * (gRPC transport error, socket/IO error, or a JDBC/JPA connection problem) that is expected to self-heal,
-     * as opposed to an unexpected programming/configuration error that should be surfaced. Walks the whole
-     * cause chain.
-     *
-     * @param error Error to classify.
-     * @return {@literal true} if the error is a transient infrastructure failure.
-     */
-    private static boolean isTransientInfrastructureFailure(final Throwable error) {
-        for (Throwable t = error; t != null; t = t.getCause()) {
-            if (t instanceof java.io.IOException) {
-                return true;
-            }
-            final String type = t.getClass().getName();
-            if (type.startsWith("io.grpc.")                       // gRPC transport / StatusRuntimeException
-                    || type.startsWith("java.net.")               // ConnectException, SocketException, ...
-                    || type.startsWith("java.sql.")               // SQLException / transient DB errors
-                    || type.startsWith("jakarta.persistence.")    // JPA persistence exceptions on a DB hiccup
-                    || type.startsWith("org.springframework.dao.")) { // Spring's DataAccessException hierarchy
-                return true;
-            }
-        }
-        return false;
-    }
 
     private void createProjection(@NotNull final ViewJob viewJob) {
         if (admin.projectionExists(viewJob.getProjectionId())) {

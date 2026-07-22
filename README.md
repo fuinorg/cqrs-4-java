@@ -50,6 +50,9 @@ The BOM manages the following modules:
 - `cqrs-4-java-springboot-query-starter`
 - `cqrs-4-java-quarkus`
 
+## Resilience
+See [resilience.md](resilience.md) for what happens when the event store or the database is unreachable, and how the timeouts and circuit breakers can be configured.
+
 ## Example
 See [ddd-cqrs-4-java-example](https://github.com/fuinorg/ddd-cqrs-4-java-example) for example microservices using the classes of this library.
 

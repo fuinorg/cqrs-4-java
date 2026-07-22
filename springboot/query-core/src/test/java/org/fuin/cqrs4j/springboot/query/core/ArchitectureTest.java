@@ -49,7 +49,9 @@ public class ArchitectureTest {
                     "org.springframework.jdbc..",
                     "org.springframework.scheduling..",
                     "org.springframework.stereotype..",
-                    "org.springframework.transaction.."
+                    "org.springframework.transaction..",
+                    // Fault tolerance for the scheduled catch-up (circuit breaker).
+                    "io.github.resilience4j.."
                     );
 
 }

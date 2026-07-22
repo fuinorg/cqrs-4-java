@@ -50,7 +50,10 @@ public class ArchitectureTest {
                     "io.quarkus.arc..",
                     "io.quarkus.narayana.jta..",
                     "io.quarkus.runtime..",
-                    "io.quarkus.scheduler.."
+                    "io.quarkus.scheduler..",
+                    // Fault tolerance for the scheduled catch-up (circuit breaker).
+                    "io.smallrye.faulttolerance.api..",
+                    "org.eclipse.microprofile.faulttolerance.."
                     );
 
 }

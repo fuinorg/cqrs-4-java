@@ -20,21 +20,27 @@ Framework tags: **[Q]** SmallRye FT (Quarkus) · **[S]** Resilience4j (Spring) �
 ## Phase 0 — Foundation
 
 ### F1. Shared transient-failure classifier — **[N]**
-- [ ] Promote the duplicated `isTransientInfrastructureFailure(Throwable)` (currently private in
-      `quarkus/query/.../QuarkusViewManager.java` and `springboot/query-core/.../SpringViewManager.java`)
-      into a reusable helper in `cqrs-4-java-core` (e.g. `CqrsUtils`) or an esc util, keyed on
-      `EscConnectionException` + `io.grpc.*` + `java.net.*` + `java.io.IOException` + `java.sql.*` +
-      `jakarta.persistence.*` + `org.springframework.dao.*`. Both view managers and all retry/CB predicates
-      reuse it (single source of truth).
+- [x] Promoted to `CqrsUtils.isTransientInfrastructureFailure(Throwable)` in `cqrs-4-java-core`; both view
+      managers delegate, and both circuit breaker predicates use it. Covered by `CqrsUtilsTest`.
+      Keyed on `java.util.concurrent.TimeoutException` (the esc call timeout) + `io.grpc.*` + `java.net.*` +
+      `java.io.IOException` + `java.sql.*` + `jakarta.persistence.*` + `org.springframework.dao.*`.
+- [ ] Add `EscConnectionException` to the predicate once event-store-commons Phase 0 introduces it.
 
 ### F2. Dependencies & config skeleton
-- [ ] **[Q]** Add `quarkus-smallrye-fault-tolerance` to the Quarkus modules that will guard remote calls
-      (`quarkus-process-manager`, optionally `quarkus-command`/`quarkus-query`).
-- [ ] **[S]** Add `io.github.resilience4j:resilience4j-spring-boot3` + `spring-boot-starter-aop` to the
-      Spring modules (`springboot-pm-core`, `keycloak-core`, optionally `command-core`/`query-core`);
-      expose actuator health/metrics.
-- [ ] Establish config namespaces and safe defaults (SmallRye MP-Config keys for Q; `resilience4j.*`
-      instances for S). Document in each module README.
+- [x] **[Q]** `quarkus-query` builds against `smallrye-fault-tolerance-api` +
+      `microprofile-fault-tolerance-api` (NOT the extension - `dependency:analyze` rejects it as unused,
+      same arrangement as `quarkus-scheduler-api`). **The application must add
+      `io.quarkus:quarkus-smallrye-fault-tolerance`** for the runtime SPI; `test/quarkus` does.
+- [ ] **[Q]** Still missing in `quarkus-process-manager` / `quarkus-command`.
+- [x] **[S]** `springboot-query-core` uses `resilience4j-circuitbreaker` + `resilience4j-core`
+      (programmatic API). Versions added to `org.fuin:bom` - neither framework BOM manages resilience4j.
+- [ ] **[S]** `resilience4j-spring-boot3` + `spring-boot-starter-aop` + actuator health/metrics NOT added:
+      the guards are applied programmatically, so no AOP proxies are involved. Needed only if annotation
+      driven config or actuator integration is wanted.
+- [ ] **[S]** Still missing in `springboot-pm-core` / `keycloak-core`.
+- [x] Config namespace `org.fuin.cqrs4j.projection.breaker.*` for **[Q]** (all with defaults).
+      Documented in [resilience.md](resilience.md).
+- [ ] **[S]** side is not configurable yet - the values are constants in `SpringViewManager`.
 
 ---
 
@@ -90,11 +96,18 @@ throws `IllegalStateException`, no resilience), `shared/.../SharedExampleUtils.j
 ### V1. Projection catch-up hardening — **[Q]/[S] S1/S2**
 Files: `quarkus/query/.../QuarkusViewManager.java`, `springboot/query-core/.../SpringViewManager.java`
 (`prepareRead`, `readStreamEvents` → `readAllEventsForward` → `handleChunk`).
-- [ ] The catch-up already **self-heals** (scheduled retry + `isTransientInfrastructureFailure`
-      classification + logs transient at DEBUG / unexpected at ERROR). Optional hardening: wrap
-      `readAllEventsForward`/`handleChunk` with **[Q]** `@Timeout`+`@CircuitBreaker` / **[S]** Resilience4j
-      so a wedged store trips a breaker (visible in metrics) instead of failing silently every tick. Keep
-      the schedule as the ultimate self-heal.
+- [x] `prepareRead` (create projection + read checkpoint) **and** `readAllEventsForward`/`handleChunk`
+      (reading and dispatching the events) are guarded by one shared circuit breaker in both
+      frameworks, so a wedged store no longer blocks a thread on every tick. The guards are applied
+      **programmatically** (**[Q]** `Guard`, **[S]** `CircuitBreaker.executeCallable`) rather than by
+      annotation, because MP-FT / Spring AOP interceptors never fire on self-invocation or private methods -
+      annotating `prepareRead` would have compiled and silently done nothing. Both breakers trip only on
+      `CqrsUtils.isTransientInfrastructureFailure`. The schedule remains the ultimate self-heal.
+      **[Q]** fixed open-state delay (SmallRye FT supports no more), **[S]** exponential 5s -> x2 -> max 5min.
+      A transient failure during the read is now logged at DEBUG instead of ERROR on every tick; a view
+      handler throwing is still an ERROR.
+- [ ] No `@Timeout` layer: the operation bound comes from the esc call timeout (30s default) instead.
+- [ ] Breakers expose no metrics yet; **[Q]** logs state changes at INFO, **[S]** logs nothing.
 - [ ] Push-mode reconnect: `esc` `ViewSubscriptions` re-subscribes at a fixed `RESUBSCRIBE_BACKOFF_MILLIS
       = 5000`. Generalize to **exponential backoff + jitter + max-attempts** (coordinate with
       event-store-commons E1).
