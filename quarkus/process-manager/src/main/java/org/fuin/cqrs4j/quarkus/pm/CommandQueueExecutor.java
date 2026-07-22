@@ -1,6 +1,12 @@
 package org.fuin.cqrs4j.quarkus.pm;
 
 import io.quarkus.scheduler.Scheduled;
+import io.smallrye.faulttolerance.api.Guard;
+import org.eclipse.microprofile.faulttolerance.exceptions.CircuitBreakerOpenException;
+import org.fuin.cqrs4j.core.CqrsUtils;
+import org.jspecify.annotations.Nullable;
+
+import java.time.temporal.ChronoUnit;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.fuin.cqrs4j.quarkus.pm.CommandOutboxService.Entry;
@@ -40,6 +46,17 @@ public class CommandQueueExecutor {
     private final Lock lock = new ReentrantLock();
 
     /**
+     * Guards the delivery of a queued command. Without it a command endpoint that is down is contacted once
+     * per queued command on every tick, and - worse - every failed attempt consumes the retry budget, so a
+     * short outage dead-letters commands that were perfectly deliverable. While the breaker is open the
+     * batch is deferred untouched instead.
+     */
+    // Package visible so a test can inject a pass-through; guard() honours a pre-set instance. Creating a
+    // real Guard needs the SmallRye Fault Tolerance runtime SPI, which only exists inside the container.
+    @Nullable
+    volatile Guard deliveryGuard;
+
+    /**
      * Reads a batch of queued commands and delivers them. Scheduled via the cron expression from
      * {@code org.fuin.cqrs4j.pm.cmdqueue.cron}. Overlapping runs are skipped.
      */
@@ -56,7 +73,11 @@ public class CommandQueueExecutor {
             }
             LOG.debug("Draining {} queued command(s)", batch.size());
             for (final Entry entry : batch) {
-                deliver(entry);
+                if (!deliver(entry)) {
+                    // Endpoint is known to be down: stop the run and leave the rest of the batch queued.
+                    LOG.debug("Command endpoint unavailable - deferring the rest of the batch");
+                    break;
+                }
             }
         } catch (final RuntimeException ex) { // NOSONAR - a failing run must not kill the scheduler
             LOG.error("Error draining the command outbox", ex);
@@ -65,15 +86,61 @@ public class CommandQueueExecutor {
         }
     }
 
-    private void deliver(final Entry entry) {
+    /**
+     * Delivers a single queued command.
+     *
+     * @param entry Command to deliver.
+     * @return {@literal false} if the endpoint is known to be unavailable and the rest of the batch should be
+     *         deferred, {@literal true} otherwise (delivered, or failed in a way that was recorded).
+     */
+    private boolean deliver(final Entry entry) {
         try {
-            commandRestClient.cmd(entry.type(), entry.contentType(), entry.json());
+            guard().call(() -> {
+                commandRestClient.cmd(entry.type(), entry.contentType(), entry.json());
+                return null;
+            }, Void.class);
             outboxService.delete(entry.id());
             LOG.debug("Delivered command '{}' ({})", entry.id(), entry.type());
-        } catch (final RuntimeException ex) {
+            return true;
+        } catch (final CircuitBreakerOpenException ex) {
+            // Deliberately NO recordFailure: the command was never sent, so this must not count towards
+            // the dead-letter budget. It stays queued and is tried again once the breaker half-opens.
+            return false;
+        } catch (final Exception ex) { // NOSONAR - the guarded call declares Exception
             LOG.warn("Failed to deliver command '{}' ({}): {}", entry.id(), entry.type(), ex.getMessage());
             outboxService.recordFailure(entry.id(), ex.getMessage(), config.getMaxRetries());
+            return true;
         }
+    }
+
+    /**
+     * Returns the delivery guard, created lazily because the configuration is injected after construction.
+     *
+     * @return Guard shared by all deliveries - it is the endpoint that is down, not a single command.
+     */
+    private Guard guard() {
+        Guard result = deliveryGuard;
+        if (result == null) {
+            synchronized (this) {
+                result = deliveryGuard;
+                if (result == null) {
+                    result = Guard.create()
+                            .withDescription("cqrs4j-command-delivery")
+                            .withCircuitBreaker()
+                            // A rejected command (unknown type, validation error) is not an outage and
+                            // must never open the breaker for all the other commands.
+                            .when(CqrsUtils::isTransientInfrastructureFailure)
+                            .requestVolumeThreshold(config.getBreakerRequestVolumeThreshold())
+                            .failureRatio(config.getBreakerFailureRatio())
+                            .delay(config.getBreakerDelay(), ChronoUnit.MILLIS)
+                            .onStateChange(state -> LOG.info("Command delivery circuit breaker is now {}", state))
+                            .done()
+                            .build();
+                    deliveryGuard = result;
+                }
+            }
+        }
+        return result;
     }
 
 }

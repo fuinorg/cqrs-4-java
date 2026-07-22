@@ -100,6 +100,13 @@ public final class CqrsUtils {
      */
     public static boolean isTransientInfrastructureFailure(@Nullable final Throwable error) {
         for (Throwable t = error; t != null; t = t.getCause()) {
+            if (t instanceof TransientCommandDeliveryException) {
+                return true;
+            }
+            if (t instanceof CommandDeliveryException) {
+                // Permanent: the endpoint answered and the command itself is the problem.
+                return false;
+            }
             if (t instanceof java.io.IOException) {
                 return true;
             }

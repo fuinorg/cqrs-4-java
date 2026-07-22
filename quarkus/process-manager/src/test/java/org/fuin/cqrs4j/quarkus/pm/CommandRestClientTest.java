@@ -1,6 +1,7 @@
 package org.fuin.cqrs4j.quarkus.pm;
 
 import jakarta.enterprise.inject.Instance;
+import org.fuin.cqrs4j.core.TransientCommandDeliveryException;
 import org.fuin.cqrs4j.core.CommandAuthProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,7 @@ public class CommandRestClientTest {
         authProviders = mock(Instance.class);
         when(authProviders.isResolvable()).thenReturn(false);
         testee = new CommandRestClient();
-        testee.config = new CommandQueueConfig("http://localhost:9999", 100, 5);
+        testee.config = new CommandQueueConfig("http://localhost:9999", 100, 5, 1000, 1000, 30000, 4, 0.5);
         testee.authProviders = authProviders;
         testee.httpClient = httpClient;
     }
@@ -67,7 +68,7 @@ public class CommandRestClientTest {
 
         // TEST & VERIFY
         assertThatThrownBy(() -> testee.cmd("MyCommand", "application/json", "{}"))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(TransientCommandDeliveryException.class)
                 .hasMessageContaining("500");
     }
 

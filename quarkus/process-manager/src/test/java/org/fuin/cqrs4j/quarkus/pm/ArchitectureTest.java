@@ -48,7 +48,10 @@ public class ArchitectureTest {
                     "org.slf4j..",
                     "io.micrometer..",
                     "io.quarkus.narayana.jta..",
-                    "io.quarkus.scheduler.."
+                    "io.quarkus.scheduler..",
+                    // Fault tolerance for the outbox delivery (circuit breaker).
+                    "io.smallrye.faulttolerance.api..",
+                    "org.eclipse.microprofile.faulttolerance.."
                     );
 
 }

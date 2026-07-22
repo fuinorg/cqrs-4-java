@@ -4,8 +4,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.fuin.cqrs4j.core.CommandAuthProvider;
+import org.fuin.cqrs4j.core.CommandDeliveryException;
+import org.fuin.cqrs4j.core.TransientCommandDeliveryException;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ThreadSafe;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -13,6 +16,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +38,32 @@ public class CommandRestClient {
     @Inject
     Instance<CommandAuthProvider> authProviders;
 
-    HttpClient httpClient = HttpClient.newHttpClient();
+    // Package visible so a test can inject a mock; httpClient() honours a pre-set instance.
+    @Nullable
+    volatile HttpClient httpClient;
+
+    /**
+     * Returns the HTTP client, created lazily because the configuration is injected after construction.
+     * Without a connect timeout a delivery to an unreachable host blocks the drain thread until the OS
+     * gives up, which can be minutes.
+     *
+     * @return HTTP client.
+     */
+    HttpClient httpClient() {
+        HttpClient result = httpClient;
+        if (result == null) {
+            synchronized (this) {
+                result = httpClient;
+                if (result == null) {
+                    result = HttpClient.newBuilder()
+                            .connectTimeout(Duration.ofMillis(config.getConnectTimeout()))
+                            .build();
+                    httpClient = result;
+                }
+            }
+        }
+        return result;
+    }
 
     /**
      * Sends a command for execution.
@@ -51,19 +81,33 @@ public class CommandRestClient {
         Contract.requireArgNotNull("cmdJson", cmdJson);
         final HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(config.getUrl() + "/cmd/" + type))
                 .header("Content-Type", contentType)
+                .timeout(Duration.ofMillis(config.getRequestTimeout()))
                 .POST(HttpRequest.BodyPublishers.ofString(cmdJson));
         applyAuthHeaders(builder);
         try {
-            final HttpResponse<String> response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() >= 300) {
-                throw new IllegalStateException("Command delivery failed: " + response.statusCode() + " " + response.body());
+            final HttpResponse<String> response = httpClient().send(builder.build(), HttpResponse.BodyHandlers.ofString());
+            final int status = response.statusCode();
+            if (status >= 500) {
+                // The endpoint is there but cannot handle the request right now - worth delivering again.
+                throw new TransientCommandDeliveryException(
+                        "Command delivery failed: " + status + " " + response.body(), status, null);
+            }
+            if (status >= 300) {
+                // The endpoint answered that the command itself is the problem - delivering it again
+                // cannot succeed, so it must not consume the retry budget as if it were an outage.
+                throw new CommandDeliveryException(
+                        "Command delivery failed: " + status + " " + response.body(), status, null);
             }
             return response.body();
+        } catch (final HttpTimeoutException ex) {
+            throw new TransientCommandDeliveryException(
+                    "Command delivery timed out: " + ex.getMessage(), 0, ex);
         } catch (final IOException ex) {
-            throw new IllegalStateException("Command delivery failed: " + ex.getMessage(), ex);
+            throw new TransientCommandDeliveryException(
+                    "Could not reach the command endpoint: " + ex.getMessage(), 0, ex);
         } catch (final InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while delivering command", ex);
+            throw new TransientCommandDeliveryException("Interrupted while delivering command", 0, ex);
         }
     }
 
