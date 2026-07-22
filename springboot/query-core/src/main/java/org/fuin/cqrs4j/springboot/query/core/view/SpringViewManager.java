@@ -11,6 +11,7 @@ import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.View;
 import org.fuin.cqrs4j.core.ViewRegistry;
 import org.fuin.cqrs4j.esc.ProjectionLeaseService;
+import org.fuin.cqrs4j.esc.EscUtils;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.cqrs4j.esc.ViewSubscriptions;
 import org.fuin.ddd4j.core.Event;
@@ -120,7 +121,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
                     .failureRateThreshold(BREAKER_FAILURE_RATE_PERCENT)
                     .waitIntervalFunctionInOpenState(IntervalFunction.ofExponentialBackoff(
                             BREAKER_INITIAL_WAIT, BREAKER_BACKOFF_MULTIPLIER, BREAKER_MAX_WAIT))
-                    .recordException(CqrsUtils::isTransientInfrastructureFailure)
+                    .recordException(EscUtils::isTransientInfrastructureFailure)
                     .build());
 
     private final boolean multitenancyEnabled;
@@ -334,7 +335,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             LOG.debug("Circuit breaker is open, skipping the event read for viewJob '{}'",
                     viewJob.entry.beanName());
         } catch (final Exception ex) { // NOSONAR - the guarded call declares Exception
-            if (CqrsUtils.isTransientInfrastructureFailure(ex)) {
+            if (EscUtils.isTransientInfrastructureFailure(ex)) {
                 // The store or database went away mid-read; the next run continues from the last checkpoint.
                 LOG.debug("Could not read events for viewJob '{}' (will retry on the next run): {}",
                         viewJob.entry.beanName(), ex.toString());
@@ -373,7 +374,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
                     viewJob.entry.beanName());
             return null;
         } catch (final Exception ex) { // NOSONAR - the guarded call declares Exception
-            if (CqrsUtils.isTransientInfrastructureFailure(ex)) {
+            if (EscUtils.isTransientInfrastructureFailure(ex)) {
                 // Expected during an event store / database reconnect or shutdown; self-heals next run.
                 LOG.debug("Could not reach the event store for viewJob '{}' (will retry on the next run): {}",
                         viewJob.entry.beanName(), ex.toString());

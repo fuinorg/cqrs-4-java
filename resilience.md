@@ -32,12 +32,19 @@ ESGrpcEventStore.builder()
 new GrpcProjectionAdminEventStore(client, tenantContext, Duration.ofSeconds(10));
 ```
 
-## 2. Failure classification (`cqrs-4-java-core`)
+## 2. Failure classification
 
-`CqrsUtils.isTransientInfrastructureFailure(Throwable)` decides whether a failure is an expected
-connectivity problem or an unexpected programming/configuration error. It walks the whole cause chain and
-matches gRPC transport errors, call timeouts, `java.net.*`, `java.io.IOException`, `java.sql.*`,
-`jakarta.persistence.*` and `org.springframework.dao.*`.
+`EscUtils.isTransientInfrastructureFailure(Throwable)` (module `cqrs-4-java-esc`) decides whether a failure
+is an expected connectivity problem or an unexpected programming/configuration error.
+
+The event store reports every "store or database not reachable" condition as an `EscConnectionException`,
+so a single `instanceof` settles those. Anything else falls back to
+`CqrsUtils.isTransientInfrastructureFailure(Throwable)` in `cqrs-4-java-core`, which stays free of any event
+store dependency and matches gRPC transport errors, call timeouts, `java.net.*`, `java.io.IOException`,
+`java.sql.*`, `jakarta.persistence.*` and `org.springframework.dao.*` by name - so failures raised *below*
+the event store abstraction are still recognised.
+
+Use the `EscUtils` variant wherever an event store is involved, the `CqrsUtils` one where it is not.
 
 It is used for two things:
 

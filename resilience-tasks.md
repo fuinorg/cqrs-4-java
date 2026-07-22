@@ -24,7 +24,11 @@ Framework tags: **[Q]** SmallRye FT (Quarkus) Â· **[S]** Resilience4j (Spring) Â
       managers delegate, and both circuit breaker predicates use it. Covered by `CqrsUtilsTest`.
       Keyed on `java.util.concurrent.TimeoutException` (the esc call timeout) + `io.grpc.*` + `java.net.*` +
       `java.io.IOException` + `java.sql.*` + `jakarta.persistence.*` + `org.springframework.dao.*`.
-- [ ] Add `EscConnectionException` to the predicate once event-store-commons Phase 0 introduces it.
+- [x] `EscConnectionException` is used now that esc Phase 0 shipped it. Kept layered so that
+      `cqrs-4-java-core` stays free of any event store dependency (its ArchUnit rule enforces that):
+      the new `EscUtils.isTransientInfrastructureFailure(..)` in `cqrs-4-java-esc` does the typed
+      `instanceof` and delegates to `CqrsUtils` for everything else. Both view managers and both circuit
+      breaker predicates use `EscUtils`.
 
 ### F2. Dependencies & config skeleton
 - [x] **[Q]** `quarkus-query` builds against `smallrye-fault-tolerance-api` +
