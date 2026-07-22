@@ -58,7 +58,8 @@ class QuarkusAppTest {
     @Inject
     JsonbProvider jsonbProvider;
 
-    @ConfigProperty(name = "quarkus.http.port")
+    // A @QuarkusTest serves on the test port (8081 by default), not on "quarkus.http.port" (8080).
+    @ConfigProperty(name = "quarkus.http.test-port")
     Integer port;
 
     private String getBaseUrl() {

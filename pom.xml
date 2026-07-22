@@ -30,8 +30,8 @@
 
     <properties>
         <description>Base classes for Command Query Responsibility Segregation (CQRS) with Java</description>
-        <quarkus.version>3.21.0</quarkus.version>
-        <spring.boot.version>3.4.4</spring.boot.version>
+        <quarkus.version>3.23.4</quarkus.version>
+        <spring.boot.version>3.5.14</spring.boot.version>
         <jackson.version>2.18.2</jackson.version>
         <esc.version>0.10.0-SNAPSHOT</esc.version>
         <ddd4j.version>0.8.0-SNAPSHOT</ddd4j.version>
@@ -284,6 +284,20 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
                         <argLine>-Duser.country=US -Duser.language=en --add-opens java.base/java.util=ALL-UNNAMED ${argLine}</argLine>
+                        <!-- Backstop for hangs outside a test method (Quarkus augmentation, container
+                             startup). Must stay below the 30 minute job timeout in the GitHub workflow,
+                             otherwise the runner is killed first and no log is kept. -->
+                        <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
+                        <properties>
+                            <configurationParameters>
+                                <!-- A stuck test (for example a gRPC call whose future never completes)
+                                     fails with a stack trace naming the blocked line instead of running
+                                     until the CI job is killed. Deliberately limited to testable methods:
+                                     a global default would also cover @BeforeAll, where pulling container
+                                     images can legitimately take a long time on a cold runner. -->
+                                junit.jupiter.execution.timeout.testable.method.default = 5 m
+                            </configurationParameters>
+                        </properties>
                     </configuration>
                 </plugin>
 
@@ -357,6 +371,16 @@
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <!-- Kept in lockstep with the parent's maven-surefire-plugin (3.5.5). -->
                     <version>3.5.5</version>
+                    <configuration>
+                        <!-- Same rationale as the surefire timeouts above. Integration tests start
+                             real containers, so the per-method budget is more generous. -->
+                        <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
+                        <properties>
+                            <configurationParameters>
+                                junit.jupiter.execution.timeout.testable.method.default = 10 m
+                            </configurationParameters>
+                        </properties>
+                    </configuration>
                 </plugin>
 
                 <plugin>
@@ -368,6 +392,41 @@
             </plugins>
 
         </pluginManagement>
+
+        <plugins>
+
+            <!-- org.fuin:bom deliberately overrides versions that the Quarkus / Spring Boot BOMs
+                 also manage (for example protobuf-java, which the KurrentDB client needs at 4.28.2
+                 while quarkus-bom pins 3.25.x). An imported BOM only wins against another imported
+                 BOM declared LATER in the same POM, so org.fuin:bom has to come first. Getting the
+                 order wrong fails silently - the override is simply ignored - which is why it is
+                 checked here instead of relying on a comment. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-protobuf-version-from-fuin-bom</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>com.google.protobuf:protobuf-java:[,4.28.2)</exclude>
+                                        <exclude>com.google.protobuf:protobuf-java-util:[,4.28.2)</exclude>
+                                    </excludes>
+                                    <message>protobuf-java must be 4.28.2 or newer: the KurrentDB client generates its gRPC stubs against it and needs com.google.protobuf.RuntimeVersion. With the 3.25.x line that quarkus-bom pins, the generated code dies on the gRPC callback thread and every call (for example appendToStream) hangs forever instead of failing. The version comes from org.fuin:bom, which therefore MUST be imported BEFORE io.quarkus:quarkus-bom / org.springframework.boot:spring-boot-dependencies in this POM - an imported BOM only wins against another imported BOM declared later in the same POM.</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
 
     </build>
 

@@ -15,12 +15,22 @@
     <packaging>jar</packaging>
     <description>${description} (TEST-QUARKUS)</description>
 
-    <properties>
-        <quarkus.version>3.21.0</quarkus.version>
-    </properties>
 
     <dependencyManagement>
         <dependencies>
+
+            <!-- Must be imported BEFORE quarkus-bom. An imported BOM only wins against another
+                 imported BOM declared later in the same POM, so the deliberate overrides in
+                 org.fuin:bom (for example protobuf-java, which the KurrentDB client needs at
+                 4.28.2 while quarkus-bom pins 3.25.x) would otherwise be silently ignored. -->
+            <dependency>
+                <groupId>org.fuin</groupId>
+                <artifactId>bom</artifactId>
+                <version>${org-fuin-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <dependency>
                 <groupId>io.quarkus</groupId>
                 <artifactId>quarkus-bom</artifactId>
@@ -28,6 +38,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 

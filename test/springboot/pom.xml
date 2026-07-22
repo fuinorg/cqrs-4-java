@@ -15,12 +15,20 @@
     <packaging>jar</packaging>
     <description>${description} (TEST-SPRINGBOOT)</description>
 
-    <properties>
-        <spring.boot.version>3.4.4</spring.boot.version>
-    </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- Must be imported BEFORE spring-boot-dependencies. An imported BOM only wins
+                 against another imported BOM declared later in the same POM, so the deliberate
+                 overrides in org.fuin:bom would otherwise be silently ignored. -->
+            <dependency>
+                <groupId>org.fuin</groupId>
+                <artifactId>bom</artifactId>
+                <version>${org-fuin-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
