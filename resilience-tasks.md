@@ -48,7 +48,19 @@ Framework tags: **[Q]** SmallRye FT (Quarkus) · **[S]** Resilience4j (Spring) �
 
 ---
 
-## Phase 1 — S4: Command→Query HTTP (outbox delivery) — highest value
+## Phase 1 — DONE (2026-07-22) — S4: Command→Query HTTP (outbox delivery)
+
+O1 (Quarkus) and O2 (Spring) are implemented; O3 is obsolete (the example no longer has a command→query
+HTTP call - see below). Both outboxes now have connect/request timeouts, typed transient vs. permanent
+delivery failures, and a circuit breaker that **defers the batch without consuming the retry budget** while
+the endpoint is down. Documented for users in [resilience.md](resilience.md).
+
+**Still open across both:** no per-call retry/bulkhead (deliberate - the outbox is the retry mechanism),
+no breaker metrics, and no actuator health indicator on the Spring side.
+
+---
+
+## Phase 1 — original tasks — S4: Command→Query HTTP (outbox delivery) — highest value
 
 The outbox already gives **durable redelivery + dead-letter** (`CommandOutboxService.recordFailure` →
 DLQ at `maxRetries`, default 5). Add fast-fail + backoff + timeout so a down query service doesn't burn
@@ -116,15 +128,25 @@ Files: `springboot/process-manager/.../CommandRestClient.java` (`@PostExchange`)
       `org.fuin.cqrs4j.pm.cmdqueue.breaker.*` keys instead, so there is one place to look regardless of
       framework. Adding `resilience4j-spring-boot3` would be needed for actuator health/metrics.
 
-### O3. Example — command→query call (`cqrs-keycloak-example`, Spring) — **[S] S4**
-Files: `query/api/.../roles/RemoteEntityRoleService.java` (`getEntityRoles/findById/findByKey`,
-throws `IllegalStateException`, no resilience), `shared/.../SharedExampleUtils.java`
-(`createRestClient` — the `RestClient`/`HttpServiceProxyFactory` factory, the natural seam).
-- [ ] Set connect/read timeouts in `SharedExampleUtils.createRestClient` (it already takes a `Duration`).
-- [ ] Guard `RemoteEntityRoleService` methods with Resilience4j `@Retry` + `@CircuitBreaker` +
-      `@TimeLimiter`; `@Fallback` returns empty/last-known roles (or a typed "roles-unavailable") so a down
-      query service degrades the command instead of 500-ing. Treat HTTP 404 as business (no retry), 5xx/IO
-      as transient.
+### O3. Example — command→query call (`cqrs-keycloak-example`, Spring) — **OBSOLETE (2026-07-22)**
+
+**The scenario this task describes no longer exists in the example.** Checked against the current tree:
+
+- `RemoteEntityRoleService` was **deleted** in `5af9883` ("Removed old example classes - Start with fresh
+  generated ones"). There is nothing left to annotate.
+- The timeouts are **already set**: `SharedExampleUtils.clientHttpRequestFactory()` uses connect 2s /
+  read 5s.
+- `SharedExampleUtils` is the only file in the repo that touches `RestClient`, and **nothing calls
+  `createRestClient`** - it is currently dead code. The example does not use the process manager outbox
+  either (no `cmdqueue` configuration).
+
+So there is no command→query HTTP call left to guard. Deliberately **not** guarding `createRestClient`
+speculatively: with no callers nothing would be exercised, tested or demonstrated.
+
+**Revisit when the example regains a command→query call.** The task text above is still the right recipe:
+timeouts at the `createRestClient` seam, then retry + circuit breaker on the calling service, 404 treated
+as business (no retry) and 5xx/IO as transient, with a fallback to empty/last-known roles so a down query
+service degrades the command instead of returning 500.
 
 ---
 
