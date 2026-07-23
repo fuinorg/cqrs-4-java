@@ -350,9 +350,23 @@ Files: `quarkus/keycloak/.../KeycloakTenantConfigResolver.java`, `KeycloakTenant
       the `cmdqueue` configuration, because Quarkus needs it before boot.
       NB the Quarkus `connectTimeout` / `requestTimeout` keys are **plain integers (milliseconds)** while the
       Spring ones are `Duration` strings; passing "1s" fails the application at startup.
-- [ ] **K1 - Keycloak is blocked**, not merely unwritten: neither test application wires Keycloak at all (the
-      only matches are a stubbed auth context). An IT needs a Keycloak container plus OIDC security wiring in
-      a test app first - that is a harness feature, not a test.
+- [x] **K1 - Keycloak outage** (`KeycloakOutageIT`, 2026-07-23). **The earlier "blocked" assessment was too
+      broad and is corrected here.** What needs a secured test application is an end-to-end *token validation*
+      test; K1's claims are about `KeycloakTenantRepository`, so they can be tested against a real Keycloak
+      with no application wiring at all - which is also the sharper test, since a security filter chain would
+      sit between the assertion and the behaviour.
+      Covers the three things the unit tests cannot, because they stub the discovery away: a failed discovery
+      is not repeated on the next call, it *is* attempted again once the backoff elapsed, and an issuer that
+      was resolved keeps being served while Keycloak is down. A counting subclass that still calls the real
+      `super.createTenant(..)` distinguishes "answered from the cache" from "asked again".
+- [x] The container is bound to a **fixed host port**, because Testcontainers hands out a different mapped
+      port on every start and the issuer URI is both the address and the cache key - a moving port would make
+      the "same issuer, Keycloak went away and came back" sequence untestable. Only the master realm is used,
+      so no realm import is needed. `keycloak-core` gained testcontainers test dependencies and the failsafe
+      plugin; the `testcontainers-keycloak` version was already managed in `org.fuin:bom`.
+- [ ] Still not covered: end-to-end **token validation** through the security filter chain during a Keycloak
+      outage. That does need a secured test application (Keycloak container plus OIDC wiring), which is a
+      harness feature rather than a test.
 - [ ] O3 is obsolete (see Phase 1).
 
 ---

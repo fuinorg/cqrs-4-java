@@ -235,6 +235,9 @@ window and every other request fails immediately.
 already in the cache keeps validating tokens from the keys Nimbus holds, so an outage never invalidates
 issuers that were working. Only a *new* issuer appearing during an outage is refused.
 
+All three behaviours - not retrying while down, retrying once the backoff elapsed, and continuing to serve an
+issuer that was already resolved - are checked against a real Keycloak in `KeycloakOutageIT`.
+
 ## Quarkus
 
 The application does not fetch anything itself — `quarkus-oidc` does. Tune it with configuration rather than
