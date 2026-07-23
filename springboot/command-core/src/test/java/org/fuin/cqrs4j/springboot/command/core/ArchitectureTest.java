@@ -42,6 +42,7 @@ public class ArchitectureTest {
                     "org.fuin.objects4j.common..",
                     "org.jspecify.annotations..",
                     "org.slf4j..",
+                    "io.github.resilience4j..",
                     "org.springframework.context..",
                     "org.springframework.core..",
                     "org.springframework.http..",

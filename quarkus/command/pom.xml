@@ -50,6 +50,24 @@
         </dependency>
 
         <dependency>
+            <groupId>org.fuin</groupId>
+            <artifactId>utils4j</artifactId>
+        </dependency>
+
+        <!-- Only the fault tolerance APIs are needed to build. The application supplies the
+             io.quarkus:quarkus-smallrye-fault-tolerance extension that implements them at runtime,
+             exactly like quarkus-query. -->
+        <dependency>
+            <groupId>io.smallrye</groupId>
+            <artifactId>smallrye-fault-tolerance-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.microprofile.fault-tolerance</groupId>
+            <artifactId>microprofile-fault-tolerance-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>

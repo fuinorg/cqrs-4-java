@@ -44,8 +44,11 @@ public class ArchitectureTest {
                     "org.fuin.ddd4j.core..",
                     "org.fuin.esc.api..",
                     "org.fuin.objects4j.common..",
+                    "org.fuin.utils4j..",
                     "org.jspecify.annotations..",
-                    "org.slf4j.."
+                    "org.slf4j..",
+                    "io.smallrye.faulttolerance.api..",
+                    "org.eclipse.microprofile.faulttolerance.."
                     );
 
 }

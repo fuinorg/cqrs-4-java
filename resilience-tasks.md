@@ -192,10 +192,35 @@ Files: `quarkus/query/.../QuarkusViewManager.java`, `springboot/query-core/.../S
 Files: `quarkus/command/.../QuarkusCommandDispatcher.java` + `QuarkusProcessedCommandStore.java`;
 `springboot/command-core/.../CommandDispatcher.java` + `QryProcessedCommandStore.java`;
 `core/.../ProcessedCommandStore.java`.
-- [ ] The receiver's DB dedup (`processed`/`markProcessed`) has no local resilience; it's protected by the
-      *sender's* outbox retry. Add an inbound **`@Bulkhead`** (and optional `@RateLimit`) so a slow DB or a
-      redelivery storm sheds load / fails fast rather than exhausting request threads. Don't add retry here
-      (the sender owns retry) — just isolation + fast-fail.
+- [x] **Inbound bulkhead added (2026-07-23).** `BulkheadProcessedCommandStore` decorates the neutral
+      `ProcessedCommandStore` in both frameworks - **[Q]** SmallRye FT `Guard.withBulkhead()`, **[S]**
+      Resilience4j `Bulkhead` with a short `maxWait` that absorbs the ordinary burstiness of an outbox drain.
+      Applied **programmatically** for the third time and the same reason as O1/O2/V1: MP-FT and Spring AOP
+      interceptors never fire on a bean the application wires up itself, so `@Bulkhead` would have compiled
+      and silently done nothing.
+      No retry here, as the task says - the sender's outbox owns that.
+- [x] **Only `processed(..)` is guarded, never `markProcessed(..)`.** This is the part that is easy to get
+      wrong: `processed` runs *before* any handler does anything, so refusing it costs nothing and the
+      command simply arrives again. `markProcessed` runs *after* the handler succeeded - refusing it would
+      leave the command executed but unrecorded, and the next redelivery would **execute it a second time**.
+      A bulkhead across the whole store would turn an overload into a duplicate side effect. Pinned by a test
+      in both frameworks that fills the bulkhead and then records.
+- [x] A shed command is reported as the new neutral `CommandOverloadedException` and mapped to **HTTP 503**
+      (**[Q]** `CommandOverloadedExceptionMapper`, **[S]** `CommandOverloadedExceptionHandler`). The status
+      is what makes shedding safe end to end: the sender's outbox classifies a 5xx as
+      `TransientCommandDeliveryException`, so the command is deferred and redelivered instead of counting
+      towards the dead-letter budget. A 4xx would permanently dead-letter a perfectly valid command that was
+      merely turned away.
+- [x] Closes part of **F2**: `quarkus-command` now builds against the fault tolerance APIs (the application
+      still supplies `io.quarkus:quarkus-smallrye-fault-tolerance`), and `springboot-command-core` against
+      `resilience4j-bulkhead` + `-core`. **`resilience4j-bulkhead` had to be added to `org.fuin:bom`**
+      (1.0.2-SNAPSHOT, pinned at 2.4.0 like the other two) - that BOM has to be published before CI here is
+      green.
+- [ ] The limits are constructor arguments, not configuration, and no `@RateLimit` was added. Belongs with
+      the other **[Q]**/**[S]** config work in F2.
+- [ ] **[Q]** `CommandOverloadedExceptionMapper` is `@TestOmitted`: building a JAX-RS `Response` needs a
+      `RuntimeDelegate`, which only exists inside the container. The **[S]** handler has a real test, and the
+      Quarkus mapping should be covered by an IT in `test/quarkus` (see Phase 6).
 
 ---
 

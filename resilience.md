@@ -144,6 +144,28 @@ outage starts at the beginning of the schedule again.
 reads from its checkpoint, which is why there is no attempt limit by default and why exhausting a configured
 one is logged and accepted rather than escalated.
 
+## 5. Inbound bulkhead on the command receiver
+
+The receiving side deduplicates commands so a redelivery is not executed twice. That lookup hits the
+database on every incoming command, which makes it the place where a slow database turns into exhausted
+request threads. `BulkheadProcessedCommandStore` bounds how many lookups may run at once and refuses the rest
+straight away, so the endpoint stays responsive for the traffic it can still handle.
+
+There is deliberately **no retry** here — the sender's outbox is the retry mechanism.
+
+A refused command is answered with **HTTP 503**. The sender classifies a 5xx as a transient delivery failure,
+so the command is deferred and delivered again rather than counting towards its dead-letter budget.
+
+**Only the lookup is guarded, never the record.** `processed(..)` runs before the handler does anything, so
+refusing it costs nothing. `markProcessed(..)` runs after the handler succeeded: refusing it would leave the
+command executed but unrecorded, and the next redelivery would execute it a second time. Load shedding must
+never be able to create a duplicate side effect, so the record always goes through — even when the bulkhead
+is full.
+
+Both frameworks apply the bulkhead programmatically, for the same reason as the guards above: the annotation
+would not fire on a bean the application wires up itself. Limits are constructor arguments today, not
+configuration.
+
 # Command outbox delivery
 
 The process manager queues commands in an outbox and a scheduled drain delivers them over HTTP. The outbox
