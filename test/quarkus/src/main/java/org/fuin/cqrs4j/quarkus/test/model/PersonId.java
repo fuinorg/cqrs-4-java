@@ -1,4 +1,4 @@
-package org.fuin.cqrs4j.springboot.test.model;
+package org.fuin.cqrs4j.quarkus.test.model;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -10,7 +10,6 @@ import java.util.UUID;
 import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.persistence.AttributeConverter;
 
-import jakarta.annotation.Generated;
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -25,12 +24,11 @@ import org.fuin.objects4j.common.ConstraintViolationException;
 import org.fuin.objects4j.common.HasPublicStaticIsValidMethod;
 import org.fuin.objects4j.common.HasPublicStaticValueOfMethod;
 
-import javax.annotation.concurrent.Immutable;
+import org.fuin.objects4j.common.Immutable;
 
 /**
  * Unique identifier of a person.
  */
-@Generated("Generated class - Manual changes will be overwritten")
 @Immutable
 @HasEntityTypeConstant
 @HasPublicStaticIsValidMethod
@@ -119,7 +117,7 @@ public final class PersonId extends AggregateRootUuid {
 
         String message()
 
-        default "{org.fuin.cqrs4j.springboot.test.model.PersonId.message}";
+        default "{org.fuin.cqrs4j.quarkus.test.model.PersonId.message}";
 
         Class<?>[] groups() default {};
 

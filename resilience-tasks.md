@@ -167,9 +167,26 @@ Files: `quarkus/query/.../QuarkusViewManager.java`, `springboot/query-core/.../S
       handler throwing is still an ERROR.
 - [ ] No `@Timeout` layer: the operation bound comes from the esc call timeout (5s default) instead.
 - [ ] Breakers expose no metrics yet; **[Q]** logs state changes at INFO, **[S]** logs nothing.
-- [ ] Push-mode reconnect: `esc` `ViewSubscriptions` re-subscribes at a fixed `RESUBSCRIBE_BACKOFF_MILLIS
-      = 5000`. Generalize to **exponential backoff + jitter + max-attempts** (coordinate with
-      event-store-commons E1).
+- [x] **Push-mode reconnect generalized (2026-07-23).** `ViewSubscriptions` now takes an
+      `org.fuin.esc.api.Backoff` (the type added by event-store-commons E1) instead of a fixed
+      `RESUBSCRIBE_BACKOFF_MILLIS = 5000`: exponential, capped, jittered, with an optional attempt limit.
+      Both view managers pass `Backoff.DEFAULT` (500 ms -> x2 -> 30 s cap, 50% jitter, no limit).
+      The attempt counter is **per stream and reset on every successful subscribe**, so a later outage starts
+      at the beginning of the schedule rather than continuing at the delay the previous one ended with -
+      pinned by a test that fails if the reset is removed.
+      The same schedule now also covers the **first** subscribe, which is what lets an application start
+      before the store is reachable. Exhausting a configured attempt limit is logged at `ERROR` and accepted:
+      losing a wake-up subscription costs latency, not correctness, because the poll keeps reading from the
+      checkpoint.
+      The old `(store, scheduler, long millis)` constructor is kept and deprecated; it builds an equivalent
+      non-growing, unjittered `Backoff`, so existing callers keep their exact behaviour.
+- [x] **Not** delegating to event-store-commons `ReconnectingSubscribableEventStore`, although E1 added it.
+      That decorator deliberately does not retry the initial subscribe (which this consumer needs), and its
+      main feature - resuming after the last delivered event - does not apply to a wake-up subscription,
+      which follows new events only and has no position to resume from. The shared piece worth reusing was
+      `Backoff`, and that is what is reused.
+- [ ] The re-subscribe schedule is a constant in both view managers, not configurable. Belongs with the
+      other **[S]**/**[Q]** projection config work in F2.
 
 ### V2. Command dispatch / dedup store — **[Q]/[S] S1/S2**
 Files: `quarkus/command/.../QuarkusCommandDispatcher.java` + `QuarkusProcessedCommandStore.java`;

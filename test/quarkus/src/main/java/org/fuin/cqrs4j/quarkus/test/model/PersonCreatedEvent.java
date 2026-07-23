@@ -1,12 +1,12 @@
-package org.fuin.cqrs4j.springboot.test.model;
+package org.fuin.cqrs4j.quarkus.test.model;
 
 import jakarta.validation.constraints.NotNull;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.json.bind.annotation.JsonbProperty;
+import jakarta.json.bind.annotation.JsonbTypeAdapter;
 import org.fuin.ddd4j.core.EntityIdPath;
 import org.fuin.ddd4j.core.EventId;
 import org.fuin.ddd4j.core.EventType;
-import org.fuin.ddd4j.jackson.AbstractDomainEvent;
+import org.fuin.ddd4j.jsonb.AbstractDomainEvent;
 import org.fuin.esc.api.HasSerializedDataTypeConstant;
 import org.fuin.esc.api.SerializedDataType;
 import org.fuin.objects4j.common.Contract;
@@ -16,11 +16,11 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.concurrent.Immutable;
+import org.fuin.objects4j.common.Immutable;
 import org.fuin.utils4j.Utils4J;
 
-import org.fuin.cqrs4j.springboot.test.model.PersonId;
-import org.fuin.cqrs4j.springboot.test.model.PersonName;
+import org.fuin.cqrs4j.quarkus.test.model.PersonId;
+import org.fuin.cqrs4j.quarkus.test.model.PersonName;
 
 /**
  * A person was created.
@@ -38,10 +38,10 @@ public final class PersonCreatedEvent extends AbstractDomainEvent<PersonId> {
     /** Unique name of the serialized event. */
     public static final SerializedDataType SER_TYPE = new SerializedDataType(TYPE.asBaseType());
 
-    @JsonProperty("id")
+    @JsonbProperty("id")
     private PersonId id;
 
-    @JsonProperty("name")
+    @JsonbProperty("name")
     private PersonName name;
 
 
@@ -53,7 +53,6 @@ public final class PersonCreatedEvent extends AbstractDomainEvent<PersonId> {
     }
 
     @Override
-    @JsonIgnore
     public EventType getEventType() {
         return TYPE;
     }

@@ -118,6 +118,32 @@ Resilience4j supports an **exponentially growing** wait between probes, so a lon
 less often. SmallRye Fault Tolerance only supports a **fixed** delay, so the Quarkus side re-probes on a
 constant interval. Both stop hammering an unreachable store; only the Spring side backs off progressively.
 
+## 4. Push-mode wake-up subscriptions
+
+In `push` mode each view opens a subscription to new events, and an arriving event triggers the catch-up
+pass immediately instead of waiting for the next tick. The event store does not re-subscribe by itself, so
+`ViewSubscriptions` re-establishes a dropped subscription — and retries the very first one, which is what
+lets an application start before the store is reachable.
+
+The schedule is an event-store-commons `Backoff`, `Backoff.DEFAULT` in both frameworks:
+
+| Setting | Value |
+|---|---|
+| Delay before the first re-subscribe | `500 ms` |
+| Growth factor per further failure | `2.0` |
+| Upper bound for the delay | `30 s` |
+| Jitter | `50 %` (the delay is spread over `[0.5 × delay, delay]`) |
+| Attempt limit | none |
+
+The cap keeps a long outage from turning into an even longer recovery, and the jitter keeps every instance
+of a scaled-out service from reconnecting in lockstep and hitting the store as one burst the moment it
+returns. The attempt counter is per stream and resets whenever a subscription is established, so a later
+outage starts at the beginning of the schedule again.
+
+**Losing a wake-up subscription costs latency, never correctness.** The scheduled poll keeps running and
+reads from its checkpoint, which is why there is no attempt limit by default and why exhausting a configured
+one is logged and accepted rather than escalated.
+
 # Command outbox delivery
 
 The process manager queues commands in an outbox and a scheduled drain delivers them over HTTP. The outbox
@@ -169,6 +195,7 @@ catch-up, the Spring side backs off exponentially while the Quarkus side re-prob
 - There are **no per-call retries, bulkheads or rate limits**, and the breakers expose no metrics. For the
   outbox that is deliberate: the outbox itself is the retry mechanism, and retrying inside a delivery would
   multiply the time a wedged endpoint holds the drain thread.
-- **Push mode** re-subscribes on a fixed interval rather than backing off progressively.
+- **Push mode** re-subscribe is not configurable: the schedule is `Backoff.DEFAULT` (500 ms doubling to a
+  30 s cap, 50% jitter, no attempt limit) and is currently a constant in both view managers.
 - Build timeouts (surefire/failsafe per-test and per-fork, and the GitHub job timeout) are a build concern
   rather than a runtime one; they live in the root `pom.xml` and `.github/workflows/maven.yml`.

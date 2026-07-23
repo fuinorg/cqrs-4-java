@@ -17,6 +17,7 @@
  */
 package org.fuin.cqrs4j.esc;
 
+import org.fuin.esc.api.Backoff;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EscApiUtils;
 import org.fuin.esc.api.StreamId;
@@ -27,11 +28,13 @@ import org.fuin.objects4j.common.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 /**
@@ -41,6 +44,22 @@ import java.util.function.BiConsumer;
  * pass immediately instead of waiting for the next scheduled poll. Because the underlying store does not
  * re-subscribe automatically, a dropped subscription is re-established after a backoff (the poll remains as a
  * safety net in the meantime).
+ * <p>
+ * The re-subscribe schedule is an event-store-commons {@link Backoff}: exponential, capped and jittered. A
+ * fixed delay would have every instance of a scaled-out service reconnect in lockstep and hit the store as one
+ * burst the moment it returns, and would keep hammering it at the same rate throughout a long outage. The
+ * attempt counter is per stream and is reset whenever a subscription is established, so a later outage gets
+ * the full schedule again rather than continuing at the delay the previous one ended with.
+ * <p>
+ * The same schedule covers the <em>first</em> subscribe, which matters when the application starts before the
+ * store is reachable. This is why the subscription handling stays here rather than delegating to the
+ * event-store-commons {@code ReconnectingSubscribableEventStore}: that decorator deliberately does not retry
+ * the initial subscribe, and its main feature - resuming after the last delivered event - does not apply to a
+ * wake-up subscription, which follows new events only and has no position to resume from.
+ * <p>
+ * Losing a subscription only costs latency, never correctness: until it is back the catch-up pass runs on its
+ * normal schedule and reads from its checkpoint. That is why exhausting the attempt budget is logged and
+ * accepted rather than escalated.
  * <p>
  * The re-subscribe scheduler is provided by the caller (and owned by it); {@link #close()} stops signalling and
  * unsubscribes but does not shut the scheduler down.
@@ -54,29 +73,65 @@ public final class ViewSubscriptions implements AutoCloseable {
 
     private final ScheduledExecutorService resubscribeScheduler;
 
-    private final long resubscribeBackoffMillis;
+    private final Backoff backoff;
 
     private final Map<String, Subscription> subscriptions = new ConcurrentHashMap<>();
+
+    private final Map<String, AtomicInteger> attempts = new ConcurrentHashMap<>();
 
     private volatile boolean closed;
 
     /**
-     * Constructor with all mandatory data.
+     * Constructor with a fixed re-subscribe delay.
      *
      * @param store                    Subscribable event store.
      * @param resubscribeScheduler     Executor used to re-subscribe after a drop (owned by the caller).
      * @param resubscribeBackoffMillis Delay before a dropped subscription is re-established.
+     *
+     * @deprecated Use {@link #ViewSubscriptions(SubscribableEventStoreAsync, ScheduledExecutorService, Backoff)}
+     *             instead. A fixed delay makes every instance reconnect in lockstep and never backs off during
+     *             a long outage; this constructor now builds an equivalent unjittered, non-growing
+     *             {@link Backoff} so existing callers keep their exact behaviour.
      */
+    @Deprecated(since = "0.9.0", forRemoval = false)
     public ViewSubscriptions(final SubscribableEventStoreAsync store,
                              final ScheduledExecutorService resubscribeScheduler,
                              final long resubscribeBackoffMillis) {
+        this(store, resubscribeScheduler, fixedDelay(resubscribeBackoffMillis));
+        Contract.requireArgMin("resubscribeBackoffMillis", resubscribeBackoffMillis, 0);
+    }
+
+    /**
+     * Constructor with all mandatory data.
+     *
+     * @param store                Subscribable event store.
+     * @param resubscribeScheduler Executor used to re-subscribe after a drop (owned by the caller).
+     * @param backoff              Delay schedule between (re-)subscribe attempts. {@link Backoff#DEFAULT} is a
+     *                             reasonable choice: 500 ms doubling up to 30 s with 50% jitter and no attempt
+     *                             limit, which keeps trying for as long as the application runs.
+     */
+    public ViewSubscriptions(final SubscribableEventStoreAsync store,
+                             final ScheduledExecutorService resubscribeScheduler,
+                             final Backoff backoff) {
         super();
         Contract.requireArgNotNull("store", store);
         Contract.requireArgNotNull("resubscribeScheduler", resubscribeScheduler);
-        Contract.requireArgMin("resubscribeBackoffMillis", resubscribeBackoffMillis, 0);
+        Contract.requireArgNotNull("backoff", backoff);
         this.store = store;
         this.resubscribeScheduler = resubscribeScheduler;
-        this.resubscribeBackoffMillis = resubscribeBackoffMillis;
+        this.backoff = backoff;
+    }
+
+    /**
+     * Builds the schedule that reproduces the old fixed-delay behaviour.
+     *
+     * @param millis Delay to use for every attempt.
+     * @return Backoff that neither grows nor jitters.
+     */
+    private static Backoff fixedDelay(final long millis) {
+        // Backoff requires a positive initial delay; a caller that passed 0 wanted "as soon as possible".
+        final Duration delay = Duration.ofMillis(Math.max(1, millis));
+        return new Backoff(delay, delay, 1.0, 0.0, Backoff.UNLIMITED_ATTEMPTS);
     }
 
     /**
@@ -107,9 +162,7 @@ public final class ViewSubscriptions implements AutoCloseable {
         final BiConsumer<Subscription, Exception> onDrop = (sub, ex) -> {
             subscriptions.remove(streamId.asString());
             if (!closed) {
-                LOG.debug("Subscription for stream {} dropped, re-subscribing in {} ms: {}",
-                        streamId.asString(), resubscribeBackoffMillis, ex == null ? "n/a" : ex.toString());
-                scheduleResubscribe(streamId, onWakeup);
+                scheduleResubscribe(streamId, onWakeup, "dropped: " + (ex == null ? "n/a" : ex.toString()));
             }
         };
         store.subscribeToStream(streamId, EscApiUtils.SUBSCRIBE_TO_NEW_EVENTS, onEvent, onDrop)
@@ -119,26 +172,50 @@ public final class ViewSubscriptions implements AutoCloseable {
                         store.unsubscribeFromStream(subscription);
                     } else {
                         subscriptions.put(streamId.asString(), subscription);
+                        // A later outage starts from the beginning of the schedule, not from the delay this
+                        // one ended with.
+                        attempts(streamId).set(0);
                     }
                 })
                 .exceptionally(throwable -> {
                     if (!closed) {
-                        LOG.debug("Could not subscribe to stream {}, retrying in {} ms: {}",
-                                streamId.asString(), resubscribeBackoffMillis, throwable.toString());
-                        scheduleResubscribe(streamId, onWakeup);
+                        scheduleResubscribe(streamId, onWakeup, "could not subscribe: " + throwable);
                     }
                     return null;
                 });
     }
 
-    private void scheduleResubscribe(final StreamId streamId, final Runnable onWakeup) {
+    /**
+     * Schedules the next (re-)subscribe attempt, or gives up and leaves the view on its poll.
+     *
+     * @param streamId Stream to re-subscribe to.
+     * @param onWakeup Action to run when a new event arrives.
+     * @param reason   Why another attempt is needed, for the log.
+     */
+    private void scheduleResubscribe(final StreamId streamId, final Runnable onWakeup, final String reason) {
+        final int attempt = attempts(streamId).incrementAndGet();
+        if (!backoff.allowsAttempt(attempt)) {
+            // Only latency is lost - the catch-up pass keeps running on its schedule and reads from its
+            // checkpoint - so this is reported and accepted rather than escalated.
+            LOG.error("Wake-up subscription for stream {} could not be established within {} attempts, "
+                            + "staying on the poll ({})",
+                    streamId.asString(), backoff.maxAttempts(), reason);
+            return;
+        }
+        final long delayMillis = backoff.delay(attempt).toMillis();
+        LOG.debug("Wake-up subscription for stream {}, attempt {} in {} ms ({})",
+                streamId.asString(), attempt, delayMillis, reason);
         try {
-            resubscribeScheduler.schedule(() -> doSubscribe(streamId, onWakeup), resubscribeBackoffMillis,
+            resubscribeScheduler.schedule(() -> doSubscribe(streamId, onWakeup), delayMillis,
                     TimeUnit.MILLISECONDS);
         } catch (final RejectedExecutionException ex) {
             // Scheduler already shut down (closing) - nothing to do.
             LOG.trace("Re-subscribe rejected (shutting down) for stream {}", streamId.asString());
         }
+    }
+
+    private AtomicInteger attempts(final StreamId streamId) {
+        return attempts.computeIfAbsent(streamId.asString(), key -> new AtomicInteger());
     }
 
     @Override

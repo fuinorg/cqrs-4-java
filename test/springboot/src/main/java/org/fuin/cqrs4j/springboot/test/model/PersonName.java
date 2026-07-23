@@ -1,4 +1,4 @@
-package org.fuin.cqrs4j.quarkus.test.model;
+package org.fuin.cqrs4j.springboot.test.model;
 
 import java.io.Serializable;
 import java.lang.annotation.Documented;
@@ -11,7 +11,6 @@ import java.util.Objects;
 import jakarta.json.bind.adapter.JsonbAdapter;
 import jakarta.persistence.AttributeConverter;
 
-import jakarta.annotation.Generated;
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -22,7 +21,7 @@ import org.fuin.objects4j.common.ConstraintViolationException;
 import org.fuin.objects4j.common.AsStringCapable;
 import org.fuin.objects4j.common.ValueObjectWithBaseType;
 
-import javax.annotation.concurrent.Immutable;
+import org.fuin.objects4j.common.Immutable;
 
 /**
  * <p class="business">
@@ -33,7 +32,6 @@ import javax.annotation.concurrent.Immutable;
  * This means if you create it from JSON, XML or database (JPA) it may not have a correct length or pattern.
  * </p>
  */
-@Generated("Generated class - Manual changes will be overwritten")
 @Immutable
 
 public final class PersonName implements ValueObjectWithBaseType<String>, Comparable<PersonName>, Serializable, AsStringCapable {
@@ -172,7 +170,7 @@ public final class PersonName implements ValueObjectWithBaseType<String>, Compar
 
         String message()
 
-        default "{org.fuin.cqrs4j.quarkus.test.model.PersonName.message}";
+        default "{org.fuin.cqrs4j.springboot.test.model.PersonName.message}";
 
         Class<?>[] groups() default {};
 

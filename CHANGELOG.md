@@ -1,6 +1,9 @@
 # Release Notes
 
 ## 0.7.0
+- Push-mode wake-up subscriptions re-subscribe with an exponential, capped and jittered `Backoff` (from event-store-commons) instead of a fixed 5 s interval, and the schedule now also covers the first subscribe so an application may start before the event store is reachable.
+  The `ViewSubscriptions(store, scheduler, long)` constructor is deprecated in favour of `ViewSubscriptions(store, scheduler, Backoff)`; it keeps the old behaviour.
+- The `Person*` model classes of the two test applications moved from `src-gen` to regular `src/main/java` and use `org.fuin.objects4j.common.Immutable` instead of `javax.annotation.concurrent.Immutable`.
 - **Incompatible** Refactored view classes
   - Changed back from `JpaEventHandler` to [EventHandler](core/src/main/java/org/fuin/cqrs4j/core/EventHandler.java).
     This results in changes in several places.

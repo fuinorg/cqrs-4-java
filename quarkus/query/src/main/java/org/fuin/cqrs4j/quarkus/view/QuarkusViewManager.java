@@ -24,6 +24,7 @@ import org.fuin.cqrs4j.esc.ProjectionLeaseService;
 import org.fuin.cqrs4j.esc.EscUtils;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.cqrs4j.esc.ViewSubscriptions;
+import org.fuin.esc.api.Backoff;
 import org.fuin.cqrs4j.quarkus.base.QuarkusUtils;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
@@ -119,7 +120,12 @@ public class QuarkusViewManager {
     @Inject
     Instance<SubscribableEventStoreAsync> subscribableEventStoreInstance;
 
-    private static final long RESUBSCRIBE_BACKOFF_MILLIS = 5000L;
+    /**
+     * Schedule for (re-)establishing a wake-up subscription: 500 ms doubling up to 30 s, with jitter so
+     * several instances of a scaled-out service do not reconnect in lockstep, and no attempt limit because
+     * losing the subscription only costs latency - the cron poll keeps the projection correct meanwhile.
+     */
+    private static final Backoff RESUBSCRIBE_BACKOFF = Backoff.DEFAULT;
 
     private final String instanceId = UUID.randomUUID().toString();
 
@@ -189,7 +195,7 @@ public class QuarkusViewManager {
             return thread;
         });
         this.resubscribeScheduler = schedulerService;
-        final ViewSubscriptions subscriptions = new ViewSubscriptions(store, schedulerService, RESUBSCRIBE_BACKOFF_MILLIS);
+        final ViewSubscriptions subscriptions = new ViewSubscriptions(store, schedulerService, RESUBSCRIBE_BACKOFF);
         this.viewSubscriptions = subscriptions;
         for (final ViewExt view : views) {
             subscriptions.subscribe(view.getProjectionStreamId(), () -> updateView(view));

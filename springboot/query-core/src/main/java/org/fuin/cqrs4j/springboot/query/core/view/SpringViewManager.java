@@ -14,6 +14,7 @@ import org.fuin.cqrs4j.esc.ProjectionLeaseService;
 import org.fuin.cqrs4j.esc.EscUtils;
 import org.fuin.cqrs4j.esc.ProjectionService;
 import org.fuin.cqrs4j.esc.ViewSubscriptions;
+import org.fuin.esc.api.Backoff;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.WritableTenantContext;
@@ -139,7 +140,12 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private volatile List<ViewJob> viewJobs = Collections.emptyList();
 
-    private static final long RESUBSCRIBE_BACKOFF_MILLIS = 5000L;
+    /**
+     * Schedule for (re-)establishing a wake-up subscription: 500 ms doubling up to 30 s, with jitter so
+     * several instances of a scaled-out service do not reconnect in lockstep, and no attempt limit because
+     * losing the subscription only costs latency - the scheduled poll keeps the projection correct meanwhile.
+     */
+    private static final Backoff RESUBSCRIBE_BACKOFF = Backoff.DEFAULT;
 
     /**
      * Constructor with mandatory data.
@@ -251,7 +257,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             return thread;
         });
         this.resubscribeScheduler = scheduler;
-        final ViewSubscriptions subscriptions = new ViewSubscriptions(store, scheduler, RESUBSCRIBE_BACKOFF_MILLIS);
+        final ViewSubscriptions subscriptions = new ViewSubscriptions(store, scheduler, RESUBSCRIBE_BACKOFF);
         this.viewSubscriptions = subscriptions;
         for (final ViewJob view : viewJobs) {
             subscriptions.subscribe(view.getProjectionStreamId(), () -> tryLocked(view, () -> readTenantsStreamEvents(view)));
