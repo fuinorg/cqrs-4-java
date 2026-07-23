@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.Adler32;
 
 /**
@@ -82,6 +83,35 @@ public final class CqrsUtils {
     }
 
     /**
+     * Failures that live in the packages matched below but are <em>answers about the data</em>, not signs
+     * that the database could not be reached. A concurrency conflict, a constraint violation or a missing row
+     * will still be there on the next attempt, so treating them as transient would retry them forever, log
+     * them at {@code DEBUG} as if they were expected, and - worst - open the projection circuit breaker for
+     * every other view because of one broken write.
+     * <p>
+     * Matched by name so this class stays free of any JPA or Spring dependency, like the prefixes below.
+     */
+    private static final Set<String> PERMANENT_DATA_FAILURES = Set.of(
+            // JPA
+            "jakarta.persistence.OptimisticLockException",
+            "jakarta.persistence.EntityExistsException",
+            "jakarta.persistence.EntityNotFoundException",
+            "jakarta.persistence.NoResultException",
+            "jakarta.persistence.NonUniqueResultException",
+            "jakarta.persistence.RollbackException",
+            // JDBC
+            "java.sql.SQLIntegrityConstraintViolationException",
+            "java.sql.SQLSyntaxErrorException",
+            "java.sql.SQLFeatureNotSupportedException",
+            // Spring
+            "org.springframework.dao.OptimisticLockingFailureException",
+            "org.springframework.dao.DuplicateKeyException",
+            "org.springframework.dao.DataIntegrityViolationException",
+            "org.springframework.dao.EmptyResultDataAccessException",
+            "org.springframework.dao.IncorrectResultSizeDataAccessException",
+            "org.springframework.dao.InvalidDataAccessApiUsageException");
+
+    /**
      * Determines if the given error looks like a transient infrastructure connectivity failure (event store
      * transport error, call timeout, socket/IO error, or a JDBC/JPA connection problem) that is expected to
      * self-heal, as opposed to an unexpected programming or configuration error that should be surfaced.
@@ -116,6 +146,12 @@ public final class CqrsUtils {
                 return true;
             }
             final String type = t.getClass().getName();
+            if (PERMANENT_DATA_FAILURES.contains(type)) {
+                // The database answered, and the answer is about the data rather than about reaching it.
+                // Retrying cannot change it, so it must not be hidden behind a "will retry" debug line and
+                // must never open a circuit breaker for everyone else.
+                return false;
+            }
             if (type.startsWith("io.grpc.")                       // gRPC transport / StatusRuntimeException
                     || type.startsWith("java.net.")               // ConnectException, SocketException, ...
                     || type.startsWith("java.sql.")               // SQLException / transient DB errors

@@ -66,6 +66,41 @@ class CqrsUtilsTest {
     }
 
     @Test
+    void testIsTransientInfrastructureFailureForDatabaseHiccup() {
+        // A lock that could not be obtained in time, or a query that timed out, means the database is
+        // struggling - the next tick may well succeed.
+        assertThat(CqrsUtils.isTransientInfrastructureFailure(new jakarta.persistence.LockTimeoutException()))
+                .isTrue();
+        assertThat(CqrsUtils.isTransientInfrastructureFailure(new jakarta.persistence.QueryTimeoutException()))
+                .isTrue();
+        assertThat(CqrsUtils.isTransientInfrastructureFailure(new jakarta.persistence.PessimisticLockException()))
+                .isTrue();
+    }
+
+    @Test
+    void testAnswerAboutTheDataIsNotTransient() {
+        // These live in the same packages as the failures above, but the database answered and the answer is
+        // about the data. Retrying cannot change it, and treating it as transient would hide it at DEBUG and
+        // open the projection circuit breaker for every other view.
+        assertThat(CqrsUtils.isTransientInfrastructureFailure(new jakarta.persistence.OptimisticLockException()))
+                .isFalse();
+        assertThat(CqrsUtils.isTransientInfrastructureFailure(new jakarta.persistence.EntityExistsException()))
+                .isFalse();
+        assertThat(CqrsUtils.isTransientInfrastructureFailure(new jakarta.persistence.NoResultException()))
+                .isFalse();
+        assertThat(CqrsUtils.isTransientInfrastructureFailure(
+                new java.sql.SQLIntegrityConstraintViolationException())).isFalse();
+    }
+
+    @Test
+    void testAnswerAboutTheDataWinsOverAWrappingPersistenceException() {
+        // JPA wraps the conflict in a RollbackException on commit - the outermost type must not decide.
+        assertThat(CqrsUtils.isTransientInfrastructureFailure(
+                new jakarta.persistence.RollbackException(new jakarta.persistence.OptimisticLockException())))
+                .isFalse();
+    }
+
+    @Test
     void testIsTransientInfrastructureFailureForNull() {
         assertThat(CqrsUtils.isTransientInfrastructureFailure(null)).isFalse();
     }

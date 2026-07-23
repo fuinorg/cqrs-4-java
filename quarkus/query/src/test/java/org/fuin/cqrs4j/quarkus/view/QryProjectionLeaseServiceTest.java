@@ -8,6 +8,8 @@ import org.fuin.esc.api.StreamId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -45,7 +47,8 @@ public class QryProjectionLeaseServiceTest {
 
     @Test
     public void testAcquireFreshWhenNoLease() {
-        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE)).thenReturn(null);
+        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
+                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(null);
         assertThat(testee.acquire(STREAM, "A", TTL)).isTrue();
         verify(em).persist(any(QryProjectionLease.class));
     }
@@ -53,7 +56,8 @@ public class QryProjectionLeaseServiceTest {
     @Test
     public void testAcquireBlockedByOtherLiveOwner() {
         final QryProjectionLease held = new QryProjectionLease(STREAM, "B", now + TTL);
-        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE)).thenReturn(held);
+        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
+                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(held);
         assertThat(testee.acquire(STREAM, "A", TTL)).isFalse();
         assertThat(held.getOwner()).isEqualTo("B");
         verify(em, never()).persist(any());
@@ -62,7 +66,8 @@ public class QryProjectionLeaseServiceTest {
     @Test
     public void testAcquireTakesOverExpiredLease() {
         final QryProjectionLease held = new QryProjectionLease(STREAM, "B", now - 1);
-        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE)).thenReturn(held);
+        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
+                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(held);
         assertThat(testee.acquire(STREAM, "A", TTL)).isTrue();
         assertThat(held.getOwner()).isEqualTo("A");
         assertThat(held.getExpiresAt()).isEqualTo(now + TTL);
@@ -71,7 +76,8 @@ public class QryProjectionLeaseServiceTest {
     @Test
     public void testAcquireRenewsOwnLease() {
         final QryProjectionLease held = new QryProjectionLease(STREAM, "A", now + 1);
-        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE)).thenReturn(held);
+        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
+                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(held);
         assertThat(testee.acquire(STREAM, "A", TTL)).isTrue();
         assertThat(held.getExpiresAt()).isEqualTo(now + TTL);
     }

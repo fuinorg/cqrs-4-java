@@ -1,6 +1,8 @@
 # Release Notes
 
 ## 0.7.0
+- **Bugfix** `CqrsUtils.isTransientInfrastructureFailure` classified *every* `jakarta.persistence.*`, `java.sql.*` and `org.springframework.dao.*` failure as transient, including `OptimisticLockException`, `DataIntegrityViolationException` and `SQLIntegrityConstraintViolationException`. Those are answers about the data: they were logged at `DEBUG` as "will retry" and one view's constraint violation could open the shared projection circuit breaker for every other view. They are now classified as permanent.
+- The projection lease acquisition bounds its pessimistic lock with `jakarta.persistence.lock.timeout` (3 s), so an instance that is not the leader no longer parks a thread on the lease row on every tick.
 - Added an inbound bulkhead around the command deduplication lookup (`BulkheadProcessedCommandStore`, SmallRye FT on Quarkus / Resilience4j on Spring) so a slow database or a redelivery storm sheds load instead of exhausting request threads. Refused commands are reported as the new `CommandOverloadedException` and answered with HTTP 503, which the sender's outbox treats as transient. Recording a processed command is never refused, so shedding can never cause a double execution.
 - Push-mode wake-up subscriptions re-subscribe with an exponential, capped and jittered `Backoff` (from event-store-commons) instead of a fixed 5 s interval, and the schedule now also covers the first subscribe so an application may start before the event store is reachable.
   The `ViewSubscriptions(store, scheduler, long)` constructor is deprecated in favour of `ViewSubscriptions(store, scheduler, Backoff)`; it keeps the old behaviour.

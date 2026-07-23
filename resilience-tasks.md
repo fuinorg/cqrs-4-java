@@ -229,11 +229,32 @@ Files: `quarkus/command/.../QuarkusCommandDispatcher.java` + `QuarkusProcessedCo
 ### DB1. Lease & position repos — **[Q]/[S] S2**
 Files: `quarkus/query/.../QryProjectionLeaseService.java` + `QryProjectionPositionRepository.java`;
 `springboot/query-core/.../QryProjectionLeaseService.java`; JPA entities in `jpa/query`.
-- [ ] Set query/lock timeouts on the `@Transactional(REQUIRES_NEW)` pessimistic-lock `acquire`
-      (avoid unbounded lock waits under HA contention). Map transient DB failures to the shared classifier;
-      let the view-manager catch-up self-heal.
-- [ ] Size a **[S]** HikariCP / **[Q]** Agroal pool + a bulkhead so projection DB work can't starve the
-      request path.
+- [x] **Lock acquisition bounded (2026-07-23).** Both lease services pass
+      `jakarta.persistence.lock.timeout` (3 s, `LOCK_TIMEOUT_MILLIS`) to the `PESSIMISTIC_WRITE`
+      `em.find(..)`. Without it, every instance that is not the leader parks a thread on the row for as long
+      as the leader holds it - on every tick, on every instance. Giving up quickly is the right answer here
+      because *not* getting the lease is the normal outcome, not a failure: another instance is projecting
+      and the next tick tries again. That Hibernate and PostgreSQL genuinely honour this hint was established
+      by the event-store-commons `JpaFaultInjectionIT`, which measures that a blocked acquisition waits
+      exactly the configured timeout. The mocked stubs in both lease service tests now pin the argument.
+- [x] **Fixed a real misclassification in the shared classifier while checking the second half of this
+      item.** `CqrsUtils.isTransientInfrastructureFailure` matched `jakarta.persistence.`, `java.sql.` and
+      `org.springframework.dao.` by prefix, so it answered "transient" for every failure in those packages -
+      including `OptimisticLockException`, `DataIntegrityViolationException`, `DuplicateKeyException` and
+      `SQLIntegrityConstraintViolationException`. Those are answers *about the data*: they will be there
+      again on the next attempt. Treating them as transient meant they were logged at `DEBUG` as "will retry"
+      (the exact failure mode the class javadoc warns about) and, worse, **one view's constraint violation
+      opened the shared projection circuit breaker for every other view**. A `PERMANENT_DATA_FAILURES` set is
+      now checked before the prefixes, and the cause chain still decides - a conflict wrapped in a
+      `RollbackException` is classified by the conflict, not by the wrapper. Covered by three new tests.
+      This is the same distinction event-store-commons F4 makes when it deliberately leaves
+      `OptimisticLockException` unmapped.
+- [ ] Pool sizing is documented as guidance in [resilience.md](resilience.md) rather than implemented: the
+      library cannot size an application's HikariCP/Agroal pool. **No cross-view bulkhead was added.**
+      `tryLocked` already limits the catch-up to one pass per view, so the worst case is bounded by the
+      number of views - a number the application knows when it sizes its pool. Capping it further would need
+      its own configuration knob and would *delay* projections, which is a poor trade when the poll is
+      already the safety net. Revisit with the **F2** config work if a deployment reports starvation.
 
 ---
 

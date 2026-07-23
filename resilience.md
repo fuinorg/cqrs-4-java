@@ -50,6 +50,14 @@ store dependency and matches gRPC transport errors, call timeouts, `java.net.*`,
 `java.sql.*`, `jakarta.persistence.*` and `org.springframework.dao.*` by name - so failures raised *below*
 the event store abstraction are still recognised.
 
+**A failure that is an answer about the data is not transient**, even though it lives in those same packages.
+`OptimisticLockException`, `DataIntegrityViolationException`, `DuplicateKeyException`,
+`SQLIntegrityConstraintViolationException` and their siblings mean the database answered, and the answer will
+be the same on the next attempt. They are excluded explicitly, so a constraint violation in one view stays
+visible at `ERROR` instead of being logged as "will retry", and cannot open the shared projection breaker for
+every other view. The whole cause chain is inspected, so a conflict wrapped in a `RollbackException` is
+classified by the conflict rather than by the wrapper.
+
 Use the `EscUtils` variant wherever an event store is involved, the `CqrsUtils` one where it is not.
 
 It is used for two things:
@@ -144,7 +152,32 @@ outage starts at the beginning of the schedule again.
 reads from its checkpoint, which is why there is no attempt limit by default and why exhausting a configured
 one is logged and accepted rather than escalated.
 
-## 5. Inbound bulkhead on the command receiver
+## 5. Projection lease: bounded lock wait and pool sizing
+
+With `org.fuin.cqrs4j.projection.ha.enabled=true`, instances compete for a lease before projecting. The
+acquisition takes a `PESSIMISTIC_WRITE` lock on the lease row and gives up after **3 seconds**
+(`jakarta.persistence.lock.timeout`).
+
+Giving up quickly is deliberate: not getting the lease means another instance is projecting, which is the
+normal outcome rather than a failure. Without the bound, every instance that is not the leader would park a
+thread on that row on every scheduled tick.
+
+**Sizing your connection pool.** The library cannot size your HikariCP (Spring) or Agroal (Quarkus) pool, so
+size it yourself with the projection work in mind. `tryLock` limits the catch-up to **one pass per view at a
+time**, so the worst case a projection can occupy is:
+
+```
+concurrent projection connections  <=  number of views  (+1 while the lease transaction runs)
+```
+
+Keep the pool comfortably above that plus your request concurrency; otherwise a slow database lets projection
+passes hold every connection and the request path starves. There is deliberately no bulkhead capping
+projections further — it would delay them for a problem that correct pool sizing solves, and the scheduled
+poll is already the safety net.
+
+# Command receipt
+
+## Inbound bulkhead on the command receiver
 
 The receiving side deduplicates commands so a redelivery is not executed twice. That lookup hits the
 database on every incoming command, which makes it the place where a slow database turns into exhausted

@@ -7,6 +7,8 @@ import org.fuin.esc.api.SimpleStreamId;
 import org.fuin.esc.api.StreamId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,7 +50,8 @@ public class QryProjectionLeaseServiceTest {
     public void testAcquireFreshWhenNoLease() {
 
         // PREPARE
-        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE)).thenReturn(null);
+        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
+                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(null);
 
         // TEST & VERIFY
         assertThat(testee.acquire(STREAM, "A", TTL)).isTrue();
@@ -61,7 +64,8 @@ public class QryProjectionLeaseServiceTest {
 
         // PREPARE: owned by B, expires in the future
         final QryProjectionLease held = new QryProjectionLease(STREAM, "B", now + TTL);
-        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE)).thenReturn(held);
+        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
+                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(held);
 
         // TEST & VERIFY
         assertThat(testee.acquire(STREAM, "A", TTL)).isFalse();
@@ -75,7 +79,8 @@ public class QryProjectionLeaseServiceTest {
 
         // PREPARE: owned by B but already expired
         final QryProjectionLease held = new QryProjectionLease(STREAM, "B", now - 1);
-        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE)).thenReturn(held);
+        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
+                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(held);
 
         // TEST & VERIFY
         assertThat(testee.acquire(STREAM, "A", TTL)).isTrue();
@@ -89,7 +94,8 @@ public class QryProjectionLeaseServiceTest {
 
         // PREPARE: already owned by A
         final QryProjectionLease held = new QryProjectionLease(STREAM, "A", now + 1);
-        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE)).thenReturn(held);
+        when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
+                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(held);
 
         // TEST & VERIFY
         assertThat(testee.acquire(STREAM, "A", TTL)).isTrue();
