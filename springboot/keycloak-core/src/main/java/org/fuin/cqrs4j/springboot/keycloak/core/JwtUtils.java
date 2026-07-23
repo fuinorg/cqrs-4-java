@@ -75,11 +75,24 @@ final class JwtUtils {
 
     private static final String OAUTH_METADATA_PATH = "/.well-known/oauth-authorization-server";
 
+    /**
+     * Default bound for the OIDC discovery call, in milliseconds.
+     * <p>
+     * Discovery runs on the request thread the first time an issuer is seen, so this is how long a request
+     * can be held by an identity provider that is not answering. The upstream copy of this class defaults to
+     * the JDK's 30 s, which is far too long for something on the request path: thirty seconds times the
+     * request threads is an outage of the whole service, not just of authentication. Overriding the two
+     * {@code sun.net.client.*} system properties still works for a deployment that needs longer.
+     */
+    private static final String DEFAULT_TIMEOUT_MILLIS = "5000";
+
     private static final RestTemplate rest = new RestTemplate();
 
     static {
-        int connectTimeout = Integer.parseInt(System.getProperty("sun.net.client.defaultConnectTimeout", "30000"));
-        int readTimeout = Integer.parseInt(System.getProperty("sun.net.client.defaultReadTimeout", "30000"));
+        int connectTimeout = Integer.parseInt(
+                System.getProperty("sun.net.client.defaultConnectTimeout", DEFAULT_TIMEOUT_MILLIS));
+        int readTimeout = Integer.parseInt(
+                System.getProperty("sun.net.client.defaultReadTimeout", DEFAULT_TIMEOUT_MILLIS));
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(connectTimeout);
         requestFactory.setReadTimeout(readTimeout);

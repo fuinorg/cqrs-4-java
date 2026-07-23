@@ -46,11 +46,22 @@ public class JwtTenant implements Tenant {
      * @param issuerUri Issuer URI like "http://localhost:8082/realms/master".
      */
     public JwtTenant(String issuerUri) {
+        this(issuerUri, JwtUtils.getConfigurationForOidcIssuerLocation(
+                Objects.requireNonNull(issuerUri, "issuerUri==null")));
+    }
+
+    /**
+     * Constructor with already resolved settings, skipping the OIDC discovery call.
+     *
+     * @param issuerUri  Issuer URI like "http://localhost:8082/realms/master".
+     * @param attributes OpenID Connect configuration of that issuer.
+     */
+    JwtTenant(String issuerUri, Map<String, Object> attributes) {
         Objects.requireNonNull(issuerUri, "issuerUri==null");
         final int p = issuerUri.lastIndexOf('/');
         final String realm = issuerUri.substring(p + 1);
-        tenantId = new TenantId(realm);
-        attributes = JwtUtils.getConfigurationForOidcIssuerLocation(issuerUri);
+        this.tenantId = new TenantId(realm);
+        this.attributes = Objects.requireNonNull(attributes, "attributes==null");
     }
 
     /**

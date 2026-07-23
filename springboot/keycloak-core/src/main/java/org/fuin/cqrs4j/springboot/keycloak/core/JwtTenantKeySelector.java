@@ -59,9 +59,34 @@ public class JwtTenantKeySelector implements JWTClaimsSetAwareJWSKeySelector<Sec
         Objects.requireNonNull(jwsHeader);
         Objects.requireNonNull(jwtClaimsSet);
 
-        return selectors.computeIfAbsent(issuer(jwtClaimsSet), this::fromIssuer)
-                .selectJWSKeys(jwsHeader, securityContext);
+        return selectorFor(issuer(jwtClaimsSet)).selectJWSKeys(jwsHeader, securityContext);
 
+    }
+
+    /**
+     * Returns the key selector for an issuer, resolving it on first use.
+     * <p>
+     * Deliberately <b>not</b> {@code computeIfAbsent}: resolving an issuer performs OIDC discovery and a JWK
+     * set fetch, and {@code ConcurrentHashMap} runs the mapping function while holding the lock for that
+     * bin. Doing network I/O there makes every concurrent request whose issuer maps to the same bin queue up
+     * behind it - exactly when the identity provider is slow and that hurts most - and the JDK documents
+     * that the mapping function must not attempt to update the map, which resolving an issuer does
+     * indirectly through the tenant repository.
+     * <p>
+     * The cost is that two requests arriving together for an unknown issuer may both resolve it. That is
+     * harmless: the work is idempotent and the first result wins.
+     *
+     * @param issuer Issuer of the token.
+     * @return Key selector for that issuer.
+     */
+    private JWSKeySelector<SecurityContext> selectorFor(final String issuer) {
+        final JWSKeySelector<SecurityContext> known = selectors.get(issuer);
+        if (known != null) {
+            return known;
+        }
+        final JWSKeySelector<SecurityContext> resolved = fromIssuer(issuer);
+        final JWSKeySelector<SecurityContext> raced = selectors.putIfAbsent(issuer, resolved);
+        return raced == null ? resolved : raced;
     }
 
     private String issuer(JWTClaimsSet claimSet) {

@@ -265,19 +265,42 @@ Files: `springboot/keycloak-core/.../JwtUtils.java` (`getConfiguration`, RestTem
 `.../JwtTenant.java` (`getJWSKeySelector` — Nimbus JWKS fetch, **no timeout**),
 `.../KeycloakTenantRepository.java` + `JwtTenantKeySelector.java` (per-issuer `ConcurrentHashMap` caches,
 failed `computeIfAbsent` **not** negatively cached → retries every request).
-- [ ] Add a connect/read timeout to the Nimbus JWKS fetch (`ResourceRetriever`/`DefaultResourceRetriever`).
-- [ ] Guard `JwtUtils.getConfiguration` and the JWKS retrieval with Resilience4j `@Retry` + `@TimeLimiter`
-      + `@CircuitBreaker`.
-- [ ] **Negative cache with backoff**: a failed OIDC-discovery/JWKS lookup currently isn't cached, so a
-      down Keycloak is hammered on every request per new issuer. Cache failures briefly (backoff) and keep
-      a **last-known-good JWKS** as fallback so in-flight tokens keep validating during a short Keycloak
-      outage.
+- [x] **The premise of this bullet was wrong and is corrected (2026-07-23).** The JWKS fetch is *not*
+      unbounded: `JWSAlgorithmFamilyJWSKeySelector.fromJWKSetURL(url)` builds a `RemoteJWKSet`, which
+      defaults to **500 ms** connect and read (`RemoteJWKSet.DEFAULT_HTTP_*`, overridable through the
+      `com.nimbusds.jose.jwk.source.RemoteJWKSet.defaultHttp*Timeout` system properties). If anything that is
+      on the tight side for a cold provider. Nothing was changed there; the defaults are now documented in
+      [resilience.md](resilience.md) so the next reader does not re-derive this.
+- [x] **The call that really was too long is the OIDC discovery**, which this module's copy of
+      `JwtUtils` bounded at the JDK default of **30 s** connect and read - on the request thread, the first
+      time an issuer is seen. Thirty seconds times the request threads is an outage of the whole service, not
+      just of authentication. Now 5 s, still overridable through the same `sun.net.client.*` properties.
+- [x] **Negative cache with backoff added** in `KeycloakTenantRepository`: a failed discovery is remembered
+      per issuer and rethrown immediately, with the delay doubling from 1 s to a 30 s cap. Without it a down
+      Keycloak was contacted again by every single request carrying that issuer. Covered by five tests using
+      an overridable clock and discovery seam (`protected now()` / `createTenant(..)`, the pattern the lease
+      services already use); `JwtTenant` gained a package-visible constructor that takes already-resolved
+      settings so a test needs no HTTP.
+- [x] **Fixed network I/O inside `ConcurrentHashMap.computeIfAbsent`** in `JwtTenantKeySelector`. The
+      mapping function performed OIDC discovery and a JWK set fetch while holding the bin lock, so concurrent
+      requests whose issuer hashes to the same bin queued behind it - precisely when the provider is slow.
+      The JDK also documents that the mapping function must not update the map, which resolving an issuer did
+      indirectly through the tenant repository. Resolution now happens outside the lock followed by
+      `putIfAbsent`; the worst case is that two requests resolve the same new issuer once.
+- [x] **Last-known-good needs no extra machinery:** the negative cache deliberately covers only *discovery*.
+      A tenant resolved once stays cached and keeps validating from the keys Nimbus holds, so an outage never
+      invalidates issuers that were already working - only a brand new issuer appearing mid-outage is refused.
+- [ ] No Resilience4j `@Retry` / `@TimeLimiter` / `@CircuitBreaker` on this path. The bounded timeouts plus
+      the negative cache already give the fast-fail a breaker would, without putting an interceptor on every
+      authenticated request, and a retry would multiply the time a request holds a thread while the provider
+      is struggling. Revisit if metrics (Phase 6) show it is needed.
 
 ### K2. Quarkus keycloak — **[Q] S3 (config, not FT)**
 Files: `quarkus/keycloak/.../KeycloakTenantConfigResolver.java`, `KeycloakTenantRepository.java`.
-- [ ] The app doesn't fetch JWKS itself — `quarkus-oidc` does. Tune OIDC resilience via config, not FT:
-      `quarkus.oidc.connection-delay`, `connection-retry-count`, `connection-timeout`, and JWKS cache
-      settings. Document the recommended values; no annotations needed.
+- [x] Recommended `quarkus.oidc.*` values documented in [resilience.md](resilience.md): `connection-timeout`,
+      `connection-retry-count`, `connection-delay`, `jwks.cache-time-to-live` and `jwks.resolve-early`. No
+      code and no annotations - the extension owns the fetching, and `resolve-early` additionally keeps the
+      first request from paying for the key fetch.
 
 ---
 

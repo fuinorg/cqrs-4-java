@@ -1,6 +1,9 @@
 # Release Notes
 
 ## 0.7.0
+- A failed Keycloak issuer discovery is now negatively cached with a growing delay (1 s to 30 s), so a down identity provider is no longer contacted again by every request carrying that issuer. Issuers that were already resolved keep validating tokens throughout an outage.
+- **Bugfix** `JwtTenantKeySelector` performed OIDC discovery and the JWK set fetch inside `ConcurrentHashMap.computeIfAbsent`, which holds the bin lock during that network I/O and made concurrent requests queue up behind it.
+- The Keycloak OIDC discovery call is bounded at 5 s instead of the JDK default of 30 s (still overridable via `sun.net.client.defaultConnectTimeout` / `defaultReadTimeout`).
 - **Bugfix** `CqrsUtils.isTransientInfrastructureFailure` classified *every* `jakarta.persistence.*`, `java.sql.*` and `org.springframework.dao.*` failure as transient, including `OptimisticLockException`, `DataIntegrityViolationException` and `SQLIntegrityConstraintViolationException`. Those are answers about the data: they were logged at `DEBUG` as "will retry" and one view's constraint violation could open the shared projection circuit breaker for every other view. They are now classified as permanent.
 - The projection lease acquisition bounds its pessimistic lock with `jakarta.persistence.lock.timeout` (3 s), so an instance that is not the leader no longer parks a thread on the lease row on every tick.
 - Added an inbound bulkhead around the command deduplication lookup (`BulkheadProcessedCommandStore`, SmallRye FT on Quarkus / Resilience4j on Spring) so a slow database or a redelivery storm sheds load instead of exhausting request threads. Refused commands are reported as the new `CommandOverloadedException` and answered with HTTP 503, which the sender's outbox treats as transient. Recording a processed command is never refused, so shedding can never cause a double execution.

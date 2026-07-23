@@ -20,6 +20,7 @@ package org.fuin.cqrs4j.springboot.keycloak.core;
 import org.fuin.ddd4j.core.TenantId;
 import org.fuin.ddd4j.core.TenantAddedEvent;
 import org.fuin.objects4j.common.ThreadSafe;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Map;
@@ -31,15 +32,44 @@ import java.util.stream.Stream;
 /**
  * Tenant repository backed by Keycloak realms. Tenants are discovered lazily by their issuer URI
  * and cached. A {@link TenantAddedEvent} is published whenever a previously unknown tenant is added.
+ * <p>
+ * <b>A failed discovery is remembered for a short, growing period.</b> Discovery happens on the request
+ * thread the first time an issuer is seen, and it talks to Keycloak. Without a negative cache, a Keycloak
+ * that is down or slow is contacted again by <em>every single request</em> carrying that issuer - each one
+ * occupying a request thread until the HTTP call gives up. Remembering the failure turns that into one
+ * attempt per backoff window; the rest fail immediately, which is what keeps the service responsive for
+ * everything that does not need this issuer.
+ * <p>
+ * Only the <em>discovery</em> is cached this way. A tenant that was resolved once stays cached, so an
+ * outage never invalidates issuers that are already known - their tokens keep validating from the keys
+ * Nimbus already holds.
  */
 @ThreadSafe
 public class KeycloakTenantRepository implements JwtTenantRepository {
+
+    /** Delay before a failed issuer discovery is attempted again. */
+    static final long INITIAL_RETRY_DELAY_MILLIS = 1_000;
+
+    /** Upper bound for the delay, so a long outage does not stop the tenant from ever being discovered. */
+    static final long MAX_RETRY_DELAY_MILLIS = 30_000;
 
     private final String baseUri;
 
     private final Map<String, JwtTenant> tenantMap;
 
+    private final Map<String, FailedDiscovery> failures = new ConcurrentHashMap<>();
+
     private final ApplicationEventPublisher publisher;
+
+    /**
+     * A discovery attempt that failed, and the point in time from which it may be attempted again.
+     *
+     * @param cause     Failure that was reported, rethrown while the entry is valid.
+     * @param retryFrom Epoch milliseconds from which a new attempt is allowed.
+     * @param attempt   Number of consecutive failures, used to grow the delay.
+     */
+    private record FailedDiscovery(RuntimeException cause, long retryFrom, int attempt) {
+    }
 
     /**
      * Constructor with the master realm issuer URI.
@@ -78,20 +108,65 @@ public class KeycloakTenantRepository implements JwtTenantRepository {
     @Override
     public Optional<JwtTenant> findByIssuer(String issuerUri) {
         Objects.requireNonNull(issuerUri, "issuer==null");
-        final Optional<JwtTenant> result = tenantMap.entrySet().stream()
-                .filter(entry -> entry.getKey().equals(issuerUri))
-                .map(Map.Entry::getValue)
-                .findFirst();
-        if (result.isPresent()) {
-            return result;
+        final JwtTenant known = tenantMap.get(issuerUri);
+        if (known != null) {
+            return Optional.of(known);
         }
         if (!issuerUri.startsWith(baseUri)) {
             throw new IllegalArgumentException("Issuer URI '" + issuerUri + "' does not start with '" + baseUri + "'");
         }
-        final JwtTenant tenant = new JwtTenant(issuerUri);
-        tenantMap.put(issuerUri, tenant);
-        publisher.publishEvent(new TenantAddedEvent(tenant));
-        return Optional.of(tenant);
+        final FailedDiscovery previous = failures.get(issuerUri);
+        if (previous != null && now() < previous.retryFrom()) {
+            // Fail immediately instead of occupying this request thread with a call that just failed.
+            throw previous.cause();
+        }
+        try {
+            final JwtTenant tenant = createTenant(issuerUri);
+            failures.remove(issuerUri);
+            tenantMap.put(issuerUri, tenant);
+            publisher.publishEvent(new TenantAddedEvent(tenant));
+            return Optional.of(tenant);
+        } catch (final RuntimeException ex) {
+            failures.put(issuerUri, nextFailure(previous, ex));
+            throw ex;
+        }
+    }
+
+    /**
+     * Builds the negative cache entry for a failed discovery, doubling the delay for each consecutive
+     * failure up to {@link #MAX_RETRY_DELAY_MILLIS}.
+     *
+     * @param previous Previous failure for the same issuer, or {@literal null} if this is the first.
+     * @param cause    Failure that was reported.
+     * @return Entry to remember.
+     */
+    private FailedDiscovery nextFailure(@Nullable final FailedDiscovery previous,
+                                        final RuntimeException cause) {
+        final int attempt = previous == null ? 1 : previous.attempt() + 1;
+        long delay = INITIAL_RETRY_DELAY_MILLIS;
+        for (int i = 1; i < attempt && delay < MAX_RETRY_DELAY_MILLIS; i++) {
+            delay = delay * 2;
+        }
+        return new FailedDiscovery(cause, now() + Math.min(delay, MAX_RETRY_DELAY_MILLIS), attempt);
+    }
+
+    /**
+     * Performs the OIDC discovery for an issuer. Overridable for testing.
+     *
+     * @param issuerUri Issuer URI of the tenant.
+     * @return Newly discovered tenant.
+     */
+    protected JwtTenant createTenant(final String issuerUri) {
+        return new JwtTenant(issuerUri);
+    }
+
+    /**
+     * Returns the current time in epoch milliseconds. Overridable for testing.
+     *
+     * @return Current time.
+     */
+    protected long now() {
+        return System.currentTimeMillis();
     }
 
 }

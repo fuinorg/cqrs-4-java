@@ -152,28 +152,94 @@ outage starts at the beginning of the schedule again.
 reads from its checkpoint, which is why there is no attempt limit by default and why exhausting a configured
 one is logged and accepted rather than escalated.
 
-## 5. Projection lease: bounded lock wait and pool sizing
+## 5. Deployment models: independent views vs. a shared read model
 
-With `org.fuin.cqrs4j.projection.ha.enabled=true`, instances compete for a lease before projecting. The
-acquisition takes a `PESSIMISTIC_WRITE` lock on the lease row and gives up after **3 seconds**
+Which of the next two paragraphs applies to you is decided by a single setting, and it changes what the
+library does at all. **Projections do not have to share a database.**
+
+| | Independent views (**default**) | Shared read model (HA) |
+|---|---|---|
+| `org.fuin.cqrs4j.projection.ha.enabled` | `false` | `true` |
+| Read model store | one per instance — in-memory, file, or its own schema | one, shared by all instances |
+| Projection position | per instance, so it resets on restart and the view is rebuilt | shared, so it survives a restart |
+| Projection lease | **never used** — no lease table, no lock | one instance per projection holds the lease and projects |
+| Instances | any number, fully independent of each other | any number, exactly one leader per projection |
+
+### Independent views (default)
+
+With HA off, `readStreamEventsLeased(..)` returns before the lease service is ever called, so nothing in this
+mode touches a lease table or takes a row lock. Every instance projects for itself.
+
+This is what makes a view with its own in-memory database work: the position is stored next to the read
+model, so an empty store on startup means position 0, and the view is simply rebuilt from the projection
+stream. `esc-spi` also ships an `InMemoryCheckpointStore` if you want to keep that side out of JPA entirely.
+
+The trade-off is read load rather than resilience: N instances each read the whole stream, so the event store
+sees N times the traffic. That is inherent to the model.
+
+### Shared read model (HA) and the projection lease
+
+With `org.fuin.cqrs4j.projection.ha.enabled=true`, several instances write the *same* read model, so exactly
+one of them may project at a time. Instances compete for a lease before projecting; the acquisition takes a
+`PESSIMISTIC_WRITE` lock on the lease row and gives up after **3 seconds**
 (`jakarta.persistence.lock.timeout`).
 
 Giving up quickly is deliberate: not getting the lease means another instance is projecting, which is the
 normal outcome rather than a failure. Without the bound, every instance that is not the leader would park a
 thread on that row on every scheduled tick.
 
-**Sizing your connection pool.** The library cannot size your HikariCP (Spring) or Agroal (Quarkus) pool, so
-size it yourself with the projection work in mind. `tryLock` limits the catch-up to **one pass per view at a
-time**, so the worst case a projection can occupy is:
+### Pool sizing
+
+The library cannot size your HikariCP (Spring) or Agroal (Quarkus) pool, so size it yourself with the
+projection work in mind. `tryLock` limits the catch-up to **one pass per view at a time**, so the worst case
+a projection can occupy is:
 
 ```
-concurrent projection connections  <=  number of views  (+1 while the lease transaction runs)
+concurrent projection connections  <=  number of views  (+1 per view while the lease transaction runs, HA only)
 ```
 
 Keep the pool comfortably above that plus your request concurrency; otherwise a slow database lets projection
 passes hold every connection and the request path starves. There is deliberately no bulkhead capping
 projections further — it would delay them for a problem that correct pool sizing solves, and the scheduled
 poll is already the safety net.
+
+# Token validation (Keycloak)
+
+Validating a token needs the identity provider's OpenID Connect configuration and its signing keys. The
+first time an issuer is seen, that happens **on the request thread**, which makes a slow or down Keycloak a
+problem for the whole service rather than only for authentication.
+
+## Spring Boot
+
+| Call | Bound | Notes |
+|---|---|---|
+| OIDC discovery (`/.well-known/openid-configuration`) | **5 s** connect / 5 s read | Override with the `sun.net.client.defaultConnectTimeout` / `defaultReadTimeout` system properties |
+| JWK set fetch | **500 ms** connect / 500 ms read | Nimbus `RemoteJWKSet` defaults; override with `com.nimbusds.jose.jwk.source.RemoteJWKSet.defaultHttpConnectTimeout` / `.defaultHttpReadTimeout` |
+
+**A failed discovery is remembered.** Without that, a Keycloak that is down is contacted again by every
+single request carrying that issuer, each one holding a request thread until the call gives up. A failure is
+cached per issuer and the delay doubles from **1 s** up to **30 s**, so a long outage costs one attempt per
+window and every other request fails immediately.
+
+**An issuer that was resolved once stays resolved.** The negative cache only covers discovery; a tenant
+already in the cache keeps validating tokens from the keys Nimbus holds, so an outage never invalidates
+issuers that were working. Only a *new* issuer appearing during an outage is refused.
+
+## Quarkus
+
+The application does not fetch anything itself — `quarkus-oidc` does. Tune it with configuration rather than
+fault tolerance annotations:
+
+| Property | Suggested | Meaning |
+|---|---|---|
+| `quarkus.oidc.connection-timeout` | `5s` | Bound for a single call to the provider |
+| `quarkus.oidc.connection-retry-count` | `3` | Retries while the provider is starting up |
+| `quarkus.oidc.connection-delay` | `10s` | How long startup waits for the provider to appear |
+| `quarkus.oidc.jwks.cache-time-to-live` | `10m` | How long a fetched JWK set is reused |
+| `quarkus.oidc.jwks.resolve-early` | `true` | Fetch the keys at startup instead of on the first request |
+
+Setting `connection-delay` lets the service start before Keycloak is reachable, and `resolve-early` keeps the
+first request from paying for the key fetch.
 
 # Command receipt
 
