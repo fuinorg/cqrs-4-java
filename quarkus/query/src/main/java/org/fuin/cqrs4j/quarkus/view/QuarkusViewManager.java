@@ -36,6 +36,7 @@ import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.ProjectionId;
 import org.fuin.esc.api.ProjectionStreamId;
+import org.fuin.esc.api.ProjectionAlreadyExistsException;
 import org.fuin.esc.api.StreamAlreadyExistsException;
 import org.fuin.esc.api.StreamEventsSlice;
 import org.fuin.esc.api.SubscribableEventStoreAsync;
@@ -402,8 +403,11 @@ public class QuarkusViewManager {
             final List<String> categoryNames = List.copyOf(viewJob.getEntry().eventCategories());
             try {
                 admin.createProjection(viewJob.getProjectionId(), viewJob.getProjectionStreamId(), true, typeNames, categoryNames);
-            } catch (StreamAlreadyExistsException ex) {
-                LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
+            } catch (StreamAlreadyExistsException | ProjectionAlreadyExistsException ex) {
+                // The projectionExists() check above is not atomic with the create: another instance (or the
+                // store-side retry of a create that actually arrived) can win the race and the create then
+                // reports "already exists". The gRPC store signals this as ProjectionAlreadyExistsException.
+                LOG.info("Race condition: After checking if projection exists, the create failed with 'already exists'");
             }
         }
     }
