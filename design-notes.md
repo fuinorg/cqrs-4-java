@@ -133,7 +133,9 @@ database-checkpoint, poll-based catch-up: simple, atomic, easy to monitor (head 
 - **ArchUnit (per module):** every top-level production class needs a thread-safety annotation
   (`@ThreadSafe` / `@Immutable` / `@NotThreadSafe`); each module keeps a package **allow-list** that must be
   extended for any newly imported package; a coverage rule requires a `*Test` per class (or `@TestOmitted`).
-- **JDK 25:** the Spring-Boot-managed Byte Buddy rejects Java-25 class files, so any module that mocks with
-  Mockito needs `-Dnet.bytebuddy.experimental=true` on the surefire JVM.
+- **JDK 25:** Byte Buddy only supports the Java-25 class file format (major 69) from **1.17.5** on, while
+  quarkus-bom still manages 1.15.11. `org.fuin:bom` therefore overrides Byte Buddy to a Java-25-aware version
+  and must stay imported **before** quarkus-bom / spring-boot-dependencies, otherwise Mockito and the Quarkus
+  build augmentation fail again.
 - **Dependency hygiene:** `maven-dependency-plugin` runs with `failOnWarning` — every used dependency must be
   declared explicitly.

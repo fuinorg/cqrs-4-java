@@ -258,10 +258,6 @@
                 <configuration>
                     <systemProperties>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-                        <!-- Byte Buddy 1.15.11 (managed by quarkus-bom) rejects Java 25 class
-                             files; allow it on the forked test JVM until a Java-25-aware
-                             Byte Buddy is on the classpath. -->
-                        <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
                     </systemProperties>
                 </configuration>
             </plugin>
@@ -278,7 +274,6 @@
                         <configuration>
                             <systemProperties>
                                 <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-                                <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
                             </systemProperties>
                         </configuration>
                     </execution>
