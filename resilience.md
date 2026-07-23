@@ -31,11 +31,17 @@ Configurable per event store instance:
 
 ```java
 ESGrpcEventStore.builder()
-        .callTimeout(Duration.ofSeconds(10))
-        // ...
-        .build();
+        .
 
-new GrpcProjectionAdminEventStore(client, tenantContext, Duration.ofSeconds(10));
+callTimeout(Duration.ofSeconds(10))
+        // ...
+        .
+
+build();
+
+new
+
+GrpcProjectionAdminEventStore(client, tenantContext, Duration.ofSeconds(10));
 ```
 
 ## 2. Failure classification
@@ -85,11 +91,11 @@ processing error: it is logged at `ERROR` and never opens the breaker.
 
 ### Quarkus (SmallRye Fault Tolerance)
 
-| Property | Default | Meaning |
-|---|---|---|
-| `org.fuin.cqrs4j.projection.breaker.delay` | `30000` | Milliseconds the breaker stays open before it probes the store again |
-| `org.fuin.cqrs4j.projection.breaker.requestVolumeThreshold` | `4` | Attempts judged before the breaker may open |
-| `org.fuin.cqrs4j.projection.breaker.failureRatio` | `0.5` | Share of failed attempts that opens the breaker |
+| Property                                                    | Default | Meaning                                                              |
+|-------------------------------------------------------------|---------|----------------------------------------------------------------------|
+| `org.fuin.cqrs4j.projection.breaker.delay`                  | `30000` | Milliseconds the breaker stays open before it probes the store again |
+| `org.fuin.cqrs4j.projection.breaker.requestVolumeThreshold` | `4`     | Attempts judged before the breaker may open                          |
+| `org.fuin.cqrs4j.projection.breaker.failureRatio`           | `0.5`   | Share of failed attempts that opens the breaker                      |
 
 State changes are logged at `INFO`, so an open breaker is visible rather than silent.
 
@@ -97,6 +103,7 @@ State changes are logged at `INFO`, so an open breaker is visible rather than si
 APIs (same arrangement as `quarkus-scheduler-api`):
 
 ```xml
+
 <dependency>
     <groupId>io.quarkus</groupId>
     <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
@@ -107,13 +114,13 @@ Without it the projection catch-up fails at runtime when it creates its guard.
 
 ### Spring Boot (Resilience4j)
 
-| Property | Default | Meaning |
-|---|---|---|
-| `org.fuin.cqrs4j.projection.breaker-window-size` | `4` | Attempts judged before the breaker may open |
-| `org.fuin.cqrs4j.projection.breaker-failure-rate-percent` | `50` | Failure rate that opens the breaker |
-| `org.fuin.cqrs4j.projection.breaker-initial-wait` | `5s` | Wait before the first probe |
-| `org.fuin.cqrs4j.projection.breaker-backoff-multiplier` | `2.0` | Growth factor per further failed probe |
-| `org.fuin.cqrs4j.projection.breaker-max-wait` | `5m` | Upper bound for the wait |
+| Property                                                  | Default | Meaning                                     |
+|-----------------------------------------------------------|---------|---------------------------------------------|
+| `org.fuin.cqrs4j.projection.breaker-window-size`          | `4`     | Attempts judged before the breaker may open |
+| `org.fuin.cqrs4j.projection.breaker-failure-rate-percent` | `50`    | Failure rate that opens the breaker         |
+| `org.fuin.cqrs4j.projection.breaker-initial-wait`         | `5s`    | Wait before the first probe                 |
+| `org.fuin.cqrs4j.projection.breaker-backoff-multiplier`   | `2.0`   | Growth factor per further failed probe      |
+| `org.fuin.cqrs4j.projection.breaker-max-wait`             | `5m`    | Upper bound for the wait                    |
 
 No extra dependency is required; `resilience4j-circuitbreaker` comes with
 `cqrs-4-java-springboot-query-core`.
@@ -133,13 +140,13 @@ lets an application start before the store is reachable.
 
 The schedule is an event-store-commons `Backoff`, `Backoff.DEFAULT` in both frameworks:
 
-| Setting | Value |
-|---|---|
-| Delay before the first re-subscribe | `500 ms` |
-| Growth factor per further failure | `2.0` |
-| Upper bound for the delay | `30 s` |
-| Jitter | `50 %` (the delay is spread over `[0.5 × delay, delay]`) |
-| Attempt limit | none |
+| Setting                             | Value                                                    |
+|-------------------------------------|----------------------------------------------------------|
+| Delay before the first re-subscribe | `500 ms`                                                 |
+| Growth factor per further failure   | `2.0`                                                    |
+| Upper bound for the delay           | `30 s`                                                   |
+| Jitter                              | `50 %` (the delay is spread over `[0.5 × delay, delay]`) |
+| Attempt limit                       | none                                                     |
 
 The cap keeps a long outage from turning into an even longer recovery, and the jitter keeps every instance
 of a scaled-out service from reconnecting in lockstep and hitting the store as one burst the moment it
@@ -148,13 +155,13 @@ outage starts at the beginning of the schedule again.
 
 Configurable per framework, with those values as the defaults:
 
-| Spring Boot | Quarkus |
-|---|---|
+| Spring Boot                                            | Quarkus                                                   |
+|--------------------------------------------------------|-----------------------------------------------------------|
 | `org.fuin.cqrs4j.projection.resubscribe-initial-delay` | `org.fuin.cqrs4j.projection.resubscribe.initial-delay-ms` |
-| `org.fuin.cqrs4j.projection.resubscribe-max-delay` | `org.fuin.cqrs4j.projection.resubscribe.max-delay-ms` |
-| `org.fuin.cqrs4j.projection.resubscribe-multiplier` | `org.fuin.cqrs4j.projection.resubscribe.multiplier` |
-| `org.fuin.cqrs4j.projection.resubscribe-jitter-factor` | `org.fuin.cqrs4j.projection.resubscribe.jitter-factor` |
-| `org.fuin.cqrs4j.projection.resubscribe-max-attempts` | `org.fuin.cqrs4j.projection.resubscribe.max-attempts` |
+| `org.fuin.cqrs4j.projection.resubscribe-max-delay`     | `org.fuin.cqrs4j.projection.resubscribe.max-delay-ms`     |
+| `org.fuin.cqrs4j.projection.resubscribe-multiplier`    | `org.fuin.cqrs4j.projection.resubscribe.multiplier`       |
+| `org.fuin.cqrs4j.projection.resubscribe-jitter-factor` | `org.fuin.cqrs4j.projection.resubscribe.jitter-factor`    |
+| `org.fuin.cqrs4j.projection.resubscribe-max-attempts`  | `org.fuin.cqrs4j.projection.resubscribe.max-attempts`     |
 
 **Losing a wake-up subscription costs latency, never correctness.** The scheduled poll keeps running and
 reads from its checkpoint, which is why there is no attempt limit by default and why exhausting a configured
@@ -165,13 +172,13 @@ one is logged and accepted rather than escalated.
 Which of the next two paragraphs applies to you is decided by a single setting, and it changes what the
 library does at all. **Projections do not have to share a database.**
 
-| | Independent views (**default**) | Shared read model (HA) |
-|---|---|---|
-| `org.fuin.cqrs4j.projection.ha.enabled` | `false` | `true` |
-| Read model store | one per instance — in-memory, file, or its own schema | one, shared by all instances |
-| Projection position | per instance, so it resets on restart and the view is rebuilt | shared, so it survives a restart |
-| Projection lease | **never used** — no lease table, no lock | one instance per projection holds the lease and projects |
-| Instances | any number, fully independent of each other | any number, exactly one leader per projection |
+|                                         | Independent views (**default**)                               | Shared read model (HA)                                   |
+|-----------------------------------------|---------------------------------------------------------------|----------------------------------------------------------|
+| `org.fuin.cqrs4j.projection.ha.enabled` | `false`                                                       | `true`                                                   |
+| Read model store                        | one per instance — in-memory, file, or its own schema         | one, shared by all instances                             |
+| Projection position                     | per instance, so it resets on restart and the view is rebuilt | shared, so it survives a restart                         |
+| Projection lease                        | **never used** — no lease table, no lock                      | one instance per projection holds the lease and projects |
+| Instances                               | any number, fully independent of each other                   | any number, exactly one leader per projection            |
 
 ### Independent views (default)
 
@@ -221,10 +228,10 @@ problem for the whole service rather than only for authentication.
 
 ## Spring Boot
 
-| Call | Bound | Notes |
-|---|---|---|
-| OIDC discovery (`/.well-known/openid-configuration`) | **5 s** connect / 5 s read | Override with the `sun.net.client.defaultConnectTimeout` / `defaultReadTimeout` system properties |
-| JWK set fetch | **500 ms** connect / 500 ms read | Nimbus `RemoteJWKSet` defaults; override with `com.nimbusds.jose.jwk.source.RemoteJWKSet.defaultHttpConnectTimeout` / `.defaultHttpReadTimeout` |
+| Call                                                 | Bound                            | Notes                                                                                                                                           |
+|------------------------------------------------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| OIDC discovery (`/.well-known/openid-configuration`) | **5 s** connect / 5 s read       | Override with the `sun.net.client.defaultConnectTimeout` / `defaultReadTimeout` system properties                                               |
+| JWK set fetch                                        | **500 ms** connect / 500 ms read | Nimbus `RemoteJWKSet` defaults; override with `com.nimbusds.jose.jwk.source.RemoteJWKSet.defaultHttpConnectTimeout` / `.defaultHttpReadTimeout` |
 
 **A failed discovery is remembered.** Without that, a Keycloak that is down is contacted again by every
 single request carrying that issuer, each one holding a request thread until the call gives up. A failure is
@@ -243,13 +250,13 @@ issuer that was already resolved - are checked against a real Keycloak in `Keycl
 The application does not fetch anything itself — `quarkus-oidc` does. Tune it with configuration rather than
 fault tolerance annotations:
 
-| Property | Suggested | Meaning |
-|---|---|---|
-| `quarkus.oidc.connection-timeout` | `5s` | Bound for a single call to the provider |
-| `quarkus.oidc.connection-retry-count` | `3` | Retries while the provider is starting up |
-| `quarkus.oidc.connection-delay` | `10s` | How long startup waits for the provider to appear |
-| `quarkus.oidc.jwks.cache-time-to-live` | `10m` | How long a fetched JWK set is reused |
-| `quarkus.oidc.jwks.resolve-early` | `true` | Fetch the keys at startup instead of on the first request |
+| Property                               | Suggested | Meaning                                                   |
+|----------------------------------------|-----------|-----------------------------------------------------------|
+| `quarkus.oidc.connection-timeout`      | `5s`      | Bound for a single call to the provider                   |
+| `quarkus.oidc.connection-retry-count`  | `3`       | Retries while the provider is starting up                 |
+| `quarkus.oidc.connection-delay`        | `10s`     | How long startup waits for the provider to appear         |
+| `quarkus.oidc.jwks.cache-time-to-live` | `10m`     | How long a fetched JWK set is reused                      |
+| `quarkus.oidc.jwks.resolve-early`      | `true`    | Fetch the keys at startup instead of on the first request |
 
 Setting `connection-delay` lets the service start before Keycloak is reachable, and `resolve-early` keeps the
 first request from paying for the key fetch.
@@ -269,10 +276,12 @@ and you wrap your store with it:
 
 ```java
 // Spring
-new BulkheadProcessedCommandStore(myProcessedCommandStore, 8, Duration.ofMillis(50));
+new BulkheadProcessedCommandStore(myProcessedCommandStore, 8,Duration.ofMillis(50));
 
 // Quarkus
-new BulkheadProcessedCommandStore(myProcessedCommandStore, 8);
+        new
+
+BulkheadProcessedCommandStore(myProcessedCommandStore, 8);
 ```
 
 Pick the limit from your pool and thread budget: it caps how many request threads can be inside a dedup
@@ -322,29 +331,59 @@ all the others. While it is open **the batch is deferred untouched: nothing is r
 not consume the retry budget and cannot dead-letter commands that were never even sent. A rejected command
 still records a failure and is still dead-lettered at `maxRetries`.
 
-| Property (`org.fuin.cqrs4j.pm.cmdqueue.*`) | Default | Meaning |
-|---|---|---|
-| `connectTimeout` | `5s` | Time to wait for a connection |
-| `requestTimeout` | `5s` | Time to wait for a response |
-| `breaker.delay` *(Quarkus)* | `30s` | How long the breaker stays open |
-| `breaker.requestVolumeThreshold` *(Quarkus)* | `4` | Deliveries judged before it may open |
-| `breaker.failureRatio` *(Quarkus)* | `0.5` | Share of failures that opens it |
-| `breaker.windowSize` *(Spring)* | `4` | Deliveries judged before it may open |
-| `breaker.failureRatePercent` *(Spring)* | `50` | Share of failures that opens it |
-| `breaker.initialWait` *(Spring)* | `5s` | Wait before the first probe |
-| `breaker.maxWait` *(Spring)* | `5m` | Upper bound for the wait between probes |
+| Property (`org.fuin.cqrs4j.pm.cmdqueue.*`)   | Default | Meaning                                 |
+|----------------------------------------------|---------|-----------------------------------------|
+| `connectTimeout`                             | `5s`    | Time to wait for a connection           |
+| `requestTimeout`                             | `5s`    | Time to wait for a response             |
+| `breaker.delay` *(Quarkus)*                  | `30s`   | How long the breaker stays open         |
+| `breaker.requestVolumeThreshold` *(Quarkus)* | `4`     | Deliveries judged before it may open    |
+| `breaker.failureRatio` *(Quarkus)*           | `0.5`   | Share of failures that opens it         |
+| `breaker.windowSize` *(Spring)*              | `4`     | Deliveries judged before it may open    |
+| `breaker.failureRatePercent` *(Spring)*      | `50`    | Share of failures that opens it         |
+| `breaker.initialWait` *(Spring)*             | `5s`    | Wait before the first probe             |
+| `breaker.maxWait` *(Spring)*                 | `5m`    | Upper bound for the wait between probes |
 
 On Quarkus the values are milliseconds; on Spring they are durations (`5s`, `1m`). As with the projection
 catch-up, the Spring side backs off exponentially while the Quarkus side re-probes on a fixed interval.
 
 **Quarkus applications must add `io.quarkus:quarkus-smallrye-fault-tolerance`** here too.
 
-## Current limits
+# What is deliberately absent
 
-- There are **no per-call retries, bulkheads or rate limits**, and the breakers expose no metrics. For the
-  outbox that is deliberate: the outbox itself is the retry mechanism, and retrying inside a delivery would
-  multiply the time a wedged endpoint holds the drain thread.
-- **Push mode** re-subscribe is not configurable: the schedule is `Backoff.DEFAULT` (500 ms doubling to a
-  30 s cap, 50% jitter, no attempt limit) and is currently a constant in both view managers.
+Several patterns you might expect are not here. Each is a decision rather than an omission.
+
+**No per-delivery retry on the outbox.** The outbox *is* the retry mechanism: it stores the command durably
+and the scheduled drain tries again. Retrying inside a single delivery would multiply the time a wedged
+endpoint holds the drain thread, and the scheduler's `tryLock` already prevents overlapping runs.
+
+**No `@Timeout` layer around the projection catch-up.** The operation bound comes from the event store call
+timeout instead (5 s by default), one layer further in, where it can actually cancel the call.
+
+**No `@TimeLimiter` on the Spring outbox.** It requires a `CompletableFuture` return type; the HTTP client's
+own connect and read timeouts bound the call directly.
+
+**No retry, time limiter or circuit breaker on token validation.** The bounded timeouts plus the negative
+cache already give the fast-fail a breaker would, without putting an interceptor on every authenticated
+request — and a retry would multiply the time a request holds a thread while the identity provider is
+struggling.
+
+**No `resilience4j.*` instance configuration.** The breakers are configured through the
+`org.fuin.cqrs4j.*` keys instead, so there is one place to look regardless of framework. Adding
+`resilience4j-spring-boot3` and `spring-boot-starter-aop` would only be needed for annotation-driven
+configuration or actuator integration; the guards are applied programmatically, so no AOP proxies are
+involved.
+
+**No bulkhead capping projection work.** `tryLock` already limits the catch-up to one pass per view, so the
+worst case is bounded by the number of views — a number you know when you size your pool. Capping it further
+would delay projections for a problem that correct pool sizing solves.
+
+**Some values are not configurable**, because they are already yours to choose or have no operational reason
+to vary: the inbound bulkhead limits are the arguments you pass when you construct the decorator, and the
+Keycloak negative-cache delays are internal to a bean the starter wires.
+
+# Current limits
+
+- The circuit breakers and bulkheads **expose no metrics**. The Quarkus side logs breaker state changes at
+  `INFO`; the Spring side logs nothing.
 - Build timeouts (surefire/failsafe per-test and per-fork, and the GitHub job timeout) are a build concern
   rather than a runtime one; they live in the root `pom.xml` and `.github/workflows/maven.yml`.
