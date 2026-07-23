@@ -20,9 +20,10 @@ import java.util.Map;
  * ({@link QryProjectionLease}). A pessimistic write lock on acquire serializes competing instances, and the
  * stored expiry lets a crashed owner's lease be taken over after its time-to-live elapses.
  * <p>
- * The lock acquisition is bounded by {@link #LOCK_TIMEOUT_MILLIS}. Without a bound, an instance that loses
- * the race waits for as long as the winner holds the row - and under HA contention that is every scheduled
- * tick of every instance that is not the leader, each one parking a thread. Giving up quickly is exactly
+ * The lock acquisition is bounded by {@code org.fuin.cqrs4j.projection.lease-lock-timeout-ms} (3 s by
+ * default). Without a bound, an instance that loses the race waits for as long as the winner holds the row -
+ * and under HA contention that is every scheduled tick of every instance that is not the leader, each one
+ * parking a thread. Giving up quickly is exactly
  * right here: not getting the lease means "another instance is projecting", which is the normal outcome and
  * not a failure. The next tick tries again.
  */
