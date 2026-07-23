@@ -326,9 +326,34 @@ Files: `quarkus/keycloak/.../KeycloakTenantConfigResolver.java`, `KeycloakTenant
 - [ ] Emit metrics for every breaker/retry/bulkhead (Micrometer is already a dep in the process-manager
       modules): retry counts, CB state transitions, bulkhead rejections, timeouts. Expose **[S]** actuator
       health / **[Q]** SmallRye health.
-- [ ] ITs (Testcontainers): `pause()`/`stop()` the eventstore, Keycloak, or the query service mid-test
-      (or Toxiproxy) and assert graceful degradation + recovery for O1/O2/O3, V1, K1. Reuse the
-      `test/quarkus` + `test/springboot` harnesses and the example ITs.
+- [x] **O2 - command endpoint unreachable** (`CommandEndpointOutageIT`, 2026-07-23). The existing
+      `ProcessManagerViewIT` covers an endpoint that *answers* with a rejection (consumes the budget,
+      dead-letters); this covers one that is not there at all, which is where the O1/O2 deviation lives.
+      `maxRetries=1` and a batch of 12: the breaker judges 4 before it opens and defers the rest, so without
+      the deferral every command would be dead-lettered and the outbox left empty. Needs no event store - the
+      command is enqueued directly.
+      NB the first version of this test **proved nothing**: with `maxRetries=20` against a 5 s tick, only ~3
+      failures fit in the observation window, so the command survived with or without the deferral.
+- [x] **V1 - event store outage** (`EventStoreOutageIT`, 2026-07-23): a write fails fast with a typed
+      `EscConnectionException` instead of hanging, the read model keeps answering for everything already
+      projected (an event store outage degrades freshness, not availability), and the projection catches up
+      again once the store returns - without restarting the application.
+- [x] The outage is injected with a `FaultInjectingProxy` (new, in `cqrs-4-java-test-helper`) rather than by
+      stopping the container. **Stopping the container cannot work here:** the application binds to the
+      container's *mapped* port when its context starts, and a restarted container gets a different one, so
+      the recovery half would be untestable. The proxy keeps a fixed port and switches only the forwarding.
+      Same approach as the event-store-commons fault-injection ITs.
+- [x] **O1 - Quarkus outbox** (`CommandEndpointOutageTest`, 2026-07-23): the same scenario and the same
+      arrangement as O2, in the Quarkus harness. It is a `@QuarkusTest` rather than a plain unit test because
+      the breaker needs the SmallRye FT runtime SPI, which only exists inside the container - the constraint
+      recorded under O1 above. A `QuarkusTestResourceLifecycleManager` reserves the endpoint port and supplies
+      the `cmdqueue` configuration, because Quarkus needs it before boot.
+      NB the Quarkus `connectTimeout` / `requestTimeout` keys are **plain integers (milliseconds)** while the
+      Spring ones are `Duration` strings; passing "1s" fails the application at startup.
+- [ ] **K1 - Keycloak is blocked**, not merely unwritten: neither test application wires Keycloak at all (the
+      only matches are a stubbed auth context). An IT needs a Keycloak container plus OIDC security wiring in
+      a test app first - that is a harness feature, not a test.
+- [ ] O3 is obsolete (see Phase 1).
 
 ---
 
