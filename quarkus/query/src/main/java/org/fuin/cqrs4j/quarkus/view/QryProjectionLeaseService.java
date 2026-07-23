@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import jakarta.validation.constraints.NotNull;
 import org.fuin.cqrs4j.esc.ProjectionLeaseService;
 import org.fuin.esc.api.StreamId;
@@ -34,10 +35,16 @@ public class QryProjectionLeaseService implements ProjectionLeaseService {
     private static final String ARG_OWNER = "owner";
 
     /**
-     * Maximum time the lease acquisition waits for the row lock. Kept short on purpose - a contended lease
-     * is a normal outcome, not something worth waiting for.
+     * Maximum time the lease acquisition waits for the row lock, in milliseconds. Kept short on purpose - a
+     * contended lease is a normal outcome, not something worth waiting for.
      */
-    static final int LOCK_TIMEOUT_MILLIS = 3_000;
+    static final int DEFAULT_LOCK_TIMEOUT_MILLIS = 3_000;
+
+    // The initializer is what applies when the class is constructed outside the container (tests); CDI
+    // overwrites it from the configuration.
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.lease-lock-timeout-ms",
+            defaultValue = "" + DEFAULT_LOCK_TIMEOUT_MILLIS)
+    int lockTimeoutMillis = DEFAULT_LOCK_TIMEOUT_MILLIS;
 
     /** JPA hint bounding how long a pessimistic lock acquisition may wait. */
     private static final String LOCK_TIMEOUT_HINT = "jakarta.persistence.lock.timeout";
@@ -52,7 +59,7 @@ public class QryProjectionLeaseService implements ProjectionLeaseService {
         Contract.requireArgNotNull(ARG_OWNER, owner);
         final long now = now();
         final QryProjectionLease lease = em.find(QryProjectionLease.class, streamId.asString(),
-                LockModeType.PESSIMISTIC_WRITE, Map.of(LOCK_TIMEOUT_HINT, LOCK_TIMEOUT_MILLIS));
+                LockModeType.PESSIMISTIC_WRITE, Map.of(LOCK_TIMEOUT_HINT, lockTimeoutMillis));
         if (lease == null) {
             em.persist(new QryProjectionLease(streamId, owner, now + ttlMillis));
             return true;

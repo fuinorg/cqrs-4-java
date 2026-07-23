@@ -64,21 +64,6 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private static final Logger LOG = LoggerFactory.getLogger(SpringViewManager.class);
 
-    /** Number of catch-up attempts the circuit breaker judges before it may open. */
-    private static final int BREAKER_WINDOW_SIZE = 4;
-
-    /** Percentage of failed attempts within the window that opens the circuit breaker. */
-    private static final float BREAKER_FAILURE_RATE_PERCENT = 50.0f;
-
-    /** Wait before the first probe after the circuit breaker opened. */
-    private static final Duration BREAKER_INITIAL_WAIT = Duration.ofSeconds(5);
-
-    /** Factor the wait between probes grows by while the store stays unreachable. */
-    private static final double BREAKER_BACKOFF_MULTIPLIER = 2.0;
-
-    /** Upper bound for the wait between probes, so the view still recovers after a long outage. */
-    private static final Duration BREAKER_MAX_WAIT = Duration.ofMinutes(5);
-
     private final ScheduledAnnotationBeanPostProcessor postProcessor;
 
     private final ViewRegistry viewRegistry;
@@ -114,16 +99,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
      * longer outage is not hammered. Only transient infrastructure failures count as a failure, so a broken
      * view handler does not open it.
      */
-    private final CircuitBreaker circuitBreaker = CircuitBreaker.of("cqrs4j-projection-catch-up",
-            CircuitBreakerConfig.custom()
-                    .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
-                    .slidingWindowSize(BREAKER_WINDOW_SIZE)
-                    .minimumNumberOfCalls(BREAKER_WINDOW_SIZE)
-                    .failureRateThreshold(BREAKER_FAILURE_RATE_PERCENT)
-                    .waitIntervalFunctionInOpenState(IntervalFunction.ofExponentialBackoff(
-                            BREAKER_INITIAL_WAIT, BREAKER_BACKOFF_MULTIPLIER, BREAKER_MAX_WAIT))
-                    .recordException(EscUtils::isTransientInfrastructureFailure)
-                    .build());
+    private final CircuitBreaker circuitBreaker;
 
     private final boolean multitenancyEnabled;
 
@@ -140,12 +116,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
 
     private volatile List<ViewJob> viewJobs = Collections.emptyList();
 
-    /**
-     * Schedule for (re-)establishing a wake-up subscription: 500 ms doubling up to 30 s, with jitter so
-     * several instances of a scaled-out service do not reconnect in lockstep, and no attempt limit because
-     * losing the subscription only costs latency - the scheduled poll keeps the projection correct meanwhile.
-     */
-    private static final Backoff RESUBSCRIBE_BACKOFF = Backoff.DEFAULT;
+    private final ProjectionConfig config;
 
     /**
      * Constructor with mandatory data.
@@ -184,7 +155,19 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             final String owner,
             final long leaseTtlMillis,
             @Nullable final SubscribableEventStoreAsync subscribableEventStore,
-            final boolean pushEnabled) {
+            final boolean pushEnabled,
+            final ProjectionConfig config) {
+        this.config = Objects.requireNonNull(config, "config==null");
+        this.circuitBreaker = CircuitBreaker.of("cqrs4j-projection-catch-up", CircuitBreakerConfig.custom()
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .slidingWindowSize(config.getBreakerWindowSize())
+                .minimumNumberOfCalls(config.getBreakerWindowSize())
+                .failureRateThreshold(config.getBreakerFailureRatePercent())
+                .waitIntervalFunctionInOpenState(IntervalFunction.ofExponentialBackoff(
+                        config.getBreakerInitialWait(), config.getBreakerBackoffMultiplier(),
+                        config.getBreakerMaxWait()))
+                .recordException(EscUtils::isTransientInfrastructureFailure)
+                .build());
         this.postProcessor = Objects.requireNonNull(postProcessor, "postProcessor==null");
         this.viewRegistry = Objects.requireNonNull(viewRegistry, "viewClassRegistry==null");
         this.eventstore = Objects.requireNonNull(eventstore, "eventstore==null");
@@ -257,7 +240,7 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             return thread;
         });
         this.resubscribeScheduler = scheduler;
-        final ViewSubscriptions subscriptions = new ViewSubscriptions(store, scheduler, RESUBSCRIBE_BACKOFF);
+        final ViewSubscriptions subscriptions = new ViewSubscriptions(store, scheduler, config.getResubscribeBackoff());
         this.viewSubscriptions = subscriptions;
         for (final ViewJob view : viewJobs) {
             subscriptions.subscribe(view.getProjectionStreamId(), () -> tryLocked(view, () -> readTenantsStreamEvents(view)));

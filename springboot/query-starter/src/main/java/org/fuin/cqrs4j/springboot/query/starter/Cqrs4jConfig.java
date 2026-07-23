@@ -11,6 +11,7 @@ import org.fuin.cqrs4j.springboot.query.core.base.EventstoreConfig;
 import org.fuin.cqrs4j.springboot.query.core.view.ProjectionFreshnessService;
 import org.fuin.cqrs4j.springboot.query.core.view.ProjectionLagMetrics;
 import org.fuin.cqrs4j.springboot.query.core.view.SpringViewManager;
+import org.fuin.cqrs4j.springboot.query.core.view.ProjectionConfig;
 import org.fuin.cqrs4j.springboot.query.core.view.QryProjectionLeaseService;
 import org.fuin.cqrs4j.springboot.query.core.view.QryProjectionService;
 import org.fuin.cqrs4j.springboot.query.core.view.SpringViewRegistry;
@@ -46,7 +47,7 @@ import java.util.UUID;
 @ThreadSafe
 @AutoConfigureBefore(JpaRepositoriesAutoConfiguration.class)
 @EnableJpaRepositories(basePackages = {"org.fuin.cqrs4j.springboot.query.core.view"})
-@EnableConfigurationProperties({EventstoreConfig.class})
+@EnableConfigurationProperties({EventstoreConfig.class, ProjectionConfig.class})
 // The three annotated classes of that package are registered explicitly instead of being
 // discovered: they are all injected by type, so their bean names are irrelevant, and an
 // application no longer has to have this package inside its own component scan.
@@ -91,7 +92,8 @@ public class Cqrs4jConfig {
                                          @Value("${org.fuin.cqrs4j.projection.ha.owner:}") String ownerProperty,
                                          @Value("${org.fuin.cqrs4j.projection.ha.ttl:60000}") long leaseTtlMillis,
                                          final Optional<SubscribableEventStoreAsync> subscribableEventStore,
-                                         @Value("${org.fuin.cqrs4j.projection.mode:poll}") String projectionMode) {
+                                         @Value("${org.fuin.cqrs4j.projection.mode:poll}") String projectionMode,
+                                         final ProjectionConfig projectionConfig) {
 
         final String owner = ownerProperty.isBlank() ? UUID.randomUUID().toString() : ownerProperty;
         final boolean pushEnabled = "push".equalsIgnoreCase(projectionMode);
@@ -100,7 +102,7 @@ public class Cqrs4jConfig {
                 multitenancy, tenantContext.orElse(null),
                 tenantIdsSupplier.orElse(null),
                 leaseService, haEnabled, owner, leaseTtlMillis,
-                subscribableEventStore.orElse(null), pushEnabled);
+                subscribableEventStore.orElse(null), pushEnabled, projectionConfig);
 
     }
 

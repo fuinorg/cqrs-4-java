@@ -35,16 +35,31 @@ Framework tags: **[Q]** SmallRye FT (Quarkus) Â· **[S]** Resilience4j (Spring) Â
       `microprofile-fault-tolerance-api` (NOT the extension - `dependency:analyze` rejects it as unused,
       same arrangement as `quarkus-scheduler-api`). **The application must add
       `io.quarkus:quarkus-smallrye-fault-tolerance`** for the runtime SPI; `test/quarkus` does.
-- [ ] **[Q]** Still missing in `quarkus-process-manager` / `quarkus-command`.
+- [x] **[Q]** `quarkus-process-manager` (O1) and `quarkus-command` (V2) build against the same two APIs.
+      This bullet was stale from 2026-07-22 onwards; verified 2026-07-23.
 - [x] **[S]** `springboot-query-core` uses `resilience4j-circuitbreaker` + `resilience4j-core`
       (programmatic API). Versions added to `org.fuin:bom` - neither framework BOM manages resilience4j.
 - [ ] **[S]** `resilience4j-spring-boot3` + `spring-boot-starter-aop` + actuator health/metrics NOT added:
       the guards are applied programmatically, so no AOP proxies are involved. Needed only if annotation
       driven config or actuator integration is wanted.
-- [ ] **[S]** Still missing in `springboot-pm-core` / `keycloak-core`.
+- [x] **[S]** `springboot-pm-core` got resilience4j in O2 and `springboot-command-core` in V2 (which also
+      added `resilience4j-bulkhead` to `org.fuin:bom`). `keycloak-core` deliberately has **no** fault
+      tolerance dependency - see K1: bounded timeouts plus the negative cache do the job without putting an
+      interceptor on every authenticated request.
 - [x] Config namespace `org.fuin.cqrs4j.projection.breaker.*` for **[Q]** (all with defaults).
       Documented in [resilience.md](resilience.md).
-- [ ] **[S]** side is not configurable yet - the values are constants in `SpringViewManager`.
+- [x] **[S]** side is configurable (2026-07-23): new `ProjectionConfig` (`@ConfigurationProperties` on
+      `org.fuin.cqrs4j.projection`, constructor bound like `CommandQueueConfig`) carries the breaker
+      settings, the re-subscribe `Backoff` and the lease lock timeout. The constants are gone from
+      `SpringViewManager`. **Every property defaults to the value that used to be hard coded**, so an
+      application that configures nothing is unaffected - pinned by `ProjectionConfigTest`.
+- [x] The same values are configurable on the **[Q]** side through `org.fuin.cqrs4j.projection.resubscribe.*`
+      and `...lease-lock-timeout-ms` (the Quarkus breaker already was). The `@ConfigProperty` fields carry a
+      field initializer as well, because CDI does not inject into an instance a test constructs directly.
+- [ ] Not configurable, on purpose: the inbound dedup **bulkhead** limits and the Keycloak **negative cache**
+      delays. The bulkhead is constructed by the application (see below), so its limits are already its own
+      arguments; the Keycloak delays are internal to a bean the starter wires and have no operational reason
+      to differ per deployment. Revisit if one shows up.
 
 ---
 
@@ -216,8 +231,11 @@ Files: `quarkus/command/.../QuarkusCommandDispatcher.java` + `QuarkusProcessedCo
       `resilience4j-bulkhead` + `-core`. **`resilience4j-bulkhead` had to be added to `org.fuin:bom`**
       (1.0.2-SNAPSHOT, pinned at 2.4.0 like the other two) - that BOM has to be published before CI here is
       green.
-- [ ] The limits are constructor arguments, not configuration, and no `@RateLimit` was added. Belongs with
-      the other **[Q]**/**[S]** config work in F2.
+- [ ] **The decorator is not wired anywhere** - the application supplies the command dispatcher and decides
+      whether it gets a `ProcessedCommandStore` at all, so the library cannot apply the bulkhead on its
+      behalf. It ships the class and the application wraps its store; this is now shown with an example in
+      [resilience.md](resilience.md), which previously described the bulkhead as if it were already active.
+      The limits are therefore the application's own constructor arguments. No `@RateLimit` was added.
 - [ ] **[Q]** `CommandOverloadedExceptionMapper` is `@TestOmitted`: building a JAX-RS `Response` needs a
       `RuntimeDelegate`, which only exists inside the container. The **[S]** handler has a real test, and the
       Quarkus mapping should be covered by an IT in `test/quarkus` (see Phase 6).

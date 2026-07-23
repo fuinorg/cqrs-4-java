@@ -107,15 +107,13 @@ Without it the projection catch-up fails at runtime when it creates its guard.
 
 ### Spring Boot (Resilience4j)
 
-Currently not configurable — the values are constants in `SpringViewManager`:
-
-| Setting | Value |
-|---|---|
-| Attempts judged before the breaker may open | `4` |
-| Failure rate that opens the breaker | `50 %` |
-| Wait before the first probe | `5 s` |
-| Growth factor per further failed probe | `2.0` |
-| Upper bound for the wait | `5 min` |
+| Property | Default | Meaning |
+|---|---|---|
+| `org.fuin.cqrs4j.projection.breaker-window-size` | `4` | Attempts judged before the breaker may open |
+| `org.fuin.cqrs4j.projection.breaker-failure-rate-percent` | `50` | Failure rate that opens the breaker |
+| `org.fuin.cqrs4j.projection.breaker-initial-wait` | `5s` | Wait before the first probe |
+| `org.fuin.cqrs4j.projection.breaker-backoff-multiplier` | `2.0` | Growth factor per further failed probe |
+| `org.fuin.cqrs4j.projection.breaker-max-wait` | `5m` | Upper bound for the wait |
 
 No extra dependency is required; `resilience4j-circuitbreaker` comes with
 `cqrs-4-java-springboot-query-core`.
@@ -147,6 +145,16 @@ The cap keeps a long outage from turning into an even longer recovery, and the j
 of a scaled-out service from reconnecting in lockstep and hitting the store as one burst the moment it
 returns. The attempt counter is per stream and resets whenever a subscription is established, so a later
 outage starts at the beginning of the schedule again.
+
+Configurable per framework, with those values as the defaults:
+
+| Spring Boot | Quarkus |
+|---|---|
+| `org.fuin.cqrs4j.projection.resubscribe-initial-delay` | `org.fuin.cqrs4j.projection.resubscribe.initial-delay-ms` |
+| `org.fuin.cqrs4j.projection.resubscribe-max-delay` | `org.fuin.cqrs4j.projection.resubscribe.max-delay-ms` |
+| `org.fuin.cqrs4j.projection.resubscribe-multiplier` | `org.fuin.cqrs4j.projection.resubscribe.multiplier` |
+| `org.fuin.cqrs4j.projection.resubscribe-jitter-factor` | `org.fuin.cqrs4j.projection.resubscribe.jitter-factor` |
+| `org.fuin.cqrs4j.projection.resubscribe-max-attempts` | `org.fuin.cqrs4j.projection.resubscribe.max-attempts` |
 
 **Losing a wake-up subscription costs latency, never correctness.** The scheduled poll keeps running and
 reads from its checkpoint, which is why there is no attempt limit by default and why exhausting a configured
@@ -182,7 +190,9 @@ sees N times the traffic. That is inherent to the model.
 With `org.fuin.cqrs4j.projection.ha.enabled=true`, several instances write the *same* read model, so exactly
 one of them may project at a time. Instances compete for a lease before projecting; the acquisition takes a
 `PESSIMISTIC_WRITE` lock on the lease row and gives up after **3 seconds**
-(`jakarta.persistence.lock.timeout`).
+(`jakarta.persistence.lock.timeout`), configurable with
+`org.fuin.cqrs4j.projection.lease-lock-timeout` (Spring) or
+`org.fuin.cqrs4j.projection.lease-lock-timeout-ms` (Quarkus).
 
 Giving up quickly is deliberate: not getting the lease means another instance is projecting, which is the
 normal outcome rather than a failure. Without the bound, every instance that is not the leader would park a
@@ -249,6 +259,21 @@ The receiving side deduplicates commands so a redelivery is not executed twice. 
 database on every incoming command, which makes it the place where a slow database turns into exhausted
 request threads. `BulkheadProcessedCommandStore` bounds how many lookups may run at once and refuses the rest
 straight away, so the endpoint stays responsive for the traffic it can still handle.
+
+**You have to wire it yourself.** The application supplies the command dispatcher and decides whether to give
+it a `ProcessedCommandStore` at all, so the library cannot apply the bulkhead for you - it ships the decorator
+and you wrap your store with it:
+
+```java
+// Spring
+new BulkheadProcessedCommandStore(myProcessedCommandStore, 8, Duration.ofMillis(50));
+
+// Quarkus
+new BulkheadProcessedCommandStore(myProcessedCommandStore, 8);
+```
+
+Pick the limit from your pool and thread budget: it caps how many request threads can be inside a dedup
+lookup at once.
 
 There is deliberately **no retry** here — the sender's outbox is the retry mechanism.
 

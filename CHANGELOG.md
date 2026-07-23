@@ -1,6 +1,7 @@
 # Release Notes
 
 ## 0.7.0
+- The projection catch-up settings are configurable instead of hard coded: new `ProjectionConfig` (`org.fuin.cqrs4j.projection.*`) on the Spring side carries the circuit breaker values, the wake-up re-subscribe schedule and the lease lock timeout, and Quarkus gained the matching `org.fuin.cqrs4j.projection.resubscribe.*` / `lease-lock-timeout-ms` properties. Every property defaults to the value that was hard coded before.
 - A failed Keycloak issuer discovery is now negatively cached with a growing delay (1 s to 30 s), so a down identity provider is no longer contacted again by every request carrying that issuer. Issuers that were already resolved keep validating tokens throughout an outage.
 - **Bugfix** `JwtTenantKeySelector` performed OIDC discovery and the JWK set fetch inside `ConcurrentHashMap.computeIfAbsent`, which holds the bin lock during that network I/O and made concurrent requests queue up behind it.
 - The Keycloak OIDC discovery call is bounded at 5 s instead of the JDK default of 30 s (still overridable via `sun.net.client.defaultConnectTimeout` / `defaultReadTimeout`).

@@ -51,7 +51,7 @@ public class QryProjectionLeaseServiceTest {
 
         // PREPARE
         when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
-                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(null);
+                Map.of("jakarta.persistence.lock.timeout", (int) ProjectionConfig.DEFAULT_LEASE_LOCK_TIMEOUT.toMillis()))).thenReturn(null);
 
         // TEST & VERIFY
         assertThat(testee.acquire(STREAM, "A", TTL)).isTrue();
@@ -65,7 +65,7 @@ public class QryProjectionLeaseServiceTest {
         // PREPARE: owned by B, expires in the future
         final QryProjectionLease held = new QryProjectionLease(STREAM, "B", now + TTL);
         when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
-                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(held);
+                Map.of("jakarta.persistence.lock.timeout", (int) ProjectionConfig.DEFAULT_LEASE_LOCK_TIMEOUT.toMillis()))).thenReturn(held);
 
         // TEST & VERIFY
         assertThat(testee.acquire(STREAM, "A", TTL)).isFalse();
@@ -80,7 +80,7 @@ public class QryProjectionLeaseServiceTest {
         // PREPARE: owned by B but already expired
         final QryProjectionLease held = new QryProjectionLease(STREAM, "B", now - 1);
         when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
-                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(held);
+                Map.of("jakarta.persistence.lock.timeout", (int) ProjectionConfig.DEFAULT_LEASE_LOCK_TIMEOUT.toMillis()))).thenReturn(held);
 
         // TEST & VERIFY
         assertThat(testee.acquire(STREAM, "A", TTL)).isTrue();
@@ -95,7 +95,7 @@ public class QryProjectionLeaseServiceTest {
         // PREPARE: already owned by A
         final QryProjectionLease held = new QryProjectionLease(STREAM, "A", now + 1);
         when(em.find(QryProjectionLease.class, "MyStream", LockModeType.PESSIMISTIC_WRITE,
-                Map.of("jakarta.persistence.lock.timeout", QryProjectionLeaseService.LOCK_TIMEOUT_MILLIS))).thenReturn(held);
+                Map.of("jakarta.persistence.lock.timeout", (int) ProjectionConfig.DEFAULT_LEASE_LOCK_TIMEOUT.toMillis()))).thenReturn(held);
 
         // TEST & VERIFY
         assertThat(testee.acquire(STREAM, "A", TTL)).isTrue();

@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -120,12 +121,33 @@ public class QuarkusViewManager {
     @Inject
     Instance<SubscribableEventStoreAsync> subscribableEventStoreInstance;
 
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.resubscribe.initial-delay-ms", defaultValue = "500")
+    long resubscribeInitialDelayMillis;
+
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.resubscribe.max-delay-ms", defaultValue = "30000")
+    long resubscribeMaxDelayMillis;
+
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.resubscribe.multiplier", defaultValue = "2.0")
+    double resubscribeMultiplier;
+
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.resubscribe.jitter-factor", defaultValue = "0.5")
+    double resubscribeJitterFactor;
+
+    @ConfigProperty(name = "org.fuin.cqrs4j.projection.resubscribe.max-attempts", defaultValue = "-1")
+    int resubscribeMaxAttempts;
+
     /**
-     * Schedule for (re-)establishing a wake-up subscription: 500 ms doubling up to 30 s, with jitter so
-     * several instances of a scaled-out service do not reconnect in lockstep, and no attempt limit because
+     * Schedule for (re-)establishing a wake-up subscription. The jitter keeps several instances of a
+     * scaled-out service from reconnecting in lockstep, and there is no attempt limit by default because
      * losing the subscription only costs latency - the cron poll keeps the projection correct meanwhile.
+     *
+     * @return Backoff built from the configured values.
      */
-    private static final Backoff RESUBSCRIBE_BACKOFF = Backoff.DEFAULT;
+    private Backoff resubscribeBackoff() {
+        return new Backoff(Duration.ofMillis(resubscribeInitialDelayMillis),
+                Duration.ofMillis(resubscribeMaxDelayMillis), resubscribeMultiplier, resubscribeJitterFactor,
+                resubscribeMaxAttempts);
+    }
 
     private final String instanceId = UUID.randomUUID().toString();
 
@@ -195,7 +217,7 @@ public class QuarkusViewManager {
             return thread;
         });
         this.resubscribeScheduler = schedulerService;
-        final ViewSubscriptions subscriptions = new ViewSubscriptions(store, schedulerService, RESUBSCRIBE_BACKOFF);
+        final ViewSubscriptions subscriptions = new ViewSubscriptions(store, schedulerService, resubscribeBackoff());
         this.viewSubscriptions = subscriptions;
         for (final ViewExt view : views) {
             subscriptions.subscribe(view.getProjectionStreamId(), () -> updateView(view));

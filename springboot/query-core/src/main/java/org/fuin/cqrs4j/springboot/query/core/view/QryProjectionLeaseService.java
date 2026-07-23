@@ -10,7 +10,9 @@ import org.fuin.esc.api.StreamId;
 import org.fuin.objects4j.common.Contract;
 import org.fuin.objects4j.common.ThreadSafe;
 
+import java.time.Duration;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,10 +36,13 @@ public class QryProjectionLeaseService implements ProjectionLeaseService {
     private static final String ARG_OWNER = "owner";
 
     /**
-     * Maximum time the lease acquisition waits for the row lock. Kept short on purpose - a contended lease
-     * is a normal outcome, not something worth waiting for.
+     * Maximum time the lease acquisition waits for the row lock, in milliseconds. Kept short on purpose - a
+     * contended lease is a normal outcome, not something worth waiting for. Configurable through
+     * {@code org.fuin.cqrs4j.projection.lease-lock-timeout}; the field initializer is the default for an
+     * instance created outside Spring.
      */
-    static final int LOCK_TIMEOUT_MILLIS = 3_000;
+    @Value("${org.fuin.cqrs4j.projection.lease-lock-timeout:3s}")
+    private Duration lockTimeout = ProjectionConfig.DEFAULT_LEASE_LOCK_TIMEOUT;
 
     /** JPA hint bounding how long a pessimistic lock acquisition may wait. */
     private static final String LOCK_TIMEOUT_HINT = "jakarta.persistence.lock.timeout";
@@ -52,7 +57,7 @@ public class QryProjectionLeaseService implements ProjectionLeaseService {
         Contract.requireArgNotNull(ARG_OWNER, owner);
         final long now = now();
         final QryProjectionLease lease = em.find(QryProjectionLease.class, streamId.asString(),
-                LockModeType.PESSIMISTIC_WRITE, Map.of(LOCK_TIMEOUT_HINT, LOCK_TIMEOUT_MILLIS));
+                LockModeType.PESSIMISTIC_WRITE, Map.of(LOCK_TIMEOUT_HINT, (int) lockTimeout.toMillis()));
         if (lease == null) {
             em.persist(new QryProjectionLease(streamId, owner, now + ttlMillis));
             return true;
