@@ -24,6 +24,7 @@ import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.SubscribableEventStoreAsync;
 import org.fuin.esc.api.ProjectionId;
 import org.fuin.esc.api.ProjectionStreamId;
+import org.fuin.esc.api.ProjectionAlreadyExistsException;
 import org.fuin.esc.api.StreamAlreadyExistsException;
 import org.fuin.esc.api.StreamEventsSlice;
 import org.fuin.esc.api.TypeName;
@@ -387,8 +388,13 @@ public class SpringViewManager implements ApplicationListener<ContextClosedEvent
             LOG.debug("Creating projection: {} (types={}, categories={})", viewJob.getProjectionId(), typeNames, categoryNames);
             try {
                 admin.createProjection(viewJob.getProjectionId(), viewJob.getProjectionStreamId(), true, typeNames, categoryNames);
-            } catch (StreamAlreadyExistsException ex) {
-                LOG.info("Race condition: After checking if project exists, the create failed with 'already exists'");
+            } catch (final ProjectionAlreadyExistsException | StreamAlreadyExistsException ex) {
+                // Another thread created it between the check above and this call - every view prepares its
+                // own projection, and they run concurrently. The projection is there either way, so this is
+                // the expected outcome of the race and not a reason to abandon this run's read: letting it
+                // escape would skip the view's whole cycle and stall its read model for a full interval.
+                LOG.info("Race condition: after checking whether the projection exists, "
+                        + "the create failed with 'already exists': {}", viewJob.getProjectionId());
             }
         }
     }
