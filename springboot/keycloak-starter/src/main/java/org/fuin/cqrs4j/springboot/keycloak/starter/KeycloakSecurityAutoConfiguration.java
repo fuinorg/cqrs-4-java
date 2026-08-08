@@ -30,6 +30,7 @@ import org.fuin.cqrs4j.springboot.keycloak.core.KeycloakJwtAuthenticationConvert
 import org.fuin.cqrs4j.springboot.command.core.CommandExecutionContextProvider;
 import org.fuin.cqrs4j.springboot.keycloak.core.KeycloakCommandExecutionContextProvider;
 import org.fuin.cqrs4j.springboot.keycloak.core.KeycloakTenantRepository;
+import org.fuin.cqrs4j.springboot.keycloak.core.TenantRevalidator;
 import org.fuin.ddd4j.core.TenantId;
 import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.objects4j.common.ThreadSafe;
@@ -101,6 +102,23 @@ public class KeycloakSecurityAutoConfiguration {
     @ConditionalOnMissingBean
     public JwtTenantIssuerValidator tenantJwtIssuerValidator(final JwtTenantRepository tenantRepository) {
         return new JwtTenantIssuerValidator(tenantRepository);
+    }
+
+    /**
+     * Periodically rechecks discovered tenants so a realm deleted or disabled in Keycloak stops being
+     * accepted without a restart. Does nothing if the application supplied its own tenant repository.
+     *
+     * @param tenantRepository Repository whose tenants are rechecked.
+     * @param intervalMillis   Delay between two sweeps.
+     *
+     * @return New revalidator instance.
+     */
+    @Bean(destroyMethod = "close")
+    @ConditionalOnMissingBean
+    public TenantRevalidator tenantRevalidator(
+            final JwtTenantRepository tenantRepository,
+            @Value("${org.fuin.cqrs4j.keycloak.revalidate-interval-millis:60000}") final long intervalMillis) {
+        return new TenantRevalidator(tenantRepository, intervalMillis);
     }
 
     /**

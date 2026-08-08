@@ -18,6 +18,9 @@
 package org.fuin.cqrs4j.springboot.keycloak.starter;
 
 import org.fuin.cqrs4j.springboot.keycloak.core.JwtAudiencesValidator;
+import org.fuin.cqrs4j.springboot.keycloak.core.JwtTenantRepository;
+import org.fuin.cqrs4j.springboot.keycloak.core.KeycloakTenantRepository;
+import org.fuin.cqrs4j.springboot.keycloak.core.SingleRealmTenantRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -103,6 +106,33 @@ class KeycloakSecurityAutoConfigurationTest {
                     assertThat(context).hasSingleBean(JwtDecoder.class);
                     assertThat(context.getBeansOfType(OAuth2TokenValidator.class)).hasSizeGreaterThanOrEqualTo(3);
                 });
+    }
+
+    /**
+     * The seam a control plane relies on: an application that supplies its own tenant repository replaces
+     * the realm-discovering one, and with it the "every realm of this Keycloak is a tenant" trust boundary.
+     */
+    @Test
+    void testAnApplicationCanReplaceTheTenantRepository() {
+        runner.withPropertyValues(ISSUER_URI, AUDIENCES)
+                .withUserConfiguration(SingleRealmConfiguration.class)
+                .run(context -> {
+                    assertThat(context).hasNotFailed();
+                    assertThat(context).hasSingleBean(JwtTenantRepository.class);
+                    assertThat(context.getBean(JwtTenantRepository.class))
+                            .isInstanceOf(SingleRealmTenantRepository.class);
+                    assertThat(context).doesNotHaveBean(KeycloakTenantRepository.class);
+                });
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class SingleRealmConfiguration {
+
+        @Bean
+        public JwtTenantRepository singleRealmTenantRepository() {
+            return new SingleRealmTenantRepository("http://localhost:8080/realms/admin");
+        }
+
     }
 
     @Configuration(proxyBeanMethods = false)

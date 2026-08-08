@@ -23,7 +23,12 @@ import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.JWTClaimsSetAwareJWSKeySelector;
+import org.fuin.ddd4j.core.TenantId;
+import org.fuin.ddd4j.core.TenantRemovedEvent;
 import org.fuin.objects4j.common.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
 
 import java.security.Key;
 import java.util.List;
@@ -34,13 +39,22 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Extracts the tenant from the JWT URI and compares it with tenants from a repository.
  * See <a href="https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/multitenancy.html">Multitenancy in Spring Docs</a>.
+ * <p>
+ * Resolved key selectors are cached, so a tenant that goes away must be <b>evicted</b> - see
+ * {@link #onTenantRemoved(TenantRemovedEvent)}. Otherwise the cached selector keeps verifying signatures
+ * of a tenant the repository no longer knows.
  */
 @ThreadSafe
 public class JwtTenantKeySelector implements JWTClaimsSetAwareJWSKeySelector<SecurityContext> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JwtTenantKeySelector.class);
+
     private final JwtTenantRepository tenantRepository;
 
     private final Map<String, JWSKeySelector<SecurityContext>> selectors;
+
+    /** Reverse index, so a removed tenant can be evicted without knowing its issuer URI. */
+    private final Map<TenantId, String> issuerByTenantId;
 
     /**
      * Constructor with tenant repository.
@@ -50,6 +64,31 @@ public class JwtTenantKeySelector implements JWTClaimsSetAwareJWSKeySelector<Sec
     public JwtTenantKeySelector(JwtTenantRepository tenantRepository) {
         this.tenantRepository = Objects.requireNonNull(tenantRepository, "tenantRepository==null");
         this.selectors = new ConcurrentHashMap<>();
+        this.issuerByTenantId = new ConcurrentHashMap<>();
+    }
+
+    /**
+     * Drops the cached key selector of a tenant that is no longer known.
+     *
+     * @param event Carries the tenant that was removed.
+     */
+    @EventListener
+    public void onTenantRemoved(final TenantRemovedEvent event) {
+        evict(event.tenant().getTenantId());
+    }
+
+    /**
+     * Drops the cached key selector for a tenant. Does nothing if nothing was cached for it.
+     *
+     * @param tenantId Tenant to forget.
+     */
+    public void evict(final TenantId tenantId) {
+        Objects.requireNonNull(tenantId, "tenantId==null");
+        final String issuer = issuerByTenantId.remove(tenantId);
+        if (issuer != null) {
+            selectors.remove(issuer);
+            LOG.info("Evicted key selector of removed tenant: {} ({})", tenantId.name(), issuer);
+        }
     }
 
     @Override
@@ -84,19 +123,16 @@ public class JwtTenantKeySelector implements JWTClaimsSetAwareJWSKeySelector<Sec
         if (known != null) {
             return known;
         }
-        final JWSKeySelector<SecurityContext> resolved = fromIssuer(issuer);
+        final JwtTenant tenant = tenantRepository.findByIssuer(issuer)
+                .orElseThrow(() -> new IllegalArgumentException("Issuer not found: '" + issuer + "'"));
+        final JWSKeySelector<SecurityContext> resolved = tenant.getJWSKeySelector();
         final JWSKeySelector<SecurityContext> raced = selectors.putIfAbsent(issuer, resolved);
+        issuerByTenantId.put(tenant.getTenantId(), issuer);
         return raced == null ? resolved : raced;
     }
 
     private String issuer(JWTClaimsSet claimSet) {
         return (String) claimSet.getClaim("iss");
-    }
-
-    private JWSKeySelector<SecurityContext> fromIssuer(String issuer) {
-        final JwtTenant tenant = tenantRepository.findByIssuer(issuer)
-                .orElseThrow(() -> new IllegalArgumentException("Issuer not found: '" + issuer + "'"));
-        return tenant.getJWSKeySelector();
     }
 
 }

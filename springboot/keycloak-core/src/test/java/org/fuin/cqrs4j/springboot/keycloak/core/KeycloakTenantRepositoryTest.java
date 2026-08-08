@@ -1,8 +1,11 @@
 package org.fuin.cqrs4j.springboot.keycloak.core;
 
+import org.fuin.ddd4j.core.TenantRemovedEvent;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -102,6 +105,82 @@ class KeycloakTenantRepositoryTest {
         assertThat(testee.discoveries()).isZero();
     }
 
+    @Test
+    void testATenantIsKeptWhileItsTimeToLiveLasts() {
+
+        // PREPARE
+        final TestRepository testee = new TestRepository();
+        testee.findByIssuer(OTHER);
+        testee.realmGone(true);
+
+        // TEST: not yet due
+        testee.advance(KeycloakTenantRepository.DEFAULT_TTL_MILLIS - 1);
+        testee.revalidate();
+
+        // VERIFY: nothing was probed and the tenant is still there
+        assertThat(testee.probes()).isZero();
+        assertThat(testee.findByIssuer(OTHER)).isPresent();
+
+    }
+
+    @Test
+    void testAVanishedRealmIsRemovedAndAnnounced() {
+
+        // PREPARE
+        final TestRepository testee = new TestRepository();
+        testee.findByIssuer(OTHER);
+        testee.realmGone(true);
+
+        // TEST: the time to live has passed and the realm answers "no such realm"
+        testee.advance(KeycloakTenantRepository.DEFAULT_TTL_MILLIS);
+        testee.revalidate();
+
+        // VERIFY: gone from the repository and announced, so the caches downstream can drop it
+        assertThat(testee.getTenantIds()).isEmpty();
+        assertThat(testee.removedTenants()).containsExactly("other");
+
+    }
+
+    /**
+     * The fail-safe: a Keycloak that cannot answer says nothing about whether the realm exists. Treating
+     * that as a removal would log out every tenant on any hiccup.
+     */
+    @Test
+    void testAnUnreachableRealmIsKept() {
+
+        // PREPARE
+        final TestRepository testee = new TestRepository();
+        testee.findByIssuer(OTHER);
+        testee.probeFailure(new IllegalStateException("connection refused"));
+
+        // TEST
+        testee.advance(KeycloakTenantRepository.DEFAULT_TTL_MILLIS);
+        testee.revalidate();
+
+        // VERIFY: still known, and nothing was announced
+        assertThat(testee.findByIssuer(OTHER)).isPresent();
+        assertThat(testee.removedTenants()).isEmpty();
+
+    }
+
+    @Test
+    void testAStillExistingRealmIsRevalidatedRatherThanProbedEveryTime() {
+
+        // PREPARE
+        final TestRepository testee = new TestRepository();
+        testee.findByIssuer(OTHER);
+
+        // TEST: first sweep after the time to live confirms the realm, the next one is too early again
+        testee.advance(KeycloakTenantRepository.DEFAULT_TTL_MILLIS);
+        testee.revalidate();
+        testee.revalidate();
+
+        // VERIFY: the confirmation extended the time to live
+        assertThat(testee.probes()).isEqualTo(1);
+        assertThat(testee.findByIssuer(OTHER)).isPresent();
+
+    }
+
     /**
      * Repository with a controllable clock and a discovery that can be made to fail, so the negative cache
      * can be observed without a Keycloak.
@@ -110,14 +189,54 @@ class KeycloakTenantRepositoryTest {
 
         private final AtomicInteger discoveries = new AtomicInteger();
 
+        private final AtomicInteger probes = new AtomicInteger();
+
+        private final List<String> removed;
+
         private long now = 1_000_000L;
 
         private RuntimeException failure;
 
+        private boolean realmGone;
+
+        private RuntimeException probeFailure;
+
         private TestRepository() {
+            this(new ArrayList<>());
+        }
+
+        private TestRepository(final List<String> removed) {
             super(MASTER, event -> {
-                // Nothing to do - the events are not part of these tests
+                if (event instanceof TenantRemovedEvent removedEvent) {
+                    removed.add(removedEvent.tenant().getTenantId().name());
+                }
             });
+            this.removed = removed;
+        }
+
+        void realmGone(final boolean gone) {
+            this.realmGone = gone;
+        }
+
+        void probeFailure(final RuntimeException ex) {
+            this.probeFailure = ex;
+        }
+
+        int probes() {
+            return probes.get();
+        }
+
+        List<String> removedTenants() {
+            return removed;
+        }
+
+        @Override
+        protected boolean realmExists(final String issuerUri) {
+            probes.incrementAndGet();
+            if (probeFailure != null) {
+                throw probeFailure;
+            }
+            return !realmGone;
         }
 
         void failWith(final RuntimeException failure) {
