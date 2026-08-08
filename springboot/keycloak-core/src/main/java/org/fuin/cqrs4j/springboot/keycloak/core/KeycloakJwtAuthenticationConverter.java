@@ -23,23 +23,40 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
 
 /**
  * Converts JWT token into authentication token.
+ * <p>
+ * Only <b>realm</b> roles are mapped ({@code realm_access.roles}), each to a {@code ROLE_}-prefixed
+ * authority, alongside the standard {@code SCOPE_} authorities. Client roles
+ * ({@code resource_access.*.roles}) are deliberately not considered.
+ * <p>
+ * A token carrying no realm roles at all is valid - Keycloak omits the {@code realm_access} claim for a
+ * user without any realm role - and yields no {@code ROLE_} authority. A claim that is present but has
+ * the wrong shape is a malformed token and is rejected with an {@link InvalidBearerTokenException}, so
+ * the caller sees a 401 instead of a 500.
  */
 @ThreadSafe
 public final class KeycloakJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
     private static final String ROLE_PREFIX = "ROLE_";
+
+    private static final String REALM_ACCESS = "realm_access";
+
+    private static final String ROLES = "roles";
 
     @Override
     public AbstractAuthenticationToken convert(Jwt source) {
@@ -51,19 +68,40 @@ public final class KeycloakJwtAuthenticationConverter implements Converter<Jwt, 
     }
 
     private Collection<? extends GrantedAuthority> roles(Jwt jwt) {
-        if (jwt.getClaim("realm_access") instanceof Map realmAccess) {
-            final Object rolesClaim = realmAccess.get("roles");
-            if (rolesClaim instanceof List roles) {
-                return ((List<String>) roles).stream()
-                        .map(role -> new SimpleGrantedAuthority(ROLE_PREFIX + role))
-                        .collect(toSet());
-            } else {
-                throw new IllegalArgumentException("Expected List, but claim 'realm_access.roles' was: "
-                        + (rolesClaim == null ? "null" : rolesClaim.getClass().getName()));
-            }
-        } else {
-            throw new IllegalArgumentException("Expected Map, but claim 'realm_access' was: " + jwt.getClaim("realm_access").getClass().getName());
+
+        final Object realmAccess = jwt.getClaim(REALM_ACCESS);
+        if (realmAccess == null) {
+            // Keycloak omits the claim for a user without any realm role.
+            return Collections.emptySet();
         }
+        if (!(realmAccess instanceof Map<?, ?> realmAccessMap)) {
+            throw malformed("Expected Map, but claim '" + REALM_ACCESS + "' was: "
+                    + realmAccess.getClass().getName());
+        }
+
+        final Object rolesClaim = realmAccessMap.get(ROLES);
+        if (rolesClaim == null) {
+            return Collections.emptySet();
+        }
+        if (!(rolesClaim instanceof List<?> roles)) {
+            throw malformed("Expected List, but claim '" + REALM_ACCESS + "." + ROLES + "' was: "
+                    + rolesClaim.getClass().getName());
+        }
+
+        final Set<GrantedAuthority> authorities = new HashSet<>();
+        for (final Object role : roles) {
+            if (!(role instanceof String name)) {
+                throw malformed("Expected String, but an entry of claim '" + REALM_ACCESS + "." + ROLES
+                        + "' was: " + (role == null ? "null" : role.getClass().getName()));
+            }
+            authorities.add(new SimpleGrantedAuthority(ROLE_PREFIX + name));
+        }
+        return authorities;
+
+    }
+
+    private static InvalidBearerTokenException malformed(final String message) {
+        return new InvalidBearerTokenException(message);
     }
 
 }
