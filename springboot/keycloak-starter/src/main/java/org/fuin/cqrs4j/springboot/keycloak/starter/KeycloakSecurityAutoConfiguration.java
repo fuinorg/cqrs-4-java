@@ -22,6 +22,7 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.JWTClaimsSetAwareJWSKeySelector;
 import com.nimbusds.jwt.proc.JWTProcessor;
+import org.fuin.cqrs4j.springboot.keycloak.core.JwtAudiencesValidator;
 import org.fuin.cqrs4j.springboot.keycloak.core.JwtTenantIssuerValidator;
 import org.fuin.cqrs4j.springboot.keycloak.core.JwtTenantKeySelector;
 import org.fuin.cqrs4j.springboot.keycloak.core.JwtTenantRepository;
@@ -32,6 +33,7 @@ import org.fuin.cqrs4j.springboot.keycloak.core.KeycloakTenantRepository;
 import org.fuin.ddd4j.core.TenantId;
 import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.objects4j.common.ThreadSafe;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -44,14 +46,31 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 /**
  * Auto-configuration that wires the multi-tenant Keycloak/JWT security infrastructure. Adding this
- * starter and setting {@code spring.security.oauth2.resourceserver.jwt.issuer-uri} (pointing at the
- * Keycloak master realm) is enough to get a tenant-aware {@link JwtDecoder} and the supporting beans
- * without configuring them by hand. Every bean is conditional, so an application can override any of
- * them by declaring its own.
+ * starter and setting the two properties below is enough to get a tenant-aware {@link JwtDecoder} and the
+ * supporting beans without configuring them by hand. Every bean is conditional, so an application can
+ * override any of them by declaring its own.
+ * <p>
+ * Required configuration:
+ * <ul>
+ * <li>{@code spring.security.oauth2.resourceserver.jwt.issuer-uri} - the Keycloak <b>master</b> realm.
+ * Every realm below its base URI is a tenant.</li>
+ * <li>{@code spring.security.oauth2.resourceserver.jwt.audiences} - the audience(s) a token must carry at
+ * least one of. <b>The context refuses to start without it</b>, because a resource server that does not
+ * check {@code aud} accepts every token of every client of every accepted realm. The Keycloak client
+ * needs a matching audience mapper, otherwise its tokens carry only the default {@code account}
+ * audience and will be rejected here.</li>
+ * </ul>
+ * <p>
+ * The {@link JwtDecoder} applies the default validators (signature, expiry) plus <b>every</b>
+ * {@link OAuth2TokenValidator} bean of the context - the tenant issuer validator and the audience
+ * validator declared here, and any the application adds itself.
  */
 @ThreadSafe
 @AutoConfiguration
@@ -85,6 +104,36 @@ public class KeycloakSecurityAutoConfiguration {
     }
 
     /**
+     * Validator that asserts the token was issued for this resource server.
+     *
+     * @param audiences Comma separated audiences a token must carry at least one of, from
+     *                  {@code spring.security.oauth2.resourceserver.jwt.audiences}. Split here rather
+     *                  than bound as a {@code List}, because that binding silently yields a single
+     *                  element unless a splitting conversion service happens to be registered.
+     *
+     * @return New validator instance.
+     *
+     * @throws IllegalStateException No audience is configured.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public JwtAudiencesValidator jwtAudiencesValidator(
+            @Value("${spring.security.oauth2.resourceserver.jwt.audiences:}") final String audiences) {
+        final List<String> configured = Arrays.stream(audiences.split(","))
+                .map(String::trim)
+                .filter(aud -> !aud.isEmpty())
+                .toList();
+        if (configured.isEmpty()) {
+            throw new IllegalStateException(
+                    "No audience configured. Set 'spring.security.oauth2.resourceserver.jwt.audiences' to the "
+                            + "audience this resource server expects - without it every token issued for any "
+                            + "client of any accepted realm is valid here. The Keycloak client needs an audience "
+                            + "mapper emitting that value.");
+        }
+        return new JwtAudiencesValidator(configured);
+    }
+
+    /**
      * Key selector that picks the signing keys based on the tenant of the token.
      *
      * @param tenantRepository Repository with the known tenants.
@@ -115,20 +164,24 @@ public class KeycloakSecurityAutoConfiguration {
      * the issuer and stores it as the current tenant in the {@link WritableTenantContext} (if present).
      *
      * @param jwtProcessor  Nimbus JWT processor.
-     * @param jwtValidator  Additional validator (the tenant issuer validator).
+     * @param jwtValidators All token validators of the context - the tenant issuer validator and the
+     *                      audience validator declared here, plus any the application added. They are
+     *                      applied on top of the defaults (signature, expiry), all of them having to
+     *                      pass.
      * @param tenantContext Optional writable tenant context to populate.
      * @return New decoder instance.
      */
     @Bean
     @ConditionalOnMissingBean
     public JwtDecoder jwtDecoder(final JWTProcessor<SecurityContext> jwtProcessor,
-                                 final OAuth2TokenValidator<Jwt> jwtValidator,
+                                 final ObjectProvider<OAuth2TokenValidator<Jwt>> jwtValidators,
                                  final Optional<WritableTenantContext> tenantContext) {
 
         final NimbusJwtDecoder nimbus = new NimbusJwtDecoder(jwtProcessor);
-        final OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(
-                JwtValidators.createDefault(), jwtValidator);
-        nimbus.setJwtValidator(validator);
+        final List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
+        validators.add(JwtValidators.createDefault());
+        jwtValidators.orderedStream().forEach(validators::add);
+        nimbus.setJwtValidator(new DelegatingOAuth2TokenValidator<>(validators));
 
         return token -> {
             final Jwt jwt = nimbus.decode(token);
