@@ -1,2 +1,0 @@
-org.fuin.cqrs4j.springboot.command.starter.CommandEndpointAutoConfiguration
-org.fuin.cqrs4j.springboot.common.ThreadLocalCleanupAutoConfiguration

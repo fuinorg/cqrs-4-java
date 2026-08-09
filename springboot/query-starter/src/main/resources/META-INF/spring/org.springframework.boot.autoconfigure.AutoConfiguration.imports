@@ -1,2 +1,0 @@
-org.fuin.cqrs4j.springboot.query.starter.Cqrs4jConfig
-org.fuin.cqrs4j.springboot.common.ThreadLocalCleanupAutoConfiguration

@@ -33,8 +33,6 @@
 
     <modules>
         <module>helper</module>
-        <module>springboot</module>
-        <module>quarkus</module>
     </modules>
 
 </project>

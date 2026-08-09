@@ -30,8 +30,6 @@
 
     <properties>
         <description>Base classes for Command Query Responsibility Segregation (CQRS) with Java</description>
-        <quarkus.version>3.23.4</quarkus.version>
-        <spring.boot.version>3.5.14</spring.boot.version>
         <jackson.version>2.18.2</jackson.version>
         <esc.version>0.10.0-SNAPSHOT</esc.version>
         <ddd4j.version>0.8.0-SNAPSHOT</ddd4j.version>
@@ -114,95 +112,20 @@
                 <version>${project.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot-common</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot-command-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot-command-starter</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot-query-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot-query-starter</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot-pm-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot-keycloak-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot-keycloak-starter</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-springboot-security</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-quarkus</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-quarkus-common</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-quarkus-query</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-quarkus-command</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-quarkus-process-manager</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
-            <dependency>
-                <groupId>org.fuin.cqrs4j</groupId>
-                <artifactId>cqrs-4-java-quarkus-keycloak</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
             <dependency>
                 <groupId>org.fuin.cqrs4j</groupId>
@@ -444,8 +367,6 @@
         <module>jsonb</module>
         <module>jackson</module>
         <module>jacoco</module>
-        <module>springboot</module>
-        <module>quarkus</module>
         <module>jpa</module>
         <module>test</module>
     </modules>

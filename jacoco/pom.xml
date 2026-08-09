@@ -49,77 +49,21 @@
 
         <!-- Spring Boot modules -->
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-springboot-common</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-springboot-command-core</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-springboot-command-starter</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-springboot-query-core</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-springboot-query-starter</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-springboot-pm-core</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-springboot-keycloak-core</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-springboot-keycloak-starter</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-springboot-security</artifactId>
-        </dependency>
 
         <!-- Quarkus modules -->
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-quarkus-common</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-quarkus-query</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-quarkus-command</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-quarkus-process-manager</artifactId>
-        </dependency>
 
-        <dependency>
-            <groupId>org.fuin.cqrs4j</groupId>
-            <artifactId>cqrs-4-java-quarkus-keycloak</artifactId>
-        </dependency>
 
         <!-- JPA modules -->
 
