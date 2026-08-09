@@ -58,11 +58,45 @@ managed by the BOM, so none of it needs a version.
 | [`springboot/query-core`](springboot/query-core) + [`query-starter`](springboot/query-starter) | The Spring Boot read side, and its auto-configuration. |
 | [`springboot/process-manager`](springboot/process-manager) | The Spring Boot process manager: outbox delivery and timeouts. |
 | [`springboot/keycloak-core`](springboot/keycloak-core) + [`keycloak-starter`](springboot/keycloak-starter) | Multi-tenant Keycloak token validation for Spring Security. |
+| [`springboot/security`](springboot/security) | The filter chain that *decides access*, from `cqrs4j.security.*` - see below. |
 | [`quarkus/common`](quarkus/common), [`command`](quarkus/command), [`query`](quarkus/query), [`process-manager`](quarkus/process-manager), [`keycloak`](quarkus/keycloak) | The same five things for Quarkus. |
-| [`test/helper`](test/helper) | Test doubles: containers, a cuttable TCP proxy, and a stub OpenID provider. |
+| [`test/helper`](test/helper) | Test doubles: containers, a cuttable TCP proxy, a stub OpenID provider, a Keycloak realm fixture, and the shared security ArchUnit rules. |
 
 Not published: [`jacoco`](jacoco) aggregates the coverage report, and [`test/springboot`](test/springboot)
 and [`test/quarkus`](test/quarkus) are the sample applications the integration tests drive.
+
+## Securing an application
+
+Add [`cqrs-4-java-springboot-security`](springboot/security) and configure it. Everything is closed by
+default: health and info answer without a token, everything else needs a valid one.
+
+```yaml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://keycloak.example.com/realms/acme
+          audiences: my-api          # the starter refuses to start without it
+
+cqrs4j:
+  security:
+    rules:                           # optional; order matters, as in Spring Security
+      - paths: [ "/cmd/**" ]
+        has-any-role: [ tenant-admin ]
+```
+
+**A rule can require a role. It cannot open a path.** Anything unmatched is `authenticated()`, and that
+is not configurable. An application that genuinely needs a public path declares a `Customizer` bean, in
+Java, where a reviewer and `SecurityArchRules` can see it — moving that decision into YAML would put it
+beyond the reach of every guard there is.
+
+Two more settings: `permit-actuator: false` closes health and info, and `tenants: discover` replaces the
+single-realm trust boundary with the keycloak starter's realm-discovering one.
+
+On the test side, [`cqrs-4-java-test-helper`](test/helper) has `SecurityArchRules` (a permit-all chain
+may exist only under `@Profile("local")`, and the packaged `application.yml` may not activate it) and
+`KeycloakRealm` (a provisioned realm and real tokens, for the cases a stub cannot show).
 
 ## Resilience
 See [resilience.md](resilience.md) for what happens when the event store or the database is unreachable, and how the timeouts and circuit breakers can be configured.

@@ -18,6 +18,8 @@
 
     <properties>
         <testcontainers.version>1.20.6</testcontainers.version>
+        <!-- Not managed by any BOM this reactor imports; Spring Boot consumers already have it. -->
+        <snakeyaml.version>2.3</snakeyaml.version>
     </properties>
 
     <dependencies>
@@ -41,17 +43,40 @@
             <version>${testcontainers.version}</version>
         </dependency>
 
-        <!-- Test -->
+        <!--
+            Optional on purpose. SecurityArchRules needs them; the container helpers and StubAuthServer
+            do not, and a Quarkus consumer using only those should not inherit ArchUnit. Every module
+            that runs the rules already declares archunit itself, and snakeyaml comes with Spring Boot.
+        -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit</artifactId>
+            <optional>true</optional>
+        </dependency>
 
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${snakeyaml.version}</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- Test -->
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
 

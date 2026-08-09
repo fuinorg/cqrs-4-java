@@ -89,6 +89,11 @@
             <artifactId>cqrs-4-java-springboot-keycloak-starter</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.fuin.cqrs4j</groupId>
+            <artifactId>cqrs-4-java-springboot-security</artifactId>
+        </dependency>
+
         <!-- Quarkus modules -->
 
         <dependency>

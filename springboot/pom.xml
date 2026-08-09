@@ -23,6 +23,7 @@
         <module>query-starter</module>
         <module>keycloak-core</module>
         <module>keycloak-starter</module>
+        <module>security</module>
         <module>process-manager</module>
     </modules>
 
