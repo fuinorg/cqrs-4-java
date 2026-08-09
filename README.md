@@ -40,15 +40,29 @@ The [cqrs-4-java-bom](bom) module is a [Maven BOM](https://maven.apache.org/guid
 </dependencies>
 ```
 
-The BOM manages the following modules:
-- `cqrs-4-java-core`
-- `cqrs-4-java-esc`
-- `cqrs-4-java-jaxb`
-- `cqrs-4-java-jsonb`
-- `cqrs-4-java-jackson`
-- `cqrs-4-java-springboot`
-- `cqrs-4-java-springboot-query-starter`
-- `cqrs-4-java-quarkus`
+## Modules
+
+Every module has a `README.md` of its own saying what it is; this is the map. Everything listed here is
+managed by the BOM, so none of it needs a version.
+
+| Module | |
+|---|---|
+| [`core`](core) | The framework-independent heart: commands, results, dispatchers, tenants and authorization. |
+| [`esc`](esc) | The bridge to the `esc` event store: projections, leases, freshness and the `CommandMeta` audit record. |
+| [`jackson`](jackson) / [`jaxb`](jaxb) / [`jsonb`](jsonb) | The three serialization flavours of commands and results - pick one. |
+| [`jpa/command`](jpa/command) | Processed-command entity, so a retry cannot execute a command twice. |
+| [`jpa/query`](jpa/query) | Projection position and lease entities. |
+| [`jpa/process-manager`](jpa/process-manager) | Outbox, timeout and dead-letter entities. |
+| [`springboot/common`](springboot/common) | Thread-local and tenant-context cleanup between requests. |
+| [`springboot/command-core`](springboot/command-core) + [`command-starter`](springboot/command-starter) | The Spring Boot write side, and the auto-configuration that exposes it. |
+| [`springboot/query-core`](springboot/query-core) + [`query-starter`](springboot/query-starter) | The Spring Boot read side, and its auto-configuration. |
+| [`springboot/process-manager`](springboot/process-manager) | The Spring Boot process manager: outbox delivery and timeouts. |
+| [`springboot/keycloak-core`](springboot/keycloak-core) + [`keycloak-starter`](springboot/keycloak-starter) | Multi-tenant Keycloak token validation for Spring Security. |
+| [`quarkus/common`](quarkus/common), [`command`](quarkus/command), [`query`](quarkus/query), [`process-manager`](quarkus/process-manager), [`keycloak`](quarkus/keycloak) | The same five things for Quarkus. |
+| [`test/helper`](test/helper) | Test doubles: containers, a cuttable TCP proxy, and a stub OpenID provider. |
+
+Not published: [`jacoco`](jacoco) aggregates the coverage report, and [`test/springboot`](test/springboot)
+and [`test/quarkus`](test/quarkus) are the sample applications the integration tests drive.
 
 ## Resilience
 See [resilience.md](resilience.md) for what happens when the event store or the database is unreachable, and how the timeouts and circuit breakers can be configured.

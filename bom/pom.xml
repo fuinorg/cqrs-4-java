@@ -116,6 +116,17 @@
                 <version>${project.version}</version>
             </dependency>
 
+            <!--
+                Test scope, but managed here all the same: StubAuthServer and the container helpers are used
+                from other repositories, and a consumer that has imported this BOM should not have to name a
+                version for one artifact out of twenty-five.
+            -->
+            <dependency>
+                <groupId>org.fuin.cqrs4j</groupId>
+                <artifactId>cqrs-4-java-test-helper</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.fuin.cqrs4j</groupId>
                 <artifactId>cqrs-4-java-quarkus-command</artifactId>

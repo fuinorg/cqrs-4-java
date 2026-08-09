@@ -1,6 +1,8 @@
 # Release Notes
 
 ## 0.7.0
+- Added `StubAuthServer` to `cqrs-4-java-test-helper`: an OpenID Connect provider (discovery, `/auth`, `/token`, `/userinfo`, `/logout`) as a small in-process HTTP server, for testing a client's login without a Keycloak container. It **verifies** the PKCE challenge rather than accepting it, so a client that dropped PKCE or sent a `plain` challenge fails against it, and it reports a refusal as a redirect back to the client so such a test goes red instead of waiting out a login timeout.
+- `cqrs-4-java-test-helper` is now managed by the BOM, and every module has a `README.md` saying in one sentence what it is (mapped from the root `README.md`).
 - The projection catch-up settings are configurable instead of hard coded: new `ProjectionConfig` (`org.fuin.cqrs4j.projection.*`) on the Spring side carries the circuit breaker values, the wake-up re-subscribe schedule and the lease lock timeout, and Quarkus gained the matching `org.fuin.cqrs4j.projection.resubscribe.*` / `lease-lock-timeout-ms` properties. Every property defaults to the value that was hard coded before.
 - A failed Keycloak issuer discovery is now negatively cached with a growing delay (1 s to 30 s), so a down identity provider is no longer contacted again by every request carrying that issuer. Issuers that were already resolved keep validating tokens throughout an outage.
 - **Bugfix** `JwtTenantKeySelector` performed OIDC discovery and the JWK set fetch inside `ConcurrentHashMap.computeIfAbsent`, which holds the bin lock during that network I/O and made concurrent requests queue up behind it.
