@@ -20,15 +20,15 @@ package org.fuin.cqrs4j.core;
 import org.fuin.objects4j.common.ThreadSafe;
 
 /**
- * Provides information about things like logged-in user and tenant, while a command is being executed.
+ * Provides information about things like logged-in user and tenant, while a query is being executed.
  * <p>
- * Everything this interface offers today is inherited from {@link ExecutionContext}, which the query side
- * shares. The type is kept separate so that a component can state which side it belongs to, and so that
- * command-only information can be added later without the query side inheriting it.
+ * The query-side counterpart of {@link CommandExecutionContext}. Both inherit everything they have today
+ * from {@link ExecutionContext}; they are separate types so that a component can state which side it belongs
+ * to.
  * <p>
  * All implementations are expected to be thread safe.
  */
 @ThreadSafe
-public interface CommandExecutionContext extends ExecutionContext {
+public interface QueryExecutionContext extends ExecutionContext {
 
 }

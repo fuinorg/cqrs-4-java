@@ -17,18 +17,35 @@
  */
 package org.fuin.cqrs4j.core;
 
+import org.fuin.ddd4j.core.TenantId;
+import org.fuin.ddd4j.core.User;
 import org.fuin.objects4j.common.ThreadSafe;
 
 /**
- * Provides information about things like logged-in user and tenant, while a command is being executed.
+ * Provides information about things like logged-in user and tenant, independent of whether a command or a
+ * query is being executed.
  * <p>
- * Everything this interface offers today is inherited from {@link ExecutionContext}, which the query side
- * shares. The type is kept separate so that a component can state which side it belongs to, and so that
- * command-only information can be added later without the query side inheriting it.
+ * This exists so that a component which only needs to know <em>who is calling</em> - an authorizer, for
+ * example - can be written once and used on both sides. Anything that needs to know <em>what</em> is being
+ * executed takes {@link CommandExecutionContext} or {@link QueryExecutionContext} instead.
  * <p>
  * All implementations are expected to be thread safe.
  */
 @ThreadSafe
-public interface CommandExecutionContext extends ExecutionContext {
+public interface ExecutionContext {
+
+    /**
+     * Returns the tenant.
+     *
+     * @return Tenant.
+     */
+    TenantId getTenantId();
+
+    /**
+     * Returns the user.
+     *
+     * @return User.
+     */
+    User getUser();
 
 }

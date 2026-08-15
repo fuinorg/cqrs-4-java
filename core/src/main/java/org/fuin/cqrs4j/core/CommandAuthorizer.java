@@ -42,6 +42,26 @@ public interface CommandAuthorizer {
     Result authorized(Command command, List<SimpleRole> userRoles);
 
     /**
+     * Determines if a user is authorized to execute the given command, with the execution context available.
+     * <p>
+     * An implementation that decides from the roles in the token alone needs nothing beyond
+     * {@link #authorized(Command, List)}, which is why that method stays the one that must be implemented.
+     * An implementation that decides from the application's own data instead needs to know <em>who</em> is
+     * calling - the subject and the tenant - and the dispatcher already holds that as the context it passes
+     * to the handler. This overload is how it reaches the authorizer.
+     * <p>
+     * The default delegates, so existing implementations keep working unchanged.
+     *
+     * @param command   Command to execute.
+     * @param userRoles Security roles the user has assigned.
+     * @param context   Who is calling.
+     * @return Result of the verification.
+     */
+    default Result authorized(Command command, List<SimpleRole> userRoles, ExecutionContext context) {
+        return authorized(command, userRoles);
+    }
+
+    /**
      * Result of the authorization check.
      *
      * @param success If the user is authorized to execute the command {@literal true}.
