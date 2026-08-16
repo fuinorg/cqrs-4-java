@@ -173,6 +173,39 @@ public class PermissionStateTest {
     }
 
     @Test
+    public void testWhatOneHolderWasGranted() {
+        // The lookup for an application whose holders are not interchangeable: a subject that is several
+        // holders but acts as one of them at a time, with the caller saying which.
+        final String otherHolder = "person-2";
+        final PermissionState testee = new PermissionState();
+
+        testee.grant(T, HOLDER, List.of("A"));
+        testee.grant(T, otherHolder, List.of("B"));
+        testee.bindSubject(T, SUBJECT, HOLDER);
+        testee.bindSubject(T, SUBJECT, otherHolder);
+
+        assertThat(testee.permissionsOfHolder(T, HOLDER)).containsExactly("A");
+        assertThat(testee.permissionsOfHolder(T, otherHolder)).containsExactly("B");
+        // While the subject-keyed lookup still unions them, which is the answer this one exists beside.
+        assertThat(testee.permissionsOfSubject(T, SUBJECT)).containsExactlyInAnyOrder("A", "B");
+    }
+
+    @Test
+    public void testAHolderNobodyGrantedAnythingHoldsNothing() {
+        assertThat(new PermissionState().permissionsOfHolder(T, "never-seen")).isEmpty();
+    }
+
+    @Test
+    public void testAHoldersGrantsAreIsolatedPerTenant() {
+        // The same reason every other key carries the tenant: asking for a holder by name in the wrong
+        // tenant must not answer with the right one's grants.
+        final PermissionState testee = new PermissionState();
+        testee.grant(T, HOLDER, List.of("A"));
+
+        assertThat(testee.permissionsOfHolder(new TenantId("other"), HOLDER)).isEmpty();
+    }
+
+    @Test
     public void testClear() {
         final PermissionState testee = new PermissionState();
         testee.bindSubject(T, SUBJECT, HOLDER);

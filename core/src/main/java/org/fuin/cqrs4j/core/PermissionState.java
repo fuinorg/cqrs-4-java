@@ -174,6 +174,25 @@ public final class PermissionState {
     }
 
     /**
+     * Returns what one holder was granted, regardless of who resolves through it.
+     * <p>
+     * The counterpart to {@link #permissionsOfSubject(TenantId, String)} for an application whose holders
+     * are not interchangeable - one where a subject is several holders but is meant to act as a single
+     * one at a time, and the caller says which. Unioning over all of them would be the wrong answer there,
+     * and it is the only answer the subject-keyed lookup can give.
+     *
+     * @param tenantId Tenant the holder belongs to.
+     * @param holderId Holder to look up.
+     * @return Permission ids granted to it, empty when it holds nothing or was never seen. The two are
+     *         not told apart, for the same reason {@link #permissionsOfSubject(TenantId, String)} does not
+     *         tell them apart: both mean "may do nothing".
+     */
+    public Set<String> permissionsOfHolder(final TenantId tenantId, final String holderId) {
+        final Set<String> held = permissionsByHolder.get(new Key(tenantId, holderId));
+        return held == null ? Set.of() : held;
+    }
+
+    /**
      * Returns the holders a subject is, within one tenant.
      * <p>
      * This is the subject-to-holder index the command side would otherwise not have: the read model's
