@@ -18,11 +18,14 @@
 package org.fuin.cqrs4j.esc;
 
 import org.fuin.cqrs4j.core.AuthorizationView;
+import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.cqrs4j.core.PermissionEventSource;
 import org.fuin.cqrs4j.core.PermissionState;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
 import org.fuin.ddd4j.core.TenantId;
+import org.fuin.ddd4j.core.ThreadLocalTenantContext;
+import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.ProjectionId;
@@ -33,8 +36,10 @@ import org.mockito.ArgumentMatchers;
 import java.time.Duration;
 import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -145,16 +150,72 @@ public class AuthorizationProjectionRunnerTest {
     }
 
     @Test
-    public void testRefusesToStartWhenMultitenancyIsEnabled() {
-        // Every link in this stack's tenancy chain degrades silently to single-tenant when it is missing.
-        // This one must not: projecting one tenant and denying every other looks like a permissions problem,
-        // not like a missing feature, and it would be diagnosed as one.
-        try (AuthorizationProjectionRunner testee = runner(mock(EventStore.class), admin(),
-                Duration.ofSeconds(5), Duration.ofSeconds(30), true)) {
-            assertThatThrownBy(testee::start)
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("not tenant-aware");
-            assertThat(testee.ready()).isFalse();
+    public void testMultitenancyRequiresTheBeansItCannotWorkWithout() {
+        // The runner used to refuse to start under multitenancy because it projected one tenant and denied
+        // every other. It no longer does - but it still must not accept the flag without the two things that
+        // make the loop possible, because the failure mode that replaced the refusal would be the same one.
+        final AuthorizationView view = view();
+        assertThatThrownBy(() -> new AuthorizationProjectionRunner(mock(EventStore.class), admin(), view, T,
+                Duration.ofSeconds(5), Duration.ofSeconds(30), true, null, () -> Stream.of(T)))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("tenantContext");
+        assertThatThrownBy(() -> new AuthorizationProjectionRunner(mock(EventStore.class), admin(), view, T,
+                Duration.ofSeconds(5), Duration.ofSeconds(30), true, new ThreadLocalTenantContext(), null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("tenantIds");
+    }
+
+    @Test
+    public void testEveryKnownTenantIsProjectedUnderItsOwnContext() {
+
+        final TenantId other = new TenantId("beta");
+        final List<String> seen = new ArrayList<>();
+        final WritableTenantContext context = new ThreadLocalTenantContext();
+        final EventStore eventStore = mock(EventStore.class);
+        // Records which tenant was on the context at the moment the store was asked. That is the whole
+        // contract with the event store: it prefixes the stream from the context, so a pass that reads with
+        // the wrong tenant set reads another tenant's stream.
+        when(eventStore.streamExists(ArgumentMatchers.<StreamId>any())).thenAnswer(invocation -> {
+            seen.add(context.getTenantId().map(TenantId::asString).orElse("<none>"));
+            return false;
+        });
+
+        try (AuthorizationProjectionRunner testee = new AuthorizationProjectionRunner(eventStore, admin(),
+                view(), T, Duration.ofSeconds(5), Duration.ofSeconds(30), true, context,
+                (TenantIdsSupplier) () -> Stream.of(T, other))) {
+
+            testee.start();
+            awaitTrue(() -> testee.ready(T) && testee.ready(other), "both tenants to catch up");
+        }
+
+        assertThat(seen).containsExactly("acme", "beta");
+        // Cleared afterwards, or the next thing to run on this thread inherits a tenant it never set.
+        assertThat(context.getTenantId()).isEmpty();
+    }
+
+    @Test
+    public void testOneTenantsReadinessDoesNotAnswerForAnother() {
+
+        final TenantId other = new TenantId("beta");
+        final WritableTenantContext context = new ThreadLocalTenantContext();
+        final EventStore eventStore = mock(EventStore.class);
+        // 'beta' cannot be reached. 'acme' still has to be answerable: denying every tenant because one
+        // stream is unreachable is exactly the blast radius this per-tenant bookkeeping exists to stop.
+        when(eventStore.streamExists(ArgumentMatchers.<StreamId>any())).thenAnswer(invocation -> {
+            if (context.getTenantId().map(TenantId::asString).orElse("").equals("beta")) {
+                throw new IllegalStateException("beta's stream is unreachable");
+            }
+            return false;
+        });
+
+        try (AuthorizationProjectionRunner testee = new AuthorizationProjectionRunner(eventStore, admin(),
+                view(), T, Duration.ofSeconds(5), Duration.ofSeconds(30), true, context,
+                (TenantIdsSupplier) () -> Stream.of(T, other))) {
+
+            testee.start();
+            awaitTrue(() -> testee.ready(T), "acme to catch up");
+
+            assertThat(testee.ready(other)).isFalse();
         }
     }
 
@@ -197,9 +258,11 @@ public class AuthorizationProjectionRunnerTest {
                                                         final ProjectionAdminEventStore admin,
                                                         final Duration poll, final Duration maxStaleness,
                                                         final boolean multitenancy) {
-        final AuthorizationView view = new AuthorizationView(List.of(new NoopSource()), new PermissionState(),
-                "*/5 * * * * *", T);
-        return new AuthorizationProjectionRunner(eventStore, admin, view, T, poll, maxStaleness, multitenancy);
+        return new AuthorizationProjectionRunner(eventStore, admin, view(), T, poll, maxStaleness, multitenancy);
+    }
+
+    private static AuthorizationView view() {
+        return new AuthorizationView(List.of(new NoopSource()), new PermissionState(), "*/5 * * * * *", T);
     }
 
     private static final class NoopSource implements PermissionEventSource {

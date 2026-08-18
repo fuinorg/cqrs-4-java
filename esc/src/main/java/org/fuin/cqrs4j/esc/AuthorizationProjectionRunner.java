@@ -20,13 +20,16 @@ package org.fuin.cqrs4j.esc;
 import org.fuin.cqrs4j.core.AuthorizationView;
 import org.fuin.ddd4j.core.Event;
 import org.fuin.ddd4j.core.EventType;
+import org.fuin.cqrs4j.core.TenantIdsSupplier;
 import org.fuin.ddd4j.core.TenantId;
+import org.fuin.ddd4j.core.WritableTenantContext;
 import org.fuin.esc.api.CommonEvent;
 import org.fuin.esc.api.EventStore;
 import org.fuin.esc.api.ProjectionAdminEventStore;
 import org.fuin.esc.api.ProjectionAlreadyExistsException;
 import org.fuin.esc.api.ProjectionId;
 import org.fuin.esc.api.ProjectionStreamId;
+import org.fuin.esc.api.StreamId;
 import org.fuin.esc.api.StreamAlreadyExistsException;
 import org.fuin.esc.api.StreamEventsSlice;
 import org.fuin.esc.api.TypeName;
@@ -38,8 +41,10 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -93,7 +98,14 @@ public final class AuthorizationProjectionRunner implements AutoCloseable {
 
     private final boolean multitenancyEnabled;
 
-    private final AtomicReference<@Nullable Instant> lastCatchUp = new AtomicReference<>();
+    /** When each tenant last caught up. One entry per tenant, so a stale tenant denies only its own. */
+    private final Map<TenantId, Instant> lastCatchUp = new ConcurrentHashMap<>();
+
+    @Nullable
+    private final WritableTenantContext tenantContext;
+
+    @Nullable
+    private final TenantIdsSupplier tenantIds;
 
     @Nullable
     private ScheduledExecutorService scheduler;
@@ -108,14 +120,42 @@ public final class AuthorizationProjectionRunner implements AutoCloseable {
      * @param pollInterval        How often to look for new events.
      * @param maxStaleness        How old the last successful catch-up may be before the runner reports not
      *                            ready.
-     * @param multitenancyEnabled Whether the application runs multi-tenant. If it does, {@link #start()}
-     *                            refuses - see there for why.
+     * @param multitenancyEnabled Whether the application runs multi-tenant.
      */
     public AuthorizationProjectionRunner(final EventStore eventStore, final ProjectionAdminEventStore admin,
                                          final AuthorizationView view, final TenantId tenantId,
                                          final Duration pollInterval, final Duration maxStaleness,
                                          final boolean multitenancyEnabled) {
+        this(eventStore, admin, view, tenantId, pollInterval, maxStaleness, multitenancyEnabled, null, null);
+    }
+
+    /**
+     * Constructor for the multi-tenant case.
+     *
+     * @param eventStore          Store to read the projected events from.
+     * @param admin               Store used to create the projection.
+     * @param view                View to feed.
+     * @param tenantId            The tenant projected when multitenancy is off.
+     * @param pollInterval        How often to look for new events.
+     * @param maxStaleness        How old the last successful catch-up may be before a tenant reports not
+     *                            ready.
+     * @param multitenancyEnabled Whether the application runs multi-tenant.
+     * @param tenantContext       Carries the tenant of the pass currently running, so that the event store
+     *                            reads that tenant's streams. Required when multitenancy is enabled.
+     * @param tenantIds           Supplies the tenants known at the moment of the call; must be thread-safe.
+     *                            Required when multitenancy is enabled.
+     */
+    public AuthorizationProjectionRunner(final EventStore eventStore, final ProjectionAdminEventStore admin,
+                                         final AuthorizationView view, final TenantId tenantId,
+                                         final Duration pollInterval, final Duration maxStaleness,
+                                         final boolean multitenancyEnabled,
+                                         @Nullable final WritableTenantContext tenantContext,
+                                         @Nullable final TenantIdsSupplier tenantIds) {
         this.multitenancyEnabled = multitenancyEnabled;
+        this.tenantContext = multitenancyEnabled
+                ? Objects.requireNonNull(tenantContext, "tenantContext==null") : tenantContext;
+        this.tenantIds = multitenancyEnabled
+                ? Objects.requireNonNull(tenantIds, "tenantIds==null") : tenantIds;
         this.eventStore = Objects.requireNonNull(eventStore, "eventStore==null");
         this.admin = Objects.requireNonNull(admin, "admin==null");
         this.view = Objects.requireNonNull(view, "view==null");
@@ -142,15 +182,6 @@ public final class AuthorizationProjectionRunner implements AutoCloseable {
      * @throws IllegalStateException Multitenancy is enabled, which this runner does not support yet.
      */
     public synchronized void start() {
-        if (multitenancyEnabled) {
-            // Refuse loudly rather than project one tenant and deny every other. Every link in the tenancy
-            // chain in this stack degrades silently to single-tenant when it is missing; an authorization
-            // component is the worst possible place to add another one. Supporting it means reading each
-            // tenant's stream in turn with its own checkpoint, the way the query side's view manager does.
-            throw new IllegalStateException("The authorization projection is not tenant-aware yet. Refusing "
-                    + "to start rather than projecting a single tenant and denying every other one. Either "
-                    + "disable multitenancy, or teach this runner to iterate the known tenants.");
-        }
         if (scheduler != null) {
             return;
         }
@@ -178,7 +209,22 @@ public final class AuthorizationProjectionRunner implements AutoCloseable {
      * @return TRUE if a catch-up has completed and is not older than the staleness limit.
      */
     public boolean ready() {
-        final Instant last = lastCatchUp.get();
+        return ready(tenantId);
+    }
+
+    /**
+     * Determines whether the projection's answer for one tenant can be trusted right now.
+     * <p>
+     * Per tenant on purpose: a tenant whose stream is unreachable, or which has simply not been reached yet
+     * in this pass, must not deny requests for every other tenant. Each one carries its own catch-up time
+     * and is judged against the same staleness limit.
+     *
+     * @param tenant Tenant to answer for.
+     *
+     * @return TRUE if a catch-up for that tenant has completed and is not older than the staleness limit.
+     */
+    public boolean ready(final TenantId tenant) {
+        final Instant last = lastCatchUp.get(Objects.requireNonNull(tenant, "tenant==null"));
         if (last == null) {
             return false;
         }
@@ -192,7 +238,19 @@ public final class AuthorizationProjectionRunner implements AutoCloseable {
      */
     @Nullable
     public Instant lastCatchUp() {
-        return lastCatchUp.get();
+        return lastCatchUp.get(tenantId);
+    }
+
+    /**
+     * Returns when the last successful catch-up for one tenant finished.
+     *
+     * @param tenant Tenant to answer for.
+     *
+     * @return Instant, or {@literal null} if none has completed yet.
+     */
+    @Nullable
+    public Instant lastCatchUp(final TenantId tenant) {
+        return lastCatchUp.get(Objects.requireNonNull(tenant, "tenant==null"));
     }
 
     private void catchUpQuietly() {
@@ -212,25 +270,65 @@ public final class AuthorizationProjectionRunner implements AutoCloseable {
     }
 
     private void catchUp() {
+        final TenantIdsSupplier supplier = this.tenantIds;
+        final WritableTenantContext context = this.tenantContext;
+        if (supplier == null || context == null) {
+            catchUpTenant(tenantId);
+            return;
+        }
+        // One pass per tenant, each with its own context, its own projection in the event store and its own
+        // checkpoint. A tenant that fails is caught by the caller's handler and the others still run: the
+        // alternative - abandoning the pass - would let one unreachable tenant's stream age every other
+        // tenant's answer into a denial.
+        supplier.getTenantIds().forEach(tenant -> {
+            context.setTenantId(tenant);
+            try {
+                catchUpTenant(tenant);
+            } finally {
+                context.clear();
+            }
+        });
+    }
+
+    private void catchUpTenant(final TenantId tenant) {
         createProjection();
         if (!eventStore.streamExists(projectionStreamId)) {
             // Nothing has ever been projected. Nobody holds anything, and that is a complete answer - so the
             // runner counts as caught up rather than blocking every request until the first event arrives.
-            lastCatchUp.set(Instant.now());
+            lastCatchUp.put(tenant, Instant.now());
             return;
         }
-        final long from = projectionService.readProjectionPosition(projectionStreamId);
-        eventStore.readAllEventsForward(projectionStreamId, from, view.getChunkSize(), this::handleChunk);
-        lastCatchUp.set(Instant.now());
+        final StreamId checkpoint = checkpointFor(tenant);
+        final long from = projectionService.readProjectionPosition(checkpoint);
+        eventStore.readAllEventsForward(projectionStreamId, from, view.getChunkSize(),
+                slice -> handleChunk(tenant, checkpoint, slice));
+        lastCatchUp.put(tenant, Instant.now());
     }
 
-    private void handleChunk(final StreamEventsSlice slice) {
+    /**
+     * The key this tenant's checkpoint is stored under.
+     * <p>
+     * Note the asymmetry with the read above, which is deliberate and easy to misread: the event store is
+     * handed the <em>unprefixed</em> stream id and prefixes it itself from the tenant context, while the
+     * checkpoint has to be keyed here because the projection service knows nothing about tenants. All that
+     * is required of this name is that two tenants never collide; it mirrors the store's naming so the two
+     * read alike side by side, but nothing breaks if they ever diverge.
+     */
+    private StreamId checkpointFor(final TenantId tenant) {
+        if (!multitenancyEnabled) {
+            return projectionStreamId;
+        }
+        return new ProjectionStreamId(tenant.asString() + "-" + view.getStreamName());
+    }
+
+    private void handleChunk(final TenantId tenant, final StreamId checkpoint,
+                             final StreamEventsSlice slice) {
         final List<Event> events = slice.getEvents().stream()
                 .map(CommonEvent::getData)
                 .map(Event.class::cast)
                 .toList();
-        view.handleEvents(tenantId, events);
-        projectionService.updateProjectionPosition(projectionStreamId, slice.getNextEventNumber());
+        view.handleEvents(tenant, events);
+        projectionService.updateProjectionPosition(checkpoint, slice.getNextEventNumber());
     }
 
     private void createProjection() {
