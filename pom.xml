@@ -34,7 +34,7 @@
         <esc.version>0.10.0-SNAPSHOT</esc.version>
         <ddd4j.version>0.8.0-SNAPSHOT</ddd4j.version>
         <objects4j.version>0.12.0-SNAPSHOT</objects4j.version>
-        <utils4j.version>0.15.1-SNAPSHOT</utils4j.version>
+        <utils4j.version>0.16.1-SNAPSHOT</utils4j.version>
         <units4j.version>0.12.1-SNAPSHOT</units4j.version>
         <errorprone.version>2.49.0</errorprone.version>
         <nullaway.version>0.13.5</nullaway.version>
@@ -111,21 +111,6 @@
                 <artifactId>cqrs-4-java-jaxb</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
             <dependency>
                 <groupId>org.fuin.cqrs4j</groupId>
